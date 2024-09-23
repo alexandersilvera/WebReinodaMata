@@ -1,0 +1,76 @@
+@font-face {
+    font-family: 'ProductSans';
+    src: url('/fonts/ProductSans-Bold.woff') format('woff');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'ProductSans';
+    src: url('/fonts/ProductSans-Light.woff') format('woff');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'ProductSans';
+    src: url('/fonts/ProductSans-Regular.woff') format('woff');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'ProductSans';
+    src: url('/fonts/ProductSans-Medium.woff') format('woff');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* estilos de la barra de navegación*/
+
+.nav-links {
+    width: 100%;
+    top: 5rem;
+    background-color: #ff9776;
+    display: none;
+    margin: 0;
+  }
+  
+  .nav-links a {
+    display: block;
+    text-align: center;
+    padding: 10px 0;
+    text-decoration: none;
+    font-size: 1.2rem;
+    font-weight: bold;
+    text-transform: uppercase;
+  }
+  
+  .nav-links a:hover,
+  .nav-links a:focus {
+    background-color: #ff9776;
+  }
+  
+  .expanded {
+    display: unset;
+  }
+  
+  @media screen and (min-width: 636px) {
+    .nav-links {
+      margin-left: 5em;
+      display: block;
+      position: static;
+      width: auto;
+      background: none;
+    }
+  
+    .nav-links a {
+      display: inline-block;
+      padding: 15px 20px;
+    }
+  
+  }
