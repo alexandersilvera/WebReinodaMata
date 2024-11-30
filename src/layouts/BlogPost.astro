@@ -28,10 +28,10 @@ const { title, heroImage, pubDate, tags  } = Astro.props;
           Volver a blog
         </a>
         <div
-          class="border-extra-soft-white w-full max-w-[none] rounded-xl border"
+          class="border-extra-soft-white w-full rounded-xl border"
           transition:name={title}
         >
-          <article>
+          <article class="min-w-full text-center flex flex-col items-center justify-center">
             <Image
               class="rounded-t-xl object-cover w-[1020px] h-[520px]"
               width={1020}

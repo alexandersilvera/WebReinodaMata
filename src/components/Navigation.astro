@@ -1,55 +1,55 @@
 ---
+
 ---
 
+
 <style>
-    nav {
-      font-family: var(--serif-font);
-      font-size: 1.5rem;
-      font-weight: 600;
-      background-color: #19181c;
-      background-image: linear-gradient(#19181c, #111);
-      box-shadow: 0 -5px 0 #000 inset;
-      display: flex;
-      justify-content: center;
-  
-      & .wrapper {
-        display: flex;
-      }
-  
-      @media (width <= 700px) {
-        & .wrapper {
-          flex-direction: column;
-          align-items: center;
-  
-          & a { width: 100%; text-align: center; }
-        }
-      }
-  
-      & a {
-        display: block;
-        color: #fff;
-        padding: 1rem 3rem;
-        text-decoration: none;
-        border-bottom: 10px solid var(--bgcolor);
-        transition:
-          background 0.25s,
-          color 0.25s;
-  
-        &:nth-child(1) { --bgcolor: #F08F4A; }
-        &:nth-child(2) { --bgcolor: #D9734E; }
-        &:nth-child(3) { --bgcolor: #F05E4A; }
-        &:nth-child(4) { --bgcolor: #E64755; }
-        &:nth-child(5) { --bgcolor: #c52b38; }
-  
-        &:hover {
-          background: color-mix(in srgb, var(--bgcolor), #000 30%);
-        }
-      }
-    }
+  nav {
+    font-family: var(--serif-font);
+    font-size: 1.5rem;
+    font-weight: 600;
+    background-color: #19181c;
+    background-image: linear-gradient(#19181c, #111);
+    box-shadow: 0 -5px 0 #000 inset;
+  }
 </style>
-<nav>
-    <a href="/">Inicio</a>
-    <a href="/blog">Blog</a>
-    <a href="/instituto">Instituto</a>
-    <a href="/contacto">Contacto</a>
+
+<nav class="bg-gradient-to-b from-[#19181c] to-[#111] shadow-inner text-white">
+<div class="flex justify-between items-center px-5 py-5 md:px-20">
+  <!-- Logo -->
+  <a href="/" class="text-2xl font-bold">Reino da Mata</a>
+  <!-- Botón de menú hamburguesa para pantallas pequeñas -->
+  <button class="md:hidden text-white" id="menu-toggle">
+    <!-- Icono del menú hamburguesa -->
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-8 h-8">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+    </svg>
+  </button>
+
+  <!-- Links de navegación -->
+  <div id="menu" class="hidden md:flex md:space-x-10 absolute md:static inset-0 justify-center items-center">
+    <a href="/" class="block px-4 py-2 hover:bg-[#F08F4A] transition-colors">Inicio</a>
+    <a href="/blog" class="block px-4 py-2 hover:bg-[#D9734E] transition-colors">Blog</a>
+    <a href="/instituto" class="block px-4 py-2 hover:bg-[#F05E4A] transition-colors">Instituto</a>
+    <a href="/contacto" class="block px-4 py-2 hover:bg-[#E64755] transition-colors">Contacto</a>
+  </div>
+</div>
+
+<!-- Menú desplegable para pantallas pequeñas -->
+<div id="mobile-menu" class="md:hidden hidden flex-col items-center space-y-2 pb-5">
+  <a href="/" class="block w-full text-center px-4 py-2 hover:bg-[#F08F4A] transition-colors">Inicio</a>
+  <a href="/blog" class="block w-full text-center px-4 py-2 hover:bg-[#D9734E] transition-colors">Blog</a>
+  <a href="/instituto" class="block w-full text-center px-4 py-2 hover:bg-[#F05E4A] transition-colors">Instituto</a>
+  <a href="/contacto" class="block w-full text-center px-4 py-2 hover:bg-[#E64755] transition-colors">Contacto</a>
+</div>
 </nav>
+
+<script>
+// Lógica para alternar el menú en móviles
+const menuToggle = document.getElementById('menu-toggle');
+const mobileMenu = document.getElementById('mobile-menu');
+
+menuToggle.addEventListener('click', () => {
+  mobileMenu.classList.toggle('hidden');
+});
+</script>
