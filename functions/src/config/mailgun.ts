@@ -37,6 +37,12 @@ export const ADMIN_EMAILS = defineString('admin_emails', {
   default: 'administrador@centroumbandistareinodamata.org'
 });
 
+// URL base del sitio para enlaces en correos
+export const SITE_URL = defineString('site_url', {
+  description: 'URL base del sitio web (ej: https://www.example.com)',
+  default: 'https://www.centroumbandistareinodamata.org'
+});
+
 /**
  * Configuración de Mailgun compilada
  */
@@ -102,4 +108,21 @@ export function isAdminUser(email: string): boolean {
   const adminEmailsString = ADMIN_EMAILS.value();
   const adminEmails = adminEmailsString.split(',').map(email => email.trim().toLowerCase());
   return adminEmails.includes(email.toLowerCase());
-} 
+}
+
+/**
+ * Obtiene la configuración de la URL del sitio
+ */
+export interface SiteUrlConfig {
+  url: string;
+}
+
+export function getSiteUrlConfig(): SiteUrlConfig {
+  const siteUrlValue = SITE_URL.value();
+  if (!siteUrlValue || !siteUrlValue.startsWith('http')) {
+    throw new Error('SITE_URL no está configurado correctamente o no es una URL válida (debe empezar con http/https).');
+  }
+  return {
+    url: siteUrlValue
+  };
+}

@@ -3,7 +3,7 @@ import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import * as admin from "firebase-admin";
 import fetch from "node-fetch";
-import { getMailgunConfig, getAllowedOrigins, isValidEmail, validateEmailList, isAdminUser } from "./config/mailgun";
+import { getMailgunConfig, getAllowedOrigins, isValidEmail, validateEmailList, isAdminUser, getSiteUrlConfig } from "./config/mailgun"; // Importar getSiteUrlConfig
 import { firestore } from "firebase-admin";
 import { v4 as uuidv4 } from "uuid";
 
@@ -56,51 +56,98 @@ export const sendNewsletterToSubscribers = onCall(
       const recipients = validateEmailList(subscriberEmails);
       console.log(`Enviando newsletter a ${recipients.length} suscriptores`);
 
+      if (recipients.length === 0) {
+        return {
+          success: false,
+          message: "No hay destinatarios válidos después de la validación.",
+        };
+      }
+
       // Preparar contenido
       const subject = data.subject;
       const textContent = data.content;
       const htmlContent = data.htmlContent || `<html><body><p>${textContent.replace(/\n/g, "<br>")}</p></body></html>`;
       const senderName = data.fromName || mailgunConfig.fromName;
 
-      // Enviar correo usando Mailgun
+      const BATCH_SIZE = 500;
+      let successfulBatches = 0;
+      let failedBatches = 0;
+      let successfulSends = 0;
+      let totalProcessedEmailsInFailedBatches = 0;
+      const totalBatches = Math.ceil(recipients.length / BATCH_SIZE);
+
       const auth = Buffer.from(`api:${mailgunConfig.apiKey}`).toString("base64");
-      const formData = new URLSearchParams();
-      
-      formData.append("from", `${senderName} <${mailgunConfig.fromEmail}>`);
-      formData.append("to", recipients.join(","));
-      formData.append("subject", subject);
-      formData.append("text", textContent);
-      formData.append("html", htmlContent);
 
-      const response = await fetch(
-        `${mailgunConfig.baseUrl}/${mailgunConfig.domain}/messages`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Basic ${auth}`,
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          body: formData,
+      for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
+        const currentBatch = recipients.slice(i, i + BATCH_SIZE);
+        console.log(`Procesando lote ${ (i / BATCH_SIZE) + 1 }/${totalBatches} con ${currentBatch.length} correos.`);
+
+        const formData = new URLSearchParams();
+        formData.append("from", `${senderName} <${mailgunConfig.fromEmail}>`);
+        formData.append("to", currentBatch.join(",")); // Comma-separated list for 'to'
+        formData.append("subject", subject);
+        formData.append("text", textContent);
+        formData.append("html", htmlContent);
+        // Mailgun specific: add recipient variables if you use them for per-recipient data
+        // formData.append('recipient-variables', JSON.stringify(batchRecipientVariables));
+
+        try {
+          const response = await fetch(
+            `${mailgunConfig.baseUrl}/${mailgunConfig.domain}/messages`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Basic ${auth}`,
+                "Content-Type": "application/x-www-form-urlencoded",
+              },
+              body: formData,
+            }
+          );
+
+          if (!response.ok) {
+            const errorData = await response.text();
+            console.error(`Error en Mailgun para el lote ${ (i / BATCH_SIZE) + 1 }: ${response.statusText}`, errorData);
+            failedBatches++;
+            totalProcessedEmailsInFailedBatches += currentBatch.length;
+          } else {
+            const responseData = await response.json();
+            console.log(`Respuesta de Mailgun para el lote ${ (i / BATCH_SIZE) + 1 }:`, responseData);
+            successfulBatches++;
+            successfulSends += currentBatch.length;
+          }
+        } catch (batchError: any) {
+          console.error(`Error crítico procesando el lote ${ (i / BATCH_SIZE) + 1 }:`, batchError);
+          failedBatches++;
+          totalProcessedEmailsInFailedBatches += currentBatch.length;
         }
-      );
 
-      if (!response.ok) {
-        const errorData = await response.text();
-        console.error("Error en Mailgun:", errorData);
-        throw new Error(`Error al enviar el correo: ${response.statusText}`);
+        // Opcional: Pausa entre lotes
+        if ( (i / BATCH_SIZE) + 1 < totalBatches ) { // No esperar después del último lote
+           await new Promise(resolve => setTimeout(resolve, 500)); // 0.5 segundos
+        }
       }
 
-      const responseData = await response.json();
-      console.log("Respuesta de Mailgun:", responseData);
+      const overallSuccess = successfulBatches > 0 || recipients.length === 0; // Consider success if at least one batch sent or no recipients
+      let message = `Proceso de envío de newsletter completado. Total de destinatarios: ${recipients.length}. Lotes procesados: ${totalBatches}. `;
+      message += `Lotes exitosos: ${successfulBatches}, Lotes fallidos: ${failedBatches}. `;
+      message += `Correos enviados aproximadamente: ${successfulSends}. Correos en lotes fallidos: ${totalProcessedEmailsInFailedBatches}.`;
+
+      console.log(message);
 
       return {
-        success: true,
-        sent: recipients.length,
-        message: `Newsletter enviado a ${recipients.length} suscriptores`,
+        success: overallSuccess,
+        message: message,
+        totalRecipients: recipients.length,
+        successfulSends: successfulSends,
+        // failedSends reflects emails in batches that failed, not individual email failures
+        failedEmailsInBatches: totalProcessedEmailsInFailedBatches,
+        totalBatches: totalBatches,
+        successfulBatches: successfulBatches,
+        failedBatches: failedBatches,
       };
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-      console.error("Error al enviar newsletter:", error);
+      console.error("Error crítico al enviar newsletter:", error); // 'Error al enviar newsletter' cambiado a 'Error crítico...'
       return {
         success: false,
         message: `Error al enviar newsletter: ${errorMessage}`,
@@ -126,56 +173,65 @@ export const sendSubscriptionConfirmation = onDocumentCreated(
         return;
       }
 
-      const { email, firstName = "" } = subscriber;
+      const { email, firstName = "", unsubscribeToken } = subscriber; // Extraer unsubscribeToken
       
       if (!email || !isValidEmail(email)) {
-        console.error("Email de suscriptor inválido:", email);
         return;
       }
 
+      if (!unsubscribeToken) {
+        console.error(`Falta unsubscribeToken para el suscriptor: ${email}. No se puede generar enlace de desuscripción.`);
+        // Considerar si se debe enviar el correo igualmente o no. Por ahora, se enviará sin el enlace.
+      }
+
+      const siteUrlConfig = getSiteUrlConfig();
+      const unsubscribeLink = unsubscribeToken ? `${siteUrlConfig.url}/unsubscribe?token=${unsubscribeToken}` : null;
+
       console.log(`Enviando correo de confirmación a: ${email}`);
 
-      // Contenido del correo de confirmación
-      const textContent = `
-¡Hola ${firstName || ""}!
+      // Contenido del correo de confirmación (texto plano)
+      let textContent = `
+¡Hola ${firstName || "Suscriptor"}!
 
 Gracias por suscribirte al newsletter del Centro Umbandista Reino Da Mata.
 
 A partir de ahora recibirás nuestras actualizaciones, artículos y noticias directamente en tu correo electrónico.
-
-Si deseas cancelar tu suscripción en cualquier momento, puedes hacerlo desde nuestro sitio web.
+`;
+      const unsubscribeTextParagraph = unsubscribeLink
+        ? `Si deseas cancelar tu suscripción en cualquier momento, visita: ${unsubscribeLink}`
+        : `Si deseas cancelar tu suscripción en cualquier momento, puedes hacerlo desde nuestro sitio web.`;
+      textContent += `\n\n${unsubscribeTextParagraph}`;
+      textContent += `
 
 ¡Axé!
 
 Centro Umbandista Reino Da Mata
       `.trim();
 
-      const htmlContent = `
-<html>
-<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-            <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-              <h2 style="color: #2d5016;">¡Bienvenido/a al Newsletter!</h2>
-              
-              <p>Hola <strong>${firstName || ""}!</strong></p>
-              
-              <p>Gracias por suscribirte al newsletter del <strong>Centro Umbandista Reino Da Mata</strong>.</p>
-              
-              <p>A partir de ahora recibirás nuestras actualizaciones, artículos y noticias directamente en tu correo electrónico.</p>
-              
-              <p>Si deseas cancelar tu suscripción en cualquier momento, puedes hacerlo desde nuestro sitio web.</p>
-              
-              <p style="margin-top: 30px;"><strong>¡Axé!</strong></p>
-              
-              <div style="border-top: 2px solid #2d5016; padding-top: 20px; margin-top: 30px;">
-                <p style="color: #666; font-size: 14px;">
-                  <strong>Centro Umbandista Reino Da Mata</strong><br>
-                  Este correo fue enviado porque te suscribiste a nuestro newsletter.
-                </p>
-              </div>
-  </div>
-</body>
-</html>
-`;
+      // Contenido HTML desde plantilla
+      let htmlContent: string;
+      try {
+        // Asumimos que 'templates' está al mismo nivel que el archivo JS compilado (e.g., en 'lib/templates')
+        const templatePath = path.join(__dirname, 'templates', 'subscription-confirmation.html');
+        const emailHtmlTemplate = fs.readFileSync(templatePath, 'utf8');
+
+        const unsubscribeHtmlParagraph = unsubscribeLink
+          ? `Si deseas cancelar tu suscripción, <a href="${unsubscribeLink}" style="color: #1a73e8;">haz clic aquí</a>.`
+          : `Si deseas cancelar tu suscripción en cualquier momento, puedes hacerlo desde nuestro sitio web.`;
+
+        htmlContent = emailHtmlTemplate.replace('{{firstName}}', firstName || "Suscriptor");
+        htmlContent = htmlContent.replace('{{unsubscribeParagraph}}', unsubscribeHtmlParagraph);
+      } catch (templateError) {
+        console.error("Error al leer o procesar la plantilla de correo HTML:", templateError);
+        // Fallback a un HTML simple si la plantilla falla
+        htmlContent = `
+          <html><body>
+            <p>Hola ${firstName || "Suscriptor"},</p>
+            <p>Gracias por suscribirte.</p>
+            <p>${unsubscribeTextParagraph}</p>
+            <p>¡Axé!</p>
+          </body></html>`;
+      }
 
       // Enviar correo usando Mailgun
       const auth = Buffer.from(`api:${mailgunConfig.apiKey}`).toString("base64");

@@ -46,18 +46,19 @@ import AdminProtection from "@/components/AdminProtection";
 <script>
   import { auth } from "@/core/firebase/config";
   import { getSubscribers, updateSubscriberStatus, deleteSubscriber } from "@/firebase/subscribers";
+  import type { Subscriber } from "@/firebase/subscribers"; // Importar la interfaz
   import { onAuthStateChanged } from "firebase/auth";
   import { Timestamp } from "firebase/firestore";
 
-  // Interfaz para los datos del suscriptor (duplicada del archivo TS para uso en el cliente)
-  interface Subscriber {
-    id: string;
-    firstName: string;
-    lastName?: string;
-    email: string;
-    createdAt: Timestamp;
-    active: boolean;
-  }
+  // Interfaz para los datos del suscriptor (duplicada del archivo TS para uso en el cliente) - Eliminada
+  // interface Subscriber {
+  //   id: string;
+  //   firstName: string;
+  //   lastName?: string;
+  //   email: string;
+  //   createdAt: Timestamp;
+  //   active: boolean;
+  // }
 
   // Elementos del DOM
   const loadingElement = document.getElementById("loading");
@@ -66,41 +67,37 @@ import AdminProtection from "@/components/AdminProtection";
   // const unauthorizedElement = document.getElementById("unauthorized"); // Eliminado
 
   // Función para formatear fecha
-  const formatDate = (timestamp: any) => {
-    if (!timestamp) return "Fecha desconocida";
-    
-    let date;
+  const formatDate = (timestamp: any): string => {
+    if (!timestamp) {
+      return "Fecha desconocida";
+    }
+
+    let date: Date;
+
     try {
-      // Si es un objeto Timestamp de Firestore
       if (timestamp.toDate && typeof timestamp.toDate === 'function') {
+        // Prioridad para Timestamps de Firestore
         date = timestamp.toDate();
-      }
-      // Si es un objeto Date
-      else if (timestamp instanceof Date) {
-        date = timestamp;
-      }
-      // Si es un número (timestamp en milisegundos)
-      else if (typeof timestamp === 'number') {
+      } else {
+        // Fallback para strings ISO, números (milisegundos) o Date objects preexistentes
         date = new Date(timestamp);
       }
-      // Si es un string (formato ISO)
-      else if (typeof timestamp === 'string') {
-        date = new Date(timestamp);
+
+      // Verificar si la fecha resultante es válida
+      if (isNaN(date.getTime())) {
+        console.warn("Intento de formatear fecha inválida:", timestamp);
+        return "Fecha inválida";
       }
-      // Si no se pudo convertir
-      else {
-        return "Formato de fecha inválido";
-      }
-      
+
       return new Intl.DateTimeFormat('es-ES', {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
-      }).format(date);  
+      }).format(date);
     } catch (error) {
-      console.error("Error al formatear fecha:", error);
+      console.error("Error al formatear fecha:", error, "Input:", timestamp);
       return "Error de formato";
     }
   };

@@ -2,7 +2,7 @@ import { db } from '../core/firebase/config';
 import { collection, addDoc, query, where, getDocs, Timestamp, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 
 // Interfaz para los datos del suscriptor
-interface Subscriber {
+export interface Subscriber { // Added export
   id: string;
   firstName: string;
   lastName?: string;
