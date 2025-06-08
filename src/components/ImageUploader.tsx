@@ -1,4 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { storage } from '@/core/firebase/config'; // Import Firebase storage instance
+import { ref as storageRefFirebase, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 
 interface ImageUploaderProps {
   value: string;
@@ -88,22 +90,47 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
     return null;
   };
 
-  // Simular subida de archivo (en un proyecto real, aquí subirías a tu servidor/cloud)
+  // Subir archivo a Firebase Storage
   const uploadFile = async (file: File): Promise<string> => {
+    setIsLoading(true);
     return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        // En un proyecto real, aquí harías la subida real
-        // Por ahora, simulamos con un data URL
-        const result = e.target?.result as string;
-        setTimeout(() => {
-          resolve(result);
-        }, 1500); // Simular tiempo de subida
-      };
-      reader.onerror = () => {
-        reject(new Error('Error al leer el archivo'));
-      };
-      reader.readAsDataURL(file);
+      const uniqueFileName = `article_images/${Date.now()}-${file.name}`;
+      const fileRef = storageRefFirebase(storage, uniqueFileName);
+      const uploadTask = uploadBytesResumable(fileRef, file);
+
+      uploadTask.on(
+        'state_changed',
+        (snapshot) => {
+          // Opcional: actualizar progreso de subida
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          console.log('Upload is ' + progress + '% done');
+          // Podrías usar un estado para mostrar el progreso en la UI si lo deseas
+        },
+        (error) => {
+          console.error("Error en subida de Firebase:", error);
+          setIsLoading(false);
+          if (onError) {
+            onError(`Error al subir imagen: ${error.message}`);
+          }
+          reject(new Error(`Error al subir imagen: ${error.code}`));
+        },
+        async () => {
+          try {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            // onChange(downloadURL); // onChange se llama en handleFiles después de que esta promesa resuelve
+            // setPreviewUrl(downloadURL); // setPreviewUrl también se llama en handleFiles
+            setIsLoading(false);
+            resolve(downloadURL);
+          } catch (error: any) {
+            console.error("Error obteniendo URL de descarga:", error);
+            setIsLoading(false);
+            if (onError) {
+              onError(`Error obteniendo URL: ${error.message}`);
+            }
+            reject(new Error(`Error obteniendo URL: ${error.code}`));
+          }
+        }
+      );
     });
   };
 

@@ -289,6 +289,7 @@ import AdminProtection from "@/components/AdminProtection";
   
   // Importar el nuevo servicio de artículos
   import { createArticle, saveDraft, deleteDraft, checkSlugExists, getDraftById, cleanupOldDraftsWithSlug } from "@/firebase/articles";
+  import RichTextEditor from "@/components/RichTextEditor.tsx";
 
   // Función para sincronizar contenido
   const syncContentToFiles = httpsCallable(functions, 'syncContentToFiles');
@@ -615,32 +616,48 @@ import AdminProtection from "@/components/AdminProtection";
 
   // Inicializar componentes React simplificados
   const initializeReactComponents = (): void => {
-    // RichTextEditor simplificado
+    // RichTextEditor integrado
     const richTextEditorContainer = document.getElementById('rich-text-editor-container');
-    if (richTextEditorContainer) {
+    if (richTextEditorContainer && (window as any).React && (window as any).ReactDOM) {
+      const root = (window as any).ReactDOM.createRoot(richTextEditorContainer);
+      const editorElement = (window as any).React.createElement(RichTextEditor, {
+        value: formData.content,
+        onChange: (newContent: string) => {
+          formData.content = newContent;
+          isFormDirty = true;
+          scheduleAutosave();
+          // Validar en cada cambio para feedback inmediato, o considerar hacerlo en blur si es muy pesado
+          validateField(
+            { value: formData.content },
+            document.getElementById('content-error'),
+            validators.content
+          );
+          // Actualizar contador de palabras (si RichTextEditor no lo provee internamente)
+          // const words = newContent.replace(/<[^>]+>/g, ' ').split(/\s+/).filter(w => w.length > 0).length;
+          // let counter = richTextEditorContainer.querySelector('.word-counter');
+          // if (!counter) {
+          //   // counter logic
+          // }
+          // counter.textContent = `${words} palabras`;
+        },
+        placeholder: 'Escribe tu contenido aquí...',
+        // Aquí puedes pasar más props si RichTextEditor los acepta
+      });
+      root.render(editorElement);
+    } else {
+      console.error('RichTextEditor container o React/ReactDOM no encontrado.');
+      // Fallback a textarea si React no carga (opcional)
       const textarea = document.createElement('textarea');
       textarea.id = 'content';
       textarea.rows = 20;
       textarea.className = 'w-full px-4 py-2 bg-green-700/50 border border-green-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400 text-white font-mono transition-colors resize-y';
-      textarea.placeholder = 'Escribe tu contenido aquí usando Markdown...';
-      
+      textarea.placeholder = 'Error al cargar editor. Usando Markdown básico...';
+      textarea.value = formData.content;
       textarea.addEventListener('input', () => {
         formData.content = textarea.value;
         isFormDirty = true;
         scheduleAutosave();
-        
-        // Actualizar contador de palabras
-        const words = textarea.value.split(/\s+/).filter(w => w.length > 0).length;
-        let counter = richTextEditorContainer.querySelector('.word-counter');
-        if (!counter) {
-          counter = document.createElement('div');
-          counter.className = 'word-counter absolute bottom-2 right-2 text-xs text-gray-400 bg-green-900/80 px-2 py-1 rounded';
-          richTextEditorContainer.style.position = 'relative';
-          richTextEditorContainer.appendChild(counter);
-        }
-        counter.textContent = `${words} palabras`;
       });
-      
       textarea.addEventListener('blur', () => {
         validateField(
           { value: formData.content }, 
@@ -648,8 +665,7 @@ import AdminProtection from "@/components/AdminProtection";
           validators.content
         );
       });
-
-      richTextEditorContainer.appendChild(textarea);
+      if(richTextEditorContainer) richTextEditorContainer.appendChild(textarea);
     }
 
     // ImageUploader simplificado

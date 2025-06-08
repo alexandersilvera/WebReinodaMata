@@ -55,6 +55,19 @@ function parseUrlList(urlString: string): string[] {
 }
 
 /**
+ * Parsea una lista de emails separadas por coma, normalizándolos
+ */
+function parseEmailList(emailString: string): string[] {
+  if (!emailString) {
+    return [];
+  }
+  return emailString
+    .split(',')
+    .map(email => email.trim().toLowerCase())
+    .filter(email => email.length > 0);
+}
+
+/**
  * Valida que un email tenga un formato válido
  */
 export const isValidEmail = (email: string): boolean => {
@@ -76,8 +89,7 @@ export const config: AppConfig = {
     measurementId: getEnvVar('PUBLIC_FIREBASE_MEASUREMENT_ID'),
   },
   admin: {
-    // Por ahora mantenemos el email hardcodeado pero lo movemos aquí para centralizar
-    emails: ['alexandersilvera@hotmail.com'],
+    emails: parseEmailList(requireEnvVar('PUBLIC_ADMIN_EMAILS', import.meta.env.PUBLIC_ADMIN_EMAILS)),
   },
   app: {
     siteUrl: getEnvVar('PUBLIC_SITE_URL', 'http://localhost:4321'),
@@ -93,9 +105,16 @@ export const config: AppConfig = {
  */
 function validateConfig() {
   // Validar emails de administradores
+  if (config.admin.emails.length === 0 && requireEnvVar('PUBLIC_ADMIN_EMAILS', import.meta.env.PUBLIC_ADMIN_EMAILS) !== '') {
+    // Esto podría suceder si PUBLIC_ADMIN_EMAILS está definido pero solo contiene comas o espacios en blanco.
+    // O si parseEmailList devuelve un array vacío por alguna razón cuando no debería.
+    console.warn('[Config] PUBLIC_ADMIN_EMAILS está definido pero no se parsearon emails válidos. Asegúrate de que no esté vacío o solo contenga separadores.');
+  }
+
   config.admin.emails.forEach(email => {
     if (!isValidEmail(email)) {
-      throw new Error(`Email de administrador inválido: ${email}`);
+      // Los emails ya están en minúsculas por parseEmailList
+      throw new Error(`Email de administrador inválido en PUBLIC_ADMIN_EMAILS: ${email}`);
     }
   });
 
