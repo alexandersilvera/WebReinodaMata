@@ -23,6 +23,7 @@ export default defineConfig({
 	output: "hybrid",
 	adapter: vercel({
 		webAnalytics: { enabled: true },
+		runtime: "nodejs20.x" // ¡AÑADE ESTA LÍNEA!
 	}),
 	vite: {
 		resolve: {
