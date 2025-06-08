@@ -1,77 +1,111 @@
 ---
 import { ViewTransitions } from "astro:transitions";
-import { Image } from "astro:assets";
+import { SEO } from "astro-seo"; 
 import "@/styles/global.css";
+
 interface Props {
-  title: string;
-  description?: string;
-  image?: string;
+	title: string;
+	description?: string;
+	image?: string;
 }
+
 const {
-  title,
-  description = "Nuestro blog de Astro",
-  image = "/assets/logo.svg",
+	title,
+	description = "Centro Umbandista Reino Da Mata - Centro Umbandista. Estudios, investigación y difusión de la cultura y religiosidad Afro-amerindia.",
+	image = "/assets/logo.svg",
 } = Astro.props;
 
-const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+// Construct the full image URL for Open Graph
+const siteURL = Astro.site ? Astro.site.toString() : Astro.url.origin;
+const ogImageURL = new URL(image, siteURL).toString();
+
+// Define los datos de la organización para Schema.org
+const placeOfWorshipSchema = {
+	"@context": "https://schema.org",
+	"@type": "PlaceOfWorship",
+	"name": "Centro Umbandista Reino da Mata",
+	"url": Astro.site ? Astro.site.toString() : Astro.url.origin, // Usa Astro.site si está definido
+	"logo": new URL("/assets/logo.svg", Astro.site || Astro.url.origin).toString(), // Asume logo en public/assets/logo.svg
+	"description": "Centro Umbandista Reino da Mata, estudios investigación y difusión de la cultura y la religiosidad afro-umbandista. Nuestra misión es la investigación de las distintas escuelas Umbandistas, historia, practica y desarrollo ritualistico. Difundiendo las distintas tradiciones o raices religiosas afro-umbandistas que se desarrollaron y se expandieron en Brasil, su afincamiento en Uruguay através de los distintos pioneros y pioneras de nuestra Umbanda.",
+	"address": {
+		"@type": "PostalAddress",
+		"streetAddress": "José María Delgado 1935",
+		"addressLocality": "Montevideo",
+		"addressCountry": "UY" // Código ISO 3166-1 alpha-2 para Uruguay
+	},
+	"telephone": "095309322"
+};
+
 ---
 
 <head>
-  <!-- Global Metadata -->
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="shortcut icon" href="/public/assets/logo.svg" type="image/x-icon" />
-  <!-- Font Preloads -->
-  <link
-    rel="preload"
-    href="/fonts/ProductSans-Bold.woff"
-    as="font"
-    type="font/woff"
-    crossorigin
-  />
-  <link
-    rel="preload"
-    href="/fonts/ProductSans-Light.woff"
-    as="font"
-    type="font/woff"
-    crossorigin
-  />
-  <link
-    rel="preload"
-    href="/fonts/ProductSans-Medium.woff"
-    as="font"
-    type="font/woff"
-    crossorigin
-  />
-  <link
-    rel="preload"
-    href="/fonts/ProductSans-Regular.woff"
-    as="font"
-    type="font/woff"
-    crossorigin
-  />
+	<!-- Global Metadata -->
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<link
+		rel="shortcut icon"
+		href="/assets/logo.svg"
+		type="image/svg+xml"
+	/>
+	
+	<!-- Font Preloads -->
+	<link
+		rel="preload"
+		href="/fonts/ProductSans-Bold.woff"
+		as="font"
+		type="font/woff"
+		crossorigin
+	/>
+	<link
+		rel="preload"
+		href="/fonts/ProductSans-Light.woff"
+		as="font"
+		type="font/woff"
+		crossorigin
+	/>
+	<link
+		rel="preload"
+		href="/fonts/ProductSans-Medium.woff"
+		as="font"
+		type="font/woff"
+		crossorigin
+	/>
+	<link
+		rel="preload"
+		href="/fonts/ProductSans-Regular.woff"
+		as="font"
+		type="font/woff"
+		crossorigin
+	/>
 
-  <!-- Canonical URL -->
-  <link rel="canonical" href={canonicalURL} />
+	{/* Reemplazo de meta tags manuales con el componente SEO */}
+	<SEO
+		title={title} 
+		description={description} 
+		openGraph={{
+			basic: {
+				title: title,
+				type: "website",
+				image: ogImageURL, // Use the full URL
+				// url: Astro.url.toString() // Generally, Astro.site is preferred here if set
+			},
+			// Puedes añadir más propiedades de OpenGraph aquí si es necesario
+			// image: {
+			//   alt: 'Texto alternativo para la imagen OG',
+			// },
+		}}
+		twitter={{
+			// card: "summary_large_image", 
+			// title: title, 
+			// description: description, 
+			// image: image, 
+			// imageAlt: 'Texto alternativo para la imagen de Twitter'
+		}}
+	/>
 
-  <!-- Primary Meta Tags -->
-  <title>{title}</title>
-  <meta name="title" content={title} />
-  <meta name="description" content={description} />
+	<!-- Schema.org JSON-LD -->
+	<script type="application/ld+json" set:html={JSON.stringify(placeOfWorshipSchema)}></script>
 
-  <!-- Open Graph -->
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content={Astro.url} />
-  <meta property="og:title" content={title} />
-  <meta property="og:description" content={description} />
-  <meta property="og:image" content={new URL(image, Astro.url)} />
-
-  <!-- Twitter -->
-  <meta property="twitter:card" content="summary_large_image" />
-  <meta property="twitter:url" content={Astro.url} />
-  <meta property="twitter:title" content={title} />
-  <meta property="twitter:description" content={description} />
-  <meta property="twitter:image" content={new URL(image, Astro.url)} />
-  <!-- Transition -->
-  <ViewTransitions />
+	<!-- Transition -->
+	<ViewTransitions />
 </head>

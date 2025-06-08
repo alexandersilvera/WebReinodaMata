@@ -1,0 +1,603 @@
+---
+import MainLayout from "@/layouts/MainLayout.astro";
+import AdminProtection from "@/components/AdminProtection";
+import { functions } from "@/core/firebase/config";
+---
+
+<MainLayout title="Métricas | Reino Da Mata">
+  <AdminProtection client:load>
+    <div class="max-w-6xl mx-auto w-full px-4 py-8">
+      <div class="mb-6 flex justify-between items-center">
+        <div>
+          <h1 class="text-3xl font-bold text-green-700 mb-2">Métricas y Análisis</h1>
+          <p class="text-gray-200">Visualiza estadísticas e interacciones de los usuarios.</p>
+        </div>
+        <a href="/admin" class="text-green-400 hover:text-green-300 flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+          </svg>
+          <span>Volver al panel</span>
+        </a>
+      </div>
+
+      <div id="admin-container" class="relative">
+        <!-- Estado de carga inicial -->
+        <div id="loading" class="flex justify-center items-center py-10">
+          <svg class="animate-spin h-10 w-10 text-green-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span class="ml-3 text-green-300">Cargando métricas...</span>
+        </div>
+
+        <!-- Selector de periodos -->
+        <div id="period-selector" class="hidden mb-6 flex justify-center">
+          <div class="bg-green-900/30 p-2 rounded-lg backdrop-blur-sm inline-flex space-x-1">
+            <button class="period-btn px-4 py-2 rounded-md text-sm font-medium" data-period="7">7 días</button>
+            <button class="period-btn px-4 py-2 rounded-md text-sm font-medium" data-period="30">30 días</button>
+            <button class="period-btn px-4 py-2 rounded-md text-sm font-medium" data-period="90">3 meses</button>
+            <button class="period-btn px-4 py-2 rounded-md text-sm font-medium active" data-period="365">1 año</button>
+            <button class="period-btn px-4 py-2 rounded-md text-sm font-medium" data-period="all">Todo</button>
+          </div>
+        </div>
+
+        <!-- Contenedor para las tarjetas de métricas generales -->
+        <div id="metrics-cards" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <!-- Se llenará desde JavaScript -->
+        </div>
+
+        <!-- Contenedor para las gráficas -->
+        <div id="charts-container" class="hidden grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-green-900/30 p-6 rounded-lg backdrop-blur-sm">
+            <h3 class="text-xl font-bold text-green-500 mb-4">Visitas por día</h3>
+            <div class="h-64" id="visits-chart"></div>
+          </div>
+
+          <div class="bg-green-900/30 p-6 rounded-lg backdrop-blur-sm">
+            <h3 class="text-xl font-bold text-green-500 mb-4">Suscriptores nuevos</h3>
+            <div class="h-64" id="subscribers-chart"></div>
+          </div>
+        </div>
+
+        <!-- Contenedor para tabla de artículos más populares -->
+        <div id="popular-articles-container" class="hidden mt-6">
+          <!-- Se llenará desde JavaScript -->
+        </div>
+
+        <!-- Mensaje de error -->
+        <div id="error-message" class="hidden bg-red-600/80 text-white p-4 rounded-md text-center my-4">
+          <p class="font-medium">Error al cargar las métricas</p>
+          <p class="text-sm mt-1">Por favor, intenta de nuevo más tarde o contacta al administrador del sistema.</p>
+        </div>
+      </div>
+    </div>
+  </AdminProtection>
+</MainLayout>
+
+<script>
+  // Importar Chart.js dinámicamente
+  let Chart: any;
+  
+  // Cargar Chart.js dinámicamente
+  const loadChart = async () => {
+    try {
+      // @ts-ignore
+      const chartModule = await import('https://cdn.skypack.dev/chart.js/auto');
+      Chart = chartModule.default;
+    } catch (error) {
+      console.error('Error cargando Chart.js:', error);
+    }
+  };
+
+  import { auth, db } from "@/core/firebase/config";
+  import { onAuthStateChanged } from "firebase/auth";
+  import { collection, getDocs, query, orderBy, limit, where, Timestamp } from "firebase/firestore";
+  
+  // Definir tipos de datos
+  interface ChartData {
+    labels: string[];
+    data: number[];
+  }
+  
+  interface MetricsData {
+    totalVisits: number;
+    totalSubscribers: number;
+    totalArticles: number;
+    totalComments: number;
+    visitsPerDay: ChartData;
+    subscribersPerDay: ChartData;
+    popularArticles: any[];
+  }
+  
+  // Elementos del DOM
+  const loadingElement = document.getElementById("loading");
+  const metricsCardsContainer = document.getElementById("metrics-cards");
+  const chartsContainer = document.getElementById("charts-container");
+  const popularArticlesContainer = document.getElementById("popular-articles-container");
+  const periodSelector = document.getElementById("period-selector");
+  const errorMessageElement = document.getElementById("error-message");
+  
+  // Referencias a los gráficos
+  let visitsChart: any = null;
+  let subscribersChart: any = null;
+  
+  // Estado
+  let selectedPeriod = 365; // Días por defecto
+  let metricsData: MetricsData = {
+    totalVisits: 0,
+    totalSubscribers: 0,
+    totalArticles: 0,
+    totalComments: 0,
+    visitsPerDay: { labels: [], data: [] },
+    subscribersPerDay: { labels: [], data: [] },
+    popularArticles: []
+  };
+
+  // Configurar botones de periodo
+  const setupPeriodButtons = () => {
+    document.querySelectorAll('.period-btn').forEach(button => {
+      button.addEventListener('click', (e) => {
+        // Actualizar estilo de botones
+        document.querySelectorAll('.period-btn').forEach(btn => {
+          btn.classList.remove('bg-green-700', 'text-white', 'active');
+          btn.classList.add('text-green-300', 'hover:bg-green-800/50', 'hover:text-white');
+        });
+        
+        const btn = e.currentTarget as HTMLElement;
+        btn.classList.add('bg-green-700', 'text-white', 'active');
+        btn.classList.remove('text-green-300', 'hover:bg-green-800/50', 'hover:text-white');
+        
+        // Actualizar periodo y refrescar datos
+        selectedPeriod = parseInt(btn.getAttribute('data-period') || '365');
+        if (btn.getAttribute('data-period') === 'all') {
+          selectedPeriod = 9999; // Un valor muy grande para representar "todos"
+        }
+        
+        loadMetrics();
+      });
+    });
+    
+    // Establecer el botón activo por defecto
+    const defaultBtn = document.querySelector(`.period-btn[data-period="${selectedPeriod}"]`);
+    if (defaultBtn) {
+      defaultBtn.classList.add('bg-green-700', 'text-white');
+      defaultBtn.classList.remove('text-green-300', 'hover:bg-green-800/50', 'hover:text-white');
+    }
+  };
+
+  // Función para obtener estadísticas
+  const loadMetrics = async () => {
+    try {
+      // Calcular la fecha límite según el periodo seleccionado
+      const now = new Date();
+      const limitDate = new Date(now);
+      limitDate.setDate(limitDate.getDate() - selectedPeriod);
+      const limitTimestamp = Timestamp.fromDate(limitDate);
+      
+      // Obtener número total de visitas
+      const visitsRef = collection(db, "pageViews");
+      let visitsQuery = query(visitsRef, orderBy("timestamp", "desc"));
+      
+      if (selectedPeriod !== 9999) {
+        visitsQuery = query(visitsRef, where("timestamp", ">=", limitTimestamp), orderBy("timestamp", "desc"));
+      }
+      
+      const visitsSnapshot = await getDocs(visitsQuery);
+      const visits = [];
+      visitsSnapshot.forEach(doc => visits.push(doc.data()));
+      
+      // Obtener número total de suscriptores
+      const subscribersRef = collection(db, "subscribers");
+      let subscribersQuery = query(subscribersRef, orderBy("createdAt", "desc"));
+      
+      if (selectedPeriod !== 9999) {
+        subscribersQuery = query(subscribersRef, where("createdAt", ">=", limitTimestamp), orderBy("createdAt", "desc"));
+      }
+      
+      const subscribersSnapshot = await getDocs(subscribersQuery);
+      const subscribers = [];
+      subscribersSnapshot.forEach(doc => subscribers.push(doc.data()));
+      
+      // Obtener número total de artículos
+      const articlesRef = collection(db, "articles");
+      let articlesQuery = query(articlesRef, orderBy("publishDate", "desc"));
+      
+      if (selectedPeriod !== 9999) {
+        articlesQuery = query(articlesRef, where("publishDate", ">=", limitTimestamp), orderBy("publishDate", "desc"));
+      }
+      
+      const articlesSnapshot = await getDocs(articlesQuery);
+      const articles = [];
+      articlesSnapshot.forEach(doc => articles.push({
+        id: doc.id,
+        ...doc.data()
+      }));
+      
+      // Obtener número total de comentarios
+      const commentsRef = collection(db, "comments");
+      let commentsQuery = query(commentsRef, orderBy("createdAt", "desc"));
+      
+      if (selectedPeriod !== 9999) {
+        commentsQuery = query(commentsRef, where("createdAt", ">=", limitTimestamp), orderBy("createdAt", "desc"));
+      }
+      
+      const commentsSnapshot = await getDocs(commentsQuery);
+      const comments = [];
+      commentsSnapshot.forEach(doc => comments.push(doc.data()));
+      
+      // Procesar datos para gráficos
+      const visitsByDay = processVisitsByDay(visits);
+      const subscribersByDay = processSubscribersByDay(subscribers);
+      
+      // Obtener artículos más populares
+      const popularArticles = processPopularArticles(articles, visits);
+      
+      // Actualizar estado
+      metricsData = {
+        totalVisits: visits.length,
+        totalSubscribers: subscribers.length,
+        totalArticles: articles.length,
+        totalComments: comments.length,
+        visitsPerDay: visitsByDay,
+        subscribersPerDay: subscribersByDay,
+        popularArticles: popularArticles.slice(0, 5) // Top 5
+      };
+      
+      // Renderizar componentes
+      renderMetricCards();
+      renderVisitsChart();
+      renderSubscribersChart();
+      renderPopularArticles();
+    } catch (error) {
+      console.error("Error al cargar métricas:", error);
+      if (errorMessageElement) errorMessageElement.classList.remove("hidden");
+    } finally {
+      if (loadingElement) loadingElement.classList.add("hidden");
+    }
+  };
+
+  // Procesar visitas por día
+  const processVisitsByDay = (visits) => {
+    const dateMap = {};
+    const today = new Date();
+    
+    // Inicializar los últimos días con 0 visitas
+    for (let i = 0; i < selectedPeriod && i < 365; i++) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      dateMap[dateStr] = 0;
+    }
+    
+    // Agregar visitas a los días correspondientes
+    visits.forEach(visit => {
+      const timestamp = visit.timestamp.toDate();
+      const dateStr = timestamp.toISOString().split('T')[0];
+      if (dateMap[dateStr] !== undefined) {
+        dateMap[dateStr]++;
+      }
+    });
+    
+    // Convertir a array para Chart.js
+    const sortedDates = Object.keys(dateMap).sort();
+    
+    // Limitar la cantidad de días mostrados para periodos largos
+    const displayLimit = 30; // Mostrar máximo 30 días en el gráfico
+    const step = Math.max(1, Math.floor(sortedDates.length / displayLimit));
+    
+    const labels = [];
+    const data = [];
+    
+    for (let i = sortedDates.length - 1; i >= 0; i -= step) {
+      const date = new Date(sortedDates[i]);
+      labels.unshift(date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }));
+      data.unshift(dateMap[sortedDates[i]]);
+    }
+    
+    return { labels, data };
+  };
+
+  // Procesar suscriptores por día
+  const processSubscribersByDay = (subscribers) => {
+    const dateMap = {};
+    const today = new Date();
+    
+    // Inicializar los últimos días con 0 suscriptores
+    for (let i = 0; i < selectedPeriod && i < 365; i++) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      dateMap[dateStr] = 0;
+    }
+    
+    // Agregar suscriptores a los días correspondientes
+    subscribers.forEach(subscriber => {
+      const timestamp = subscriber.createdAt.toDate();
+      const dateStr = timestamp.toISOString().split('T')[0];
+      if (dateMap[dateStr] !== undefined) {
+        dateMap[dateStr]++;
+      }
+    });
+    
+    // Convertir a array para Chart.js
+    const sortedDates = Object.keys(dateMap).sort();
+    
+    // Limitar la cantidad de días mostrados para periodos largos
+    const displayLimit = 30; // Mostrar máximo 30 días en el gráfico
+    const step = Math.max(1, Math.floor(sortedDates.length / displayLimit));
+    
+    const labels = [];
+    const data = [];
+    
+    for (let i = sortedDates.length - 1; i >= 0; i -= step) {
+      const date = new Date(sortedDates[i]);
+      labels.unshift(date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }));
+      data.unshift(dateMap[sortedDates[i]]);
+    }
+    
+    return { labels, data };
+  };
+
+  // Procesar artículos más populares
+  const processPopularArticles = (articles, visits) => {
+    // Contar visitas por artículo
+    const articleVisits = {};
+    visits.forEach(visit => {
+      if (visit.path && visit.path.startsWith('/blog/')) {
+        const slug = visit.path.replace('/blog/', '');
+        articleVisits[slug] = (articleVisits[slug] || 0) + 1;
+      }
+    });
+    
+    // Mapear los datos de artículos con sus visitas
+    const articlesWithVisits = articles.map(article => ({
+      ...article,
+      visits: articleVisits[article.slug] || 0
+    }));
+    
+    // Ordenar por número de visitas
+    return articlesWithVisits.sort((a, b) => b.visits - a.visits);
+  };
+
+  // Renderizar tarjetas de métricas generales
+  const renderMetricCards = () => {
+    if (!metricsCardsContainer) return;
+    
+    const periodText = selectedPeriod === 9999 
+      ? 'Todo el tiempo' 
+      : selectedPeriod === 365 
+        ? 'Último año' 
+        : selectedPeriod === 90 
+          ? 'Últimos 3 meses' 
+          : selectedPeriod === 30 
+            ? 'Últimos 30 días' 
+            : 'Últimos 7 días';
+    
+    const html = `
+      <div class="bg-green-900/30 p-6 rounded-lg backdrop-blur-sm text-center">
+        <div class="text-4xl font-bold text-green-500">${metricsData.totalVisits}</div>
+        <div class="text-sm text-gray-300 mt-2">Visitas totales</div>
+        <div class="text-xs text-gray-400 mt-1">${periodText}</div>
+      </div>
+      
+      <div class="bg-green-900/30 p-6 rounded-lg backdrop-blur-sm text-center">
+        <div class="text-4xl font-bold text-green-500">${metricsData.totalSubscribers}</div>
+        <div class="text-sm text-gray-300 mt-2">Suscriptores</div>
+        <div class="text-xs text-gray-400 mt-1">${periodText}</div>
+      </div>
+      
+      <div class="bg-green-900/30 p-6 rounded-lg backdrop-blur-sm text-center">
+        <div class="text-4xl font-bold text-green-500">${metricsData.totalArticles}</div>
+        <div class="text-sm text-gray-300 mt-2">Artículos publicados</div>
+        <div class="text-xs text-gray-400 mt-1">${periodText}</div>
+      </div>
+      
+      <div class="bg-green-900/30 p-6 rounded-lg backdrop-blur-sm text-center">
+        <div class="text-4xl font-bold text-green-500">${metricsData.totalComments}</div>
+        <div class="text-sm text-gray-300 mt-2">Comentarios</div>
+        <div class="text-xs text-gray-400 mt-1">${periodText}</div>
+      </div>
+    `;
+    
+    metricsCardsContainer.innerHTML = html;
+  };
+
+  // Renderizar gráfico de visitas
+  const renderVisitsChart = () => {
+    const ctx = document.getElementById('visits-chart');
+    if (!ctx) return;
+    
+    // Destruir gráfico existente si hay uno
+    if (visitsChart) {
+      visitsChart.destroy();
+    }
+    
+    // Crear nuevo gráfico
+    visitsChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: metricsData.visitsPerDay.labels,
+        datasets: [{
+          label: 'Visitas',
+          data: metricsData.visitsPerDay.data,
+          borderColor: '#10B981',
+          backgroundColor: 'rgba(16, 185, 129, 0.2)',
+          tension: 0.3,
+          fill: true,
+          pointBackgroundColor: '#10B981',
+          pointRadius: 3,
+          pointHoverRadius: 5
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: {
+              color: 'rgba(255, 255, 255, 0.1)'
+            },
+            ticks: {
+              color: 'rgba(255, 255, 255, 0.7)'
+            }
+          },
+          x: {
+            grid: {
+              color: 'rgba(255, 255, 255, 0.1)'
+            },
+            ticks: {
+              color: 'rgba(255, 255, 255, 0.7)'
+            }
+          }
+        }
+      }
+    });
+  };
+
+  // Renderizar gráfico de suscriptores
+  const renderSubscribersChart = () => {
+    const ctx = document.getElementById('subscribers-chart');
+    if (!ctx) return;
+    
+    // Destruir gráfico existente si hay uno
+    if (subscribersChart) {
+      subscribersChart.destroy();
+    }
+    
+    // Crear nuevo gráfico
+    subscribersChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: metricsData.subscribersPerDay.labels,
+        datasets: [{
+          label: 'Nuevos suscriptores',
+          data: metricsData.subscribersPerDay.data,
+          backgroundColor: '#10B981',
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: {
+              color: 'rgba(255, 255, 255, 0.1)'
+            },
+            ticks: {
+              color: 'rgba(255, 255, 255, 0.7)',
+              stepSize: 1
+            }
+          },
+          x: {
+            grid: {
+              display: false
+            },
+            ticks: {
+              color: 'rgba(255, 255, 255, 0.7)'
+            }
+          }
+        }
+      }
+    });
+  };
+
+  // Renderizar tabla de artículos más populares
+  const renderPopularArticles = () => {
+    if (!popularArticlesContainer) return;
+    
+    if (metricsData.popularArticles.length === 0) {
+      popularArticlesContainer.innerHTML = `
+        <div class="bg-green-900/30 p-6 rounded-lg backdrop-blur-sm text-center">
+          <p class="text-xl text-green-300">No hay suficientes datos para mostrar artículos populares</p>
+        </div>
+      `;
+      return;
+    }
+    
+    const html = `
+      <div class="bg-green-900/30 p-6 rounded-lg backdrop-blur-sm">
+        <h3 class="text-xl font-bold text-green-500 mb-4">Artículos más populares</h3>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-green-700">
+            <thead class="bg-green-800/50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-green-300 uppercase tracking-wider">Título</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-green-300 uppercase tracking-wider">Fecha</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-green-300 uppercase tracking-wider">Visitas</th>
+                <th class="px-6 py-3 text-right text-xs font-medium text-green-300 uppercase tracking-wider">Acciones</th>
+              </tr>
+            </thead>
+            <tbody class="bg-green-900/20 divide-y divide-green-800">
+              ${metricsData.popularArticles.map((article, index) => `
+                <tr class="hover:bg-green-800/30">
+                  <td class="px-6 py-4">
+                    <div class="text-sm font-medium text-white">${article.title}</div>
+                    <div class="text-xs text-green-400 mt-1">${article.slug || ''}</div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-green-200">${formatDate(article.publishDate)}</div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm font-bold text-green-400">${article.visits}</div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <a href="/blog/${article.slug}" target="_blank" class="text-blue-400 hover:text-blue-300" title="Ver">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                        <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+                      </svg>
+                    </a>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+    
+    popularArticlesContainer.innerHTML = html;
+  };
+
+  // Función para formatear fecha
+  const formatDate = (timestamp) => {
+    if (!timestamp) return "Fecha desconocida";
+    
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    return new Intl.DateTimeFormat('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    }).format(date);
+  };
+
+  // Inicializar cuando el usuario esté autenticado
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      // Cargar Chart.js primero
+      await loadChart();
+      
+      // Configurar botones de periodo
+      setupPeriodButtons();
+      
+      // Cargar datos iniciales
+      await loadMetrics();
+    } else {
+      // Redirigir si no está autenticado
+      window.location.href = '/admin/login';
+    }
+  });
+</script> 

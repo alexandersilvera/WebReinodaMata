@@ -1,0 +1,117 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Lista de emails de administradores (actualizar según necesidades)
+    function getAdminEmails() {
+      return [
+        'admin@centroumbandistareinodamata.org',
+        'administrador@centroumbandistareinodamata.org'
+        // Agregar más emails de admin aquí si es necesario
+      ];
+    }
+    
+    // Verificar si el usuario es administrador
+    function isAdmin() {
+      return request.auth != null && 
+             request.auth.token.email in getAdminEmails();
+    }
+    
+    // Verificar que el usuario está autenticado
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Función auxiliar para validar datos de suscriptores
+    function isValidSubscriber(data) {
+      return data.keys().hasAll(['email', 'active']) &&
+             data.email is string &&
+             data.email.matches('.*@.*\\..*') &&
+             data.active is bool;
+    }
+    
+    // Reglas para artículos
+    match /articles/{articleId} {
+      // Permitir lectura a cualquier usuario (artículos públicos)
+      allow read: if true;
+      
+      // Solo el administrador puede crear, actualizar y eliminar artículos
+      allow create, update, delete: if isAdmin();
+    }
+    
+    // Reglas para borradores
+    match /drafts/{draftId} {
+      // Solo el administrador puede leer, crear, actualizar y eliminar borradores
+      allow read, write: if isAdmin();
+    }
+    
+    // Reglas para perfiles de usuario
+    match /userProfiles/{userId} {
+      // Permitir lectura a todos los usuarios autenticados
+      allow read: if isAuthenticated();
+      
+      // Permitir escritura solo al propio usuario o al administrador
+      allow write: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+    }
+    
+    // Reglas para comentarios
+    match /comments/{commentId} {
+      // Permitir lectura a cualquier usuario
+      allow read: if true;
+      
+      // Permitir crear comentarios solo a usuarios autenticados
+      allow create: if isAuthenticated() && 
+                    request.resource.data.userId == request.auth.uid;
+      
+      // Permitir eliminar solo al autor del comentario o al administrador
+      allow delete: if isAuthenticated() && 
+                    (resource.data.userId == request.auth.uid || isAdmin());
+      
+      // Solo el administrador puede actualizar comentarios (moderación)
+      allow update: if isAdmin();
+    }
+    
+    // Reglas para suscriptores
+    match /subscribers/{subscriberId} {
+      // Solo el administrador puede leer todos los suscriptores
+      allow read: if isAdmin();
+      
+      // Permitir crear suscriptores con validación de datos
+      allow create: if isValidSubscriber(request.resource.data) &&
+                    request.resource.data.email.size() > 0 &&
+                    request.resource.data.email.size() <= 100;
+      
+      // Permitir actualizar solo para cancelar suscripción (campo active) o administración
+      allow update: if isAdmin() || 
+                    (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['active']) &&
+                     request.resource.data.active == false);
+      
+      // Solo el administrador puede eliminar suscriptores
+      allow delete: if isAdmin();
+    }
+    
+    // Reglas para vistas de página (analytics básico)
+    match /pageViews/{viewId} {
+      // Permitir crear vistas a cualquier usuario (para analytics)
+      allow create: if request.resource.data.keys().hasAll(['path', 'timestamp']) &&
+                    request.resource.data.path is string &&
+                    request.resource.data.path.size() > 0;
+      
+      // Solo el administrador puede leer analytics
+      allow read: if isAdmin();
+      
+      // Solo el administrador puede actualizar/eliminar analytics
+      allow update, delete: if isAdmin();
+    }
+    
+    // Reglas para configuración del sitio (si se necesita en el futuro)
+    match /siteConfig/{configId} {
+      // Solo administradores pueden gestionar configuración
+      allow read, write: if isAdmin();
+    }
+    
+    // Regla por defecto - denegar acceso a cualquier otra colección
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+} 

@@ -14,6 +14,26 @@
 		{
 			"src": "^\\/_image$",
 			"dest": "_render"
+		},
+		{
+			"src": "^\\/admin\\/articles\\/edit\\/([^/]+?)\\/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^\\/admin\\/articles\\/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^\\/blog\\/tag\\/([^/]+?)\\/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^\\/blog\\/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^\\/blog(?:\\/(.*?))?\\/?$",
+			"dest": "_render"
 		}
 	]
 }

@@ -1,0 +1,248 @@
+---
+// Importaciones
+import { Image } from 'astro:assets';
+import { auth, db } from "@/core/firebase/config";
+---
+
+<nav class="bg-gradient-to-b from-[#19181c] to-[#111] shadow-inner text-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex justify-between h-16">
+      <!-- Logo y enlaces de navegación para escritorio -->
+      <div class="flex items-center">
+        <div class="flex-shrink-0">
+          <a href="/" class="text-2xl font-bold">Reino da Mata</a>
+        </div>
+        <!-- Enlaces de navegación para escritorio -->
+        <div class="hidden md:ml-10 md:flex md:space-x-8">
+          <a href="/" class="px-3 py-2 hover:bg-[#F08F4A] transition-colors rounded-md">Inicio</a>
+          <a href="/blog" class="px-3 py-2 hover:bg-[#D9734E] transition-colors rounded-md">Blog</a>
+          <a href="/instituto" class="px-3 py-2 hover:bg-[#F05E4A] transition-colors rounded-md">Instituto</a>
+          <a href="/contacto" class="px-3 py-2 hover:bg-[#E64755] transition-colors rounded-md">Contacto</a>
+          <!-- Enlace de administración (oculto por defecto) -->
+          <a href="/admin" id="admin-link-desktop" class="hidden px-3 py-2 bg-purple-700 hover:bg-purple-600 transition-colors rounded-md">Admin</a>
+        </div>
+      </div>
+      
+      <!-- Sección de autenticación para escritorio -->
+      <div class="hidden md:flex md:items-center">
+        <!-- Links de autenticación (mostrados cuando el usuario NO está logueado) -->
+        <div id="auth-links-desktop" class="flex items-center space-x-4">
+          <a href="/login" class="login-link px-3 py-2 text-sm hover:text-gray-300 transition-colors">Iniciar Sesión</a>
+          <a href="/register" class="register-link px-3 py-2 text-sm bg-blue-600 hover:bg-blue-700 transition-colors rounded-md">Registrarse</a>
+        </div>
+        
+        <!-- Información del usuario (mostrada cuando el usuario ESTÁ logueado) -->
+        <div id="user-info-desktop" class="hidden ml-6 flex items-center space-x-3">
+          <img id="user-avatar-desktop" src="/images/default-avatar.png" alt="Avatar" class="w-8 h-8 rounded-full object-cover bg-gray-600 border border-gray-500">
+          <a href="/perfil" class="px-3 py-1.5 text-sm text-gray-300 hover:bg-gray-700 transition-colors rounded-md">Mi Perfil</a>
+          <button id="logout-button-desktop" class="logout-button px-3 py-1.5 text-sm bg-red-600 hover:bg-red-700 transition-colors rounded-md">Cerrar Sesión</button>
+        </div>
+      </div>
+      
+      <!-- Botón de menú móvil -->
+      <div class="flex items-center md:hidden">
+        <button 
+          type="button" 
+          id="mobile-menu-button"
+          class="inline-flex items-center justify-center p-2 rounded-md text-white hover:bg-gray-700 focus:outline-none"
+          aria-controls="mobile-menu" 
+          aria-expanded="false"
+        >
+          <span class="sr-only">Abrir menú principal</span>
+          <!-- Icono de menú (hamburguesa) -->
+          <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Menú móvil (oculto por defecto) -->
+  <div class="md:hidden hidden bg-[#19181c] w-full border-t border-gray-700" id="mobile-menu">
+    <div class="px-2 pt-2 pb-3 space-y-1 border-t border-gray-700">
+      <a href="/" class="block px-3 py-2 hover:bg-[#F08F4A] transition-colors rounded-md text-center">Inicio</a>
+      <a href="/blog" class="block px-3 py-2 hover:bg-[#D9734E] transition-colors rounded-md text-center">Blog</a>
+      <a href="/instituto" class="block px-3 py-2 hover:bg-[#F05E4A] transition-colors rounded-md text-center">Instituto</a>
+      <a href="/contacto" class="block px-3 py-2 hover:bg-[#E64755] transition-colors rounded-md text-center">Contacto</a>
+      <!-- Enlace de administración móvil (oculto por defecto) -->
+      <a href="/admin" id="admin-link-mobile" class="hidden block px-3 py-2 bg-purple-700 hover:bg-purple-600 transition-colors rounded-md text-center">Administración</a>
+      
+      <!-- Links de autenticación móvil (mostrados cuando el usuario NO está logueado) -->
+      <div id="auth-links-mobile" class="pt-4 space-y-2 border-t border-gray-600 mt-2">
+        <a href="/login" class="login-link block px-3 py-2 hover:bg-gray-700 transition-colors rounded-md text-center">Iniciar Sesión</a>
+        <a href="/register" class="register-link block px-3 py-2 bg-blue-600 hover:bg-blue-700 transition-colors rounded-md text-center">Registrarse</a>
+      </div>
+      
+      <!-- Información del usuario móvil (mostrada cuando el usuario ESTÁ logueado) -->
+      <div id="user-info-mobile" class="hidden pt-4 space-y-3 border-t border-gray-600 mt-2">
+        <div class="flex justify-center">
+          <img id="user-avatar-mobile" src="/images/default-avatar.png" alt="Avatar" class="w-10 h-10 rounded-full object-cover bg-gray-600 border border-gray-500">
+        </div>
+        <a href="/perfil" class="block px-3 py-2 text-gray-300 hover:bg-gray-700 transition-colors rounded-md text-center">Mi Perfil</a>
+        <button id="logout-button-mobile" class="logout-button block w-full px-3 py-2 bg-red-600 hover:bg-red-700 transition-colors rounded-md text-center">Cerrar Sesión</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<script>
+  // --- Firebase Auth State --- //
+  import { onAuthStateChanged, signOut } from "firebase/auth";
+  import { doc, getDoc } from 'firebase/firestore';
+  import { auth, db } from "@/core/firebase/config";
+  
+  // ID del usuario administrador
+  const ADMIN_EMAIL = "alexandersilvera@hotmail.com";
+
+  // --- Función para actualizar imágenes de avatar --- 
+  function updateAvatarImages(url: string | null) {
+    const userAvatarDesktop = document.getElementById('user-avatar-desktop') as HTMLImageElement | null;
+    const userAvatarMobile = document.getElementById('user-avatar-mobile') as HTMLImageElement | null;
+    const finalURL = url || '/images/default-avatar.png';
+    if (userAvatarDesktop) userAvatarDesktop.src = finalURL;
+    if (userAvatarMobile) userAvatarMobile.src = finalURL;
+  }
+
+  // --- Función para actualizar la UI basada en el estado de autenticación ---
+  async function updateNavUI(user: any) {
+    // Obtener elementos DOM cada vez que se llama a la función para robustez en navegación del lado del cliente
+    const authLinksDesktop = document.getElementById('auth-links-desktop');
+    const userInfoDesktop = document.getElementById('user-info-desktop');
+    const authLinksMobile = document.getElementById('auth-links-mobile');
+    const userInfoMobile = document.getElementById('user-info-mobile');
+    const adminLinkDesktop = document.getElementById('admin-link-desktop');
+    const adminLinkMobile = document.getElementById('admin-link-mobile');
+
+    if (user) {
+      // Usuario está autenticado
+      let photoURL = '/images/default-avatar.png'; // Avatar predeterminado
+      try {
+        const userProfileRef = doc(db, 'userProfiles', user.uid);
+        const docSnap = await getDoc(userProfileRef);
+        if (docSnap.exists() && docSnap.data().photoURL) {
+          photoURL = docSnap.data().photoURL; // Usar URL de perfil si existe
+        } else if (user.photoURL) {
+          photoURL = user.photoURL; // Usar URL de auth como respaldo
+        }
+        updateAvatarImages(photoURL); // Usar la función auxiliar
+
+        authLinksDesktop?.classList.add('hidden');
+        userInfoDesktop?.classList.remove('hidden');
+        authLinksMobile?.classList.add('hidden');
+        userInfoMobile?.classList.remove('hidden');
+        
+        // Verificar si el usuario es administrador
+        if (user.email === ADMIN_EMAIL) {
+          // Mostrar enlaces de administrador
+          adminLinkDesktop?.classList.remove('hidden');
+          adminLinkMobile?.classList.remove('hidden');
+        } else {
+          // Ocultar enlaces de administrador
+          adminLinkDesktop?.classList.add('hidden');
+          adminLinkMobile?.classList.add('hidden');
+        }
+      } catch (error) {
+        console.error("[Nav] Error fetching user profile for avatar:", error);
+        updateAvatarImages(user.photoURL); // Usar URL de auth como respaldo en caso de error
+      }
+    } else {
+      // Usuario no está autenticado
+      updateAvatarImages(null); // Usar la función auxiliar para establecer el valor predeterminado
+
+      authLinksDesktop?.classList.remove('hidden');
+      userInfoDesktop?.classList.add('hidden');
+      authLinksMobile?.classList.remove('hidden');
+      userInfoMobile?.classList.add('hidden');
+      
+      // Ocultar enlaces de administrador
+      adminLinkDesktop?.classList.add('hidden');
+      adminLinkMobile?.classList.add('hidden');
+    }
+  }
+
+  // --- Escucha de estado de autenticación de Firebase ---
+  onAuthStateChanged(auth, (user) => {
+    updateNavUI(user);
+  });
+
+  // --- Escucha de actualizaciones de perfil desde otros componentes ---
+  window.addEventListener('profileUpdated', (event: Event) => {
+    requestAnimationFrame(() => {
+      if (auth.currentUser) { // Asegurarse de que tenemos un usuario antes de actualizar
+        updateNavUI(auth.currentUser);
+      } else {
+        console.warn('[Nav] - auth.currentUser es null cuando se ejecuta la tarea profileUpdated!');
+      } 
+    });
+  });
+
+  // --- Lógica del botón de cierre de sesión ---
+  async function handleLogout() {
+    try {
+      await signOut(auth);
+      // No es necesario redirigir aquí, onAuthStateChanged manejará la actualización de la UI.
+    } catch (error) {
+      console.error('Error de cierre de sesión:', error);
+      alert('Error al cerrar sesión.'); // Proporcionar retroalimentación al usuario
+    }
+  }
+
+  // Agregar event listener para botones de cierre de sesión
+  document.querySelectorAll('.logout-button').forEach(button => {
+    button.addEventListener('click', handleLogout);
+  });
+</script>
+
+<style is:inline>
+  /* Estilos específicos para el menú móvil */
+  #mobile-menu.menu-visible {
+    display: block !important;
+  }
+</style>
+
+<script is:inline>
+  // Script mejorado para el menú hamburguesa
+  document.addEventListener('DOMContentLoaded', setupMobileMenu);
+  
+  function setupMobileMenu() {
+    console.log('Configurando menú móvil...');
+    const menuButton = document.getElementById('mobile-menu-button');
+    const mobileMenu = document.getElementById('mobile-menu');
+    
+    if (menuButton && mobileMenu) {
+      // Eliminar eventos previos para evitar duplicados
+      const newButton = menuButton.cloneNode(true);
+      menuButton.parentNode.replaceChild(newButton, menuButton);
+      
+      // Asignar el nuevo evento de clic
+      newButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Alternar visibilidad con clases específicas
+        if (mobileMenu.classList.contains('hidden')) {
+          mobileMenu.classList.remove('hidden');
+          mobileMenu.classList.add('menu-visible');
+          console.log('Menú móvil ABIERTO');
+        } else {
+          mobileMenu.classList.add('hidden');
+          mobileMenu.classList.remove('menu-visible');
+          console.log('Menú móvil CERRADO');
+        }
+      });
+      
+      console.log('Menú móvil configurado correctamente');
+    } else {
+      console.error('No se encontraron los elementos necesarios para el menú móvil');
+    }
+  }
+  
+  // También configurar cuando Astro complete la navegación entre páginas
+  document.addEventListener('astro:page-load', setupMobileMenu);
+  
+  // Ejecutar inmediatamente si el documento ya está cargado
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    setTimeout(setupMobileMenu, 100);
+  }
+</script>

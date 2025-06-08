@@ -2,57 +2,354 @@
 
 ---
 
-
 <style>
-  nav {
-    font-family: var(--serif-font);
-    font-size: 1.5rem;
-    font-weight: 600;
-    background-color: #19181c;
-    background-image: linear-gradient(#19181c, #111);
-    box-shadow: 0 -5px 0 #000 inset;
-  }
+	nav {
+		font-family: var(--serif-font);
+		font-size: 1.5rem;
+		font-weight: 600;
+		background-color: #19181c;
+		background-image: linear-gradient(#19181c, #111);
+		box-shadow: 0 -5px 0 #000 inset;
+	}
 </style>
 
 <nav class="bg-gradient-to-b from-[#19181c] to-[#111] shadow-inner text-white">
-<div class="flex justify-between items-center px-5 py-5 md:px-20">
-  <!-- Logo -->
-  <a href="/" class="text-2xl font-bold">Reino da Mata</a>
-  <!-- Botón de menú hamburguesa para pantallas pequeñas -->
-  <button class="md:hidden text-white" id="menu-toggle">
-    <!-- Icono del menú hamburguesa -->
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-8 h-8">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-    </svg>
-  </button>
+	<div class="flex justify-between items-center px-5 py-5 md:px-20">
+		<!-- Logo -->
+		<a href="/" class="text-2xl font-bold">Reino da Mata</a>
+		<!-- Botón de menú hamburguesa para pantallas pequeñas -->
+		<button class="block md:hidden text-white" id="menu-toggle" aria-label="Abrir menú de navegación">
+			<!-- Icono del menú hamburguesa -->
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				fill="none"
+				viewBox="0 0 24 24"
+				stroke-width="2"
+				stroke="currentColor"
+				class="w-8 h-8"
+			>
+				<path
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					d="M4 6h16M4 12h16M4 18h16"></path>
+			</svg>
+		</button>
 
-  <!-- Links de navegación -->
-  <div id="menu" class="hidden md:flex md:space-x-10 absolute md:static inset-0 justify-center items-center">
-    <a href="/" class="block px-4 py-2 hover:bg-[#F08F4A] transition-colors">Inicio</a>
-    <a href="/blog" class="block px-4 py-2 hover:bg-[#D9734E] transition-colors">Blog</a>
-    <a href="/instituto" class="block px-4 py-2 hover:bg-[#F05E4A] transition-colors">Instituto</a>
-    <a href="/contacto" class="block px-4 py-2 hover:bg-[#E64755] transition-colors">Contacto</a>
-  </div>
-</div>
+		<!-- Links de navegación escritorio -->
+		<div
+			id="menu"
+			class="hidden md:flex md:items-center md:space-x-6 lg:space-x-10 static md:static inset-0 justify-center items-center"
+		>
+			<a href="/" class="block px-3 py-2 hover:bg-[#F08F4A] transition-colors rounded-md"
+				>Inicio</a
+			>
+			<a
+				href="/blog"
+				class="block px-3 py-2 hover:bg-[#D9734E] transition-colors rounded-md">Blog</a
+			>
+			<a
+				href="/instituto"
+				class="block px-3 py-2 hover:bg-[#F05E4A] transition-colors rounded-md"
+				>Instituto</a
+			>
+			<a
+				href="/contacto"
+				class="block px-3 py-2 hover:bg-[#E64755] transition-colors rounded-md">Contacto</a
+			>
+			<!-- Authentication Links -->
+			<div id="auth-links-desktop" class="md:ml-6 lg:ml-10 flex items-center space-x-4">
+				<a href="/login" class="login-link block px-3 py-2 text-sm hover:text-gray-300 transition-colors">Iniciar Sesión</a>
+				<a href="/register" class="register-link block px-3 py-2 text-sm bg-blue-600 hover:bg-blue-700 transition-colors rounded-md">Registrarse</a>
+			</div>
+            <!-- User Info and Logout Button (Initially Hidden) -->
+            <div id="user-info-desktop" class="hidden md:ml-6 lg:ml-10 flex items-center space-x-3">
+                <img id="user-avatar-desktop" src="/images/default-avatar.png" alt="Avatar" class="w-8 h-8 rounded-full object-cover bg-gray-600 border border-gray-500">
+                <a href="/perfil" class="block px-3 py-1.5 text-sm text-gray-300 hover:bg-gray-700 transition-colors rounded-md">Mi Perfil</a>
+                <button id="logout-button-desktop" class="logout-button block px-3 py-1.5 text-sm bg-red-600 hover:bg-red-700 transition-colors rounded-md">Cerrar Sesión</button>
+            </div>
+		</div>
+	</div>
 
-<!-- Menú desplegable para pantallas pequeñas -->
-<div id="mobile-menu" class="md:hidden hidden flex-col items-center space-y-2 pb-5">
-  <a href="/" class="block w-full text-center px-4 py-2 hover:bg-[#F08F4A] transition-colors">Inicio</a>
-  <a href="/blog" class="block w-full text-center px-4 py-2 hover:bg-[#D9734E] transition-colors">Blog</a>
-  <a href="/instituto" class="block w-full text-center px-4 py-2 hover:bg-[#F05E4A] transition-colors">Instituto</a>
-  <a href="/contacto" class="block w-full text-center px-4 py-2 hover:bg-[#E64755] transition-colors">Contacto</a>
-</div>
+	<!-- Menú desplegable para pantallas pequeñas -->
+	<div
+		id="mobile-menu"
+		class="flex flex-col items-center space-y-2 md:hidden bg-[#19181c] w-full z-50 absolute top-full left-0 shadow-lg"
+	>
+		<a
+			href="/"
+			class="block w-full text-center px-4 py-2 hover:bg-[#F08F4A] transition-colors rounded-md"
+			>Inicio</a
+		>
+		<a
+			href="/blog"
+			class="block w-full text-center px-4 py-2 hover:bg-[#D9734E] transition-colors rounded-md"
+			>Blog</a
+		>
+		<a
+			href="/instituto"
+			class="block w-full text-center px-4 py-2 hover:bg-[#F05E4A] transition-colors rounded-md"
+			>Instituto</a
+		>
+		<a
+			href="/contacto"
+			class="block w-full text-center px-4 py-2 hover:bg-[#E64755] transition-colors rounded-md"
+			>Contacto</a
+		>
+		<!-- Authentication Links Mobile -->
+		<div id="auth-links-mobile" class="pt-4 w-full flex flex-col items-center space-y-2 border-t border-gray-600 mt-2">
+			<a href="/login" class="login-link block w-3/4 text-center px-4 py-2 hover:bg-gray-700 transition-colors rounded-md">Iniciar Sesión</a>
+			<a href="/register" class="register-link block w-3/4 text-center px-4 py-2 bg-blue-600 hover:bg-blue-700 transition-colors rounded-md">Registrarse</a>
+		</div>
+        <!-- User Info and Logout Button Mobile (Initially Hidden) -->
+        <div id="user-info-mobile" class="hidden pt-4 w-full flex flex-col items-center space-y-3 border-t border-gray-600 mt-2">
+            <img id="user-avatar-mobile" src="/images/default-avatar.png" alt="Avatar" class="w-10 h-10 rounded-full object-cover mb-2 bg-gray-600 border border-gray-500">
+            <a href="/perfil" class="block w-3/4 text-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 transition-colors rounded-md">Mi Perfil</a>
+            <button id="logout-button-mobile" class="logout-button block w-3/4 text-center px-4 py-2 text-sm bg-red-600 hover:bg-red-700 transition-colors rounded-md">Cerrar Sesión</button>
+        </div>
+	</div>
 </nav>
 
-<script>
-  // Lógica para alternar el menú en móviles
-  const menuToggle = document.getElementById('menu-toggle');
-  const mobileMenu = document.getElementById('mobile-menu');
-  
-  if (menuToggle && mobileMenu) {
-    menuToggle.addEventListener('click', () => {
-      mobileMenu.classList.toggle('hidden');
+<!-- Importa el script del menú hamburguesa para el cliente desde public con is:inline -->
+<style is:inline>
+/* Estilos para el menú móvil */
+#mobile-menu {
+    display: none; /* Oculto por defecto */
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background-color: #19181c;
+    z-index: 50;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.5rem 0 1.25rem;
+    border-top: 1px solid #4b5563;
+}
+
+/* Clase para mostrar el menú */
+#mobile-menu.is-active {
+    display: flex !important;
+}
+
+@media (min-width: 768px) {
+    #mobile-menu {
+        display: none !important;
+    }
+}
+</style>
+
+<script is:inline>
+// Solución directa para el menú hamburguesa
+document.addEventListener('DOMContentLoaded', initMobileMenu);
+document.addEventListener('astro:page-load', initMobileMenu);
+
+function initMobileMenu() {
+    console.log('Inicializando menú móvil');
+    const menuButton = document.getElementById('menu-toggle');
+    const mobileMenu = document.getElementById('mobile-menu');
+    
+    if (!menuButton || !mobileMenu) {
+        console.error('No se encontraron los elementos necesarios para el menú móvil');
+        return;
+    }
+    
+    // Limpiar eventos previos
+    const newMenuButton = menuButton.cloneNode(true);
+    menuButton.parentNode.replaceChild(newMenuButton, menuButton);
+    
+    // Asignar el nuevo evento
+    newMenuButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Botón hamburguesa clickeado');
+        
+        // Alternar la clase is-active
+        mobileMenu.classList.toggle('is-active');
+        
+        if (mobileMenu.classList.contains('is-active')) {
+            console.log('Menú abierto');
+        } else {
+            console.log('Menú cerrado');
+        }
+        
+        return false;
     });
-  }
-  </script>
-  
+    
+    console.log('Menú móvil inicializado correctamente');
+}
+
+// Ejecutar inmediatamente si el documento ya está cargado
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    setTimeout(initMobileMenu, 200);
+}
+</script>
+
+<script>
+    // --- Firebase Auth State --- //
+    import { onAuthStateChanged, signOut } from "firebase/auth";
+    import { doc, getDoc } from 'firebase/firestore';
+    import { auth, db } from "@/core/firebase/config";
+
+    const allLogoutButtons = document.querySelectorAll('.logout-button');
+
+    // --- Function to Update Avatar Images --- 
+    function updateAvatarImages(url: string | null) {
+        const userAvatarDesktop = document.getElementById('user-avatar-desktop') as HTMLImageElement | null;
+        const userAvatarMobile = document.getElementById('user-avatar-mobile') as HTMLImageElement | null;
+        const finalURL = url || '/images/default-avatar.png';
+        if (userAvatarDesktop) userAvatarDesktop.src = finalURL;
+        if (userAvatarMobile) userAvatarMobile.src = finalURL;
+    }
+
+    // --- Function to Update UI based on Auth State ---
+    async function updateNavUI(user: any) {
+        console.log('[Nav] updateNavUI llamado con usuario:', user?.uid || 'null');
+        
+        // Get DOM elements each time function is called for robustness in client-side navigation
+        const authLinksDesktop = document.getElementById('auth-links-desktop');
+        const userInfoDesktop = document.getElementById('user-info-desktop');
+        const authLinksMobile = document.getElementById('auth-links-mobile');
+        const userInfoMobile = document.getElementById('user-info-mobile');
+
+        if (user) {
+            // User is signed in
+            let photoURL = '/images/default-avatar.png'; // Default avatar
+            
+            // Si recibimos photoURL directamente (caso simulado), usarlo
+            if (user.photoURL) {
+                photoURL = user.photoURL;
+                console.log('[Nav] Usando photoURL directamente:', photoURL);
+            } 
+            // De lo contrario, consultar Firestore
+            else {
+                try {
+                    console.log('[Nav] Consultando perfil de usuario en Firestore');
+                    const userProfileRef = doc(db, 'userProfiles', user.uid);
+                    const docSnap = await getDoc(userProfileRef);
+                    
+                    if (docSnap.exists() && docSnap.data().photoURL) {
+                        photoURL = docSnap.data().photoURL; // Use profile URL if exists
+                        console.log('[Nav] URL de avatar encontrado en perfil:', photoURL);
+                    } else if (user.photoURL) {
+                        photoURL = user.photoURL; // Fallback to auth photoURL if available
+                        console.log('[Nav] Fallback a URL de auth:', photoURL);
+                    } else {
+                        console.log('[Nav] Usando avatar por defecto');
+                    }
+                } catch (error) {
+                    console.error("[Nav] Error fetching user profile for avatar:", error);
+                    if (user.photoURL) {
+                        photoURL = user.photoURL; // Fallback to auth URL on error
+                    }
+                }
+            }
+
+            // Actualizar los avatares
+            updateAvatarImages(photoURL);
+            
+            // Mostrar UI de usuario autenticado
+            authLinksDesktop?.classList.add('hidden');
+            userInfoDesktop?.classList.remove('hidden');
+            authLinksMobile?.classList.add('hidden');
+            userInfoMobile?.classList.remove('hidden');
+            
+            console.log('[Nav] UI actualizada para usuario autenticado');
+        } else {
+            // Intentar recuperar información del localStorage
+            try {
+                const savedProfile = localStorage.getItem('userProfileData');
+                if (savedProfile) {
+                    const profileData = JSON.parse(savedProfile);
+                    const now = new Date().getTime();
+                    const savedTime = profileData.timestamp || 0;
+                    
+                    // Solo usar datos del localStorage si son recientes (menos de 1 hora)
+                    if (now - savedTime < 3600000) {
+                        console.log('[Nav] Recuperando datos de perfil desde localStorage:', profileData);
+                        
+                        // Mostrar UI como si el usuario estuviera autenticado
+                        updateAvatarImages(profileData.photoURL);
+                        authLinksDesktop?.classList.add('hidden');
+                        userInfoDesktop?.classList.remove('hidden');
+                        authLinksMobile?.classList.add('hidden');
+                        userInfoMobile?.classList.remove('hidden');
+                        
+                        console.log('[Nav] UI recuperada desde localStorage');
+                        return;
+                    } else {
+                        console.log('[Nav] Datos en localStorage demasiado antiguos, ignorando');
+                        localStorage.removeItem('userProfileData');
+                    }
+                }
+            } catch (e) {
+                console.warn('[Nav] Error al recuperar datos desde localStorage:', e);
+            }
+            
+            // Si llegamos aquí, es porque no hay datos en localStorage o son demasiado antiguos
+            // User is signed out
+            updateAvatarImages(null); // Use the helper function to set default
+
+            authLinksDesktop?.classList.remove('hidden');
+            userInfoDesktop?.classList.add('hidden');
+            authLinksMobile?.classList.remove('hidden');
+            userInfoMobile?.classList.add('hidden');
+            
+            console.log('[Nav] UI actualizada para usuario no autenticado');
+        }
+    }
+
+    // --- Firebase Auth State Listener ---
+    onAuthStateChanged(auth, (user) => {
+        updateNavUI(user); // Simplificado: siempre actualiza con el usuario que onAuthStateChanged provee
+    });
+
+    // --- Listener for Profile Updates from Other Components ---
+    window.addEventListener('profileUpdated', (event: Event) => {
+        console.log('[Nav] Evento profileUpdated recibido');
+        
+        // Asegurar que tenemos el detalle del evento
+        const detail = (event as CustomEvent).detail;
+        if (detail) {
+            console.log('[Nav] Detalles del evento:', detail);
+        }
+        
+        // Esperar un poco para asegurar que Firebase Auth esté actualizado
+        setTimeout(() => {
+            if (auth.currentUser) {
+                console.log('[Nav] Actualizando UI con usuario actual:', auth.currentUser.uid);
+                // Forzar reconsulta del perfil
+                updateNavUI(auth.currentUser);
+            } else {
+                console.warn('[Nav] auth.currentUser es null cuando se intentó actualizar la UI');
+                
+                // Intentar recuperar la sesión si tenemos el ID de usuario en el evento
+                if (detail && detail.userId) {
+                    console.log('[Nav] Intentando recuperar sesión con userId del evento');
+                    // Simular un usuario para la UI (solo para fines de visualización)
+                    const simulatedUser = {
+                        uid: detail.userId,
+                        photoURL: detail.photoURL
+                    };
+                    updateNavUI(simulatedUser);
+                }
+            }
+        }, 500);
+    });
+
+    // --- Logout Button Logic ---
+    async function handleLogout() {
+        try {
+            await signOut(auth);
+            // No need to redirect here, onAuthStateChanged will handle the UI update.
+        } catch (error) {
+            console.error('Logout error:', error);
+            alert('Error al cerrar sesión.'); // Provide feedback to the user
+        }
+    }
+
+    // Add event listener for logout buttons
+    allLogoutButtons.forEach(button => {
+        button.addEventListener('click', handleLogout);
+    });
+
+</script>

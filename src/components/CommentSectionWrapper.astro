@@ -1,0 +1,12 @@
+---
+import CommentSection from './CommentSection';
+
+interface Props {
+  postId: string;
+  postTitle: string;
+}
+
+const { postId, postTitle } = Astro.props;
+---
+
+<CommentSection client:load postId={postId} postTitle={postTitle} /> 

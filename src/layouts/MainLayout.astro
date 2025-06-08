@@ -1,22 +1,35 @@
 ---
+// import { ViewTransitions } from 'astro:transitions'; // <-- Comentado para prueba
 import BaseHead from "@/components/BaseHead.astro";
-import Navigation from "@/components/Navigation.astro";
+import NavigationNew from "@/components/NavigationNew.astro";
+import Footer from "@/components/Footer.astro";
+import PageViewTracker from "@/components/PageViewTracker";
 
 interface Props {
-    title:string;
+	title: string;
+	description?: string;
 }
-const { title } = Astro.props;
+const { title, description } = Astro.props;
+
 ---
 
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<BaseHead title={title} />
-<body class="bg-dark-blue py-6">
-    <main>
-        <Navigation />
-        <slot/>
-    </main>
-    
-</body>
+	<head>
+		<BaseHead title={title} description={description} />
+		<!-- <ViewTransitions /> --> <!-- <-- Comentado para prueba -->
+	</head>
+	<body class="bg-dark-blue py-6 flex flex-col min-h-screen">
+		<!-- Auth Recovery Script -->
+		<script src="/auth-recovery.js" is:inline></script>
+		
+		<!-- Rastreador de vistas de página -->
+		<PageViewTracker client:load />
+		
+		<NavigationNew />
+		<main class="flex-grow">
+			<slot />
+		</main>
+		<Footer />
+	</body>
 </html>

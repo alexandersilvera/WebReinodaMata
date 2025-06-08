@@ -2,29 +2,39 @@
 import { getAllTags } from "@/utils/getAllTags";
 const tags = await getAllTags();
 import { Icon } from "astro-icon/components";
+
+// Obtener la URL actual para resaltar la etiqueta activa
+const currentPath = Astro.url.pathname;
+const currentTag = currentPath.includes('/tag/') 
+	? currentPath.split('/tag/')[1]
+	: '';
 ---
 
-<div class="mt-4 flex gap-3">
-  <span id="opener" class="w-12 h-12 rounded-full grid place-items-center border border-zinc-700 cursor-pointer">
-    <Icon class="text-white text-2xl" name="lucide:list-filter"/>
-  </span>
-  
-  <div id="selector" class="opacity-0 transition-opacity">
-    {
-      tags.map((tag) => (
-        <a href={`/blog/tag/${tag.toLowerCase()}`}>
-          <span class="border-extra-soft-white mt-4 self-start rounded border px-2 py-1 text-zinc-400">
-            {tag}
-          </span>
-        </a>
-      ))
-    }
-  </div>    
+<div class="flex flex-wrap gap-2 items-center">
+	<a href="/blog" class={`px-4 py-2 rounded-full font-medium transition-colors duration-200 
+		${!currentTag ? 'bg-green-700 text-white' : 'bg-green-900/50 text-gray-300 hover:bg-green-700/70'}`}>
+		Todos
+	</a>
+	
+	{tags.map((tag) => (
+		<a 
+			href={`/blog/tag/${tag.toLowerCase()}`}
+			class={`px-4 py-2 rounded-full font-medium transition-colors duration-200
+				${currentTag === tag.toLowerCase() 
+					? 'bg-green-700 text-white' 
+					: 'bg-green-900/50 text-gray-300 hover:bg-green-700/70'}`}
+		>
+			<span class="flex items-center gap-1">
+				<Icon name="lucide:tag" class="w-4 h-4" />
+				{tag}
+			</span>
+		</a>
+	))}
 </div>
 
-<script data-astro-rerun>
-  document.getElementById("opener")?.addEventListener("click", () => {
-    const selector = document.getElementById("selector");
-    selector?.classList.toggle("opacity-0");
-  });
-</script>
+<style>
+	a {
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		backdrop-filter: blur(4px);
+	}
+</style>

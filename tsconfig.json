@@ -1,9 +1,38 @@
 {
-  "extends": "astro/tsconfigs/strict",
-  "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["src/*"]
-    }
-  }
+	"extends": "astro/tsconfigs/strict",
+	"compilerOptions": {
+		"baseUrl": ".",
+		"paths": {
+			"@/*": ["src/*"]
+		},
+		"jsx": "react-jsx",
+		"jsxImportSource": "react",
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"noImplicitReturns": true,
+		"noUnusedLocals": false,
+		"outDir": "lib",
+		"sourceMap": true,
+		"strict": false,
+		"target": "es2017",
+		"skipLibCheck": true,
+		"noImplicitAny": false,
+		"allowJs": true,
+		"esModuleInterop": true,
+		"allowSyntheticDefaultImports": true,
+		"forceConsistentCasingInFileNames": true,
+		"resolveJsonModule": true,
+		"isolatedModules": true,
+		"noImplicitReturns": false,
+		"types": ["vite/client", "astro/client"]
+	},
+	"include": [
+		"src/**/*",
+		"tests/**/*"
+	],
+	"exclude": [
+		"node_modules",
+		"dist",
+		"functions"
+	]
 }

@@ -1,0 +1,378 @@
+---
+import MainLayout from "@/layouts/MainLayout.astro";
+import AdminProtection from "@/components/AdminProtection";
+---
+
+<MainLayout title="Administración de Artículos | Reino Da Mata">
+  <AdminProtection client:load>
+    <div class="max-w-6xl mx-auto w-full px-4 py-8">
+      <div class="mb-6 flex justify-between items-center">
+        <div>
+          <h1 class="text-3xl font-bold text-green-700 mb-2">Administración de Artículos</h1>
+          <p class="text-gray-200">Gestiona los artículos del blog.</p>
+        </div>
+        <a href="/admin" class="text-green-400 hover:text-green-300 flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+          </svg>
+          <span>Volver al panel</span>
+        </a>
+      </div>
+
+      <div class="mb-6 flex flex-wrap justify-between items-center gap-4">
+        <div class="relative flex-grow max-w-md">
+          <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <input type="text" id="search-input" class="bg-green-900/30 backdrop-blur-sm border border-green-800 text-white text-sm rounded-lg block w-full pl-10 p-2.5 focus:ring-green-500 focus:border-green-500" placeholder="Buscar artículos...">
+        </div>
+
+        <div class="flex space-x-3">
+          <button id="sync-articles-btn" class="bg-blue-600 hover:bg-blue-500 text-white py-2 px-4 rounded-md font-medium flex items-center transition-colors duration-300">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+            </svg>
+            <span>Sincronizar a Markdown</span>
+          </button>
+
+          <a href="/admin/articles/new" id="new-article-btn" class="bg-green-600 hover:bg-green-500 text-white py-2 px-4 rounded-md font-medium flex items-center transition-colors duration-300">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+            </svg>
+            <span>Nuevo artículo</span>
+          </a>
+        </div>
+      </div>
+
+      <div id="admin-container" class="relative">
+        <!-- Estado de carga inicial -->
+        <div id="loading" class="flex justify-center items-center py-10">
+          <svg class="animate-spin h-10 w-10 text-green-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span class="ml-3 text-green-300">Cargando artículos...</span>
+        </div>
+
+        <!-- Mensaje de sincronización -->
+        <div id="sync-message" class="hidden bg-blue-600/80 text-white p-4 rounded-md text-center my-4">
+          <p class="font-medium">Sincronizando artículos con archivos Markdown...</p>
+          <div id="sync-status" class="text-sm mt-2">Procesando...</div>
+        </div>
+
+        <!-- Contenedor para la tabla de artículos -->
+        <div id="articles-table-container" class="hidden">
+          <!-- Se llenará desde JavaScript -->
+        </div>
+
+        <!-- Mensaje de error -->
+        <div id="error-message" class="hidden bg-red-600/80 text-white p-4 rounded-md text-center my-4">
+          <p class="font-medium">Error al cargar los artículos</p>
+          <p class="text-sm mt-1">Por favor, intenta de nuevo más tarde o contacta al administrador del sistema.</p>
+        </div>
+
+        <!-- Mensaje de acceso no autorizado -->
+        <div id="unauthorized" class="hidden text-center py-10">
+          <div class="bg-red-600/80 text-white p-6 rounded-lg inline-block">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-4 text-red-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m0 0v2m0-2h2m-2 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h2 class="text-xl font-bold mb-2">Acceso Restringido</h2>
+            <p class="mb-4">No tienes permiso para acceder a esta página.</p>
+            <a href="/" class="inline-block bg-white text-red-600 px-4 py-2 rounded-md font-medium hover:bg-red-100 transition-colors">
+              Volver al inicio
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </AdminProtection>
+
+  <!-- Modal de confirmación para eliminar -->
+  <div id="delete-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
+    <div class="bg-green-900 p-6 rounded-lg max-w-md w-full">
+      <h3 class="text-xl font-bold text-white mb-4">Confirmar eliminación</h3>
+      <p class="text-gray-200 mb-6">¿Estás seguro de que deseas eliminar este artículo? Esta acción no se puede deshacer.</p>
+      <div class="flex justify-end space-x-3">
+        <button id="cancel-delete" class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-500 transition-colors">
+          Cancelar
+        </button>
+        <button id="confirm-delete" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-500 transition-colors">
+          Eliminar
+        </button>
+      </div>
+    </div>
+  </div>
+</MainLayout>
+
+<script>
+  import { auth, db } from "../../core/firebase/config.js";
+  import { onAuthStateChanged } from "firebase/auth";
+  import { collection, getDocs, query, orderBy, deleteDoc, doc } from "firebase/firestore";
+  import { httpsCallable } from "firebase/functions";
+  import { functions } from "../../core/firebase/config.js";
+  
+  // Función para sincronizar contenido
+  const syncContentToFiles = httpsCallable(functions, 'syncContentToFiles');
+  
+  // Elementos del DOM
+  const loadingElement = document.getElementById("loading");
+  const articlesTableContainer = document.getElementById("articles-table-container");
+  const errorMessageElement = document.getElementById("error-message");
+  const unauthorizedElement = document.getElementById("unauthorized");
+  const syncMessage = document.getElementById("sync-message");
+  const syncStatus = document.getElementById("sync-status");
+  const syncArticlesBtn = document.getElementById("sync-articles-btn");
+  const searchInput = document.getElementById("search-input") as HTMLInputElement;
+  const deleteModal = document.getElementById("delete-modal");
+  const cancelDeleteBtn = document.getElementById("cancel-delete");
+  const confirmDeleteBtn = document.getElementById("confirm-delete");
+  
+  let articles = []; // Almacena todos los artículos
+  let articleToDelete = null; // ID del artículo a eliminar
+
+  // Función para formatear fecha
+  const formatDate = (timestamp) => {
+    if (!timestamp) return "Fecha desconocida";
+    
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    return new Intl.DateTimeFormat('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    }).format(date);
+  };
+
+  // Función para cargar artículos
+  const loadArticles = async () => {
+    try {
+      const articlesRef = collection(db, "articles");
+      const q = query(articlesRef, orderBy("publishDate", "desc"));
+      const snapshot = await getDocs(q);
+      
+      articles = [];
+      snapshot.forEach((doc) => {
+        articles.push({
+          id: doc.id,
+          ...doc.data()
+        });
+      });
+      
+      return articles;
+    } catch (error) {
+      console.error("Error al cargar artículos:", error);
+      throw error;
+    }
+  };
+
+  // Función para sincronizar artículos con archivos markdown
+  const handleSync = async () => {
+    // Mostrar mensaje de sincronización
+    if (syncMessage && syncStatus) {
+      syncMessage.classList.remove("hidden");
+      syncStatus.textContent = "Iniciando sincronización...";
+      
+      try {
+        // Llamar a la función Cloud
+        const result = await syncContentToFiles();
+        syncStatus.textContent = "Sincronización completada con éxito";
+        
+        // Ocultar mensaje después de 3 segundos
+        setTimeout(() => {
+          syncMessage.classList.add("hidden");
+        }, 3000);
+      } catch (error) {
+        console.error("Error al sincronizar artículos:", error);
+        syncStatus.textContent = `Error: ${error.message || "No se pudo completar la sincronización"}`;
+      }
+    }
+  };
+
+  // Función para renderizar la tabla de artículos
+  const renderArticlesTable = (articlesToRender) => {
+    if (!articlesTableContainer) return;
+    
+    // Si no hay artículos
+    if (articlesToRender.length === 0) {
+      articlesTableContainer.innerHTML = `
+        <div class="bg-green-900/30 p-6 rounded-lg backdrop-blur-sm text-center py-10">
+          <p class="text-xl text-green-300">No hay artículos que coincidan con tu búsqueda</p>
+        </div>
+      `;
+      return;
+    }
+    
+    // Crear tabla con datos
+    const tableHTML = `
+      <div class="bg-green-900/30 p-6 rounded-lg backdrop-blur-sm">
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-green-700">
+            <thead class="bg-green-800/50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-green-300 uppercase tracking-wider">Título</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-green-300 uppercase tracking-wider">Fecha de publicación</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-green-300 uppercase tracking-wider">Autor</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-green-300 uppercase tracking-wider">Estado</th>
+                <th class="px-6 py-3 text-right text-xs font-medium text-green-300 uppercase tracking-wider">Acciones</th>
+              </tr>
+            </thead>
+            <tbody class="bg-green-900/20 divide-y divide-green-800">
+              ${articlesToRender.map((article) => `
+                <tr data-id="${article.id}" class="hover:bg-green-800/30">
+                  <td class="px-6 py-4">
+                    <div class="text-sm font-medium text-white">${article.title}</div>
+                    <div class="text-xs text-green-400 mt-1">${article.slug || ''}</div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-green-200">${formatDate(article.publishDate)}</div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-green-200">${article.author || 'Sin autor'}</div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${article.draft ? 'bg-yellow-500/80 text-white' : 'bg-green-600 text-green-100'}">
+                      ${article.draft ? 'Borrador' : 'Publicado'}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <a href="/blog/${article.slug}" target="_blank" class="text-blue-400 hover:text-blue-300 mr-3" title="Ver">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                        <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+                      </svg>
+                    </a>
+                    <a href="/admin/articles/edit/${article.id}" class="text-yellow-400 hover:text-yellow-300 mr-3" title="Editar">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                      </svg>
+                    </a>
+                    <button class="delete-article-btn text-red-400 hover:text-red-300" title="Eliminar" data-id="${article.id}">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+    
+    articlesTableContainer.innerHTML = tableHTML;
+    
+    // Agregar event listeners para los botones de eliminar
+    document.querySelectorAll('.delete-article-btn').forEach(button => {
+      button.addEventListener('click', (e) => {
+        const id = (e.currentTarget as HTMLElement).getAttribute('data-id');
+        if (id && deleteModal) {
+          articleToDelete = id;
+          deleteModal.classList.remove('hidden');
+        }
+      });
+    });
+  };
+
+  // Función para filtrar artículos
+  const filterArticles = (searchTerm) => {
+    if (!searchTerm) {
+      renderArticlesTable(articles);
+      return;
+    }
+    
+    const normalizedSearch = searchTerm.toLowerCase();
+    const filtered = articles.filter(article => 
+      article.title.toLowerCase().includes(normalizedSearch) || 
+      (article.content && article.content.toLowerCase().includes(normalizedSearch))
+    );
+    
+    renderArticlesTable(filtered);
+  };
+
+  // Función para eliminar un artículo
+  const deleteArticle = async (id) => {
+    try {
+      await deleteDoc(doc(db, "articles", id));
+      
+      // Actualizar la lista de artículos
+      articles = articles.filter(article => article.id !== id);
+      renderArticlesTable(articles);
+      
+      // Cerrar modal
+      if (deleteModal) {
+        deleteModal.classList.add('hidden');
+      }
+    } catch (error) {
+      console.error("Error al eliminar artículo:", error);
+      alert("Error al eliminar el artículo. Por favor, intenta de nuevo.");
+    }
+  };
+
+  // Configurar eventos para el modal de eliminación
+  if (cancelDeleteBtn) {
+    cancelDeleteBtn.addEventListener('click', () => {
+      if (deleteModal) deleteModal.classList.add('hidden');
+      articleToDelete = null;
+    });
+  }
+
+  if (confirmDeleteBtn) {
+    confirmDeleteBtn.addEventListener('click', () => {
+      if (articleToDelete) {
+        deleteArticle(articleToDelete);
+      }
+    });
+  }
+
+  // Configurar evento para búsqueda
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      filterArticles((e.target as HTMLInputElement).value);
+    });
+  }
+
+  // Configurar evento para sincronización
+  if (syncArticlesBtn) {
+    syncArticlesBtn.addEventListener('click', handleSync);
+  }
+
+  // Comprueba si el usuario está autenticado y es administrador
+  onAuthStateChanged(auth, async (user) => {
+    if (loadingElement) loadingElement.classList.remove("hidden");
+    
+    if (user) {
+      // En un sistema real, verificaríamos si el usuario tiene rol de administrador
+      // Por ejemplo, usando custom claims o una colección específica en Firestore
+      const isAdmin = true; // Simulamos que el usuario es administrador
+      
+      if (isAdmin) {
+        try {
+          // Cargar artículos
+          articles = await loadArticles();
+          
+          // Ocultar cargando y mostrar tabla
+          if (loadingElement) loadingElement.classList.add("hidden");
+          if (articlesTableContainer) {
+            articlesTableContainer.classList.remove("hidden");
+            renderArticlesTable(articles);
+          }
+        } catch (error) {
+          console.error("Error al cargar artículos:", error);
+          if (loadingElement) loadingElement.classList.add("hidden");
+          if (errorMessageElement) errorMessageElement.classList.remove("hidden");
+        }
+      } else {
+        // No es administrador
+        if (loadingElement) loadingElement.classList.add("hidden");
+        if (unauthorizedElement) unauthorizedElement.classList.remove("hidden");
+      }
+    } else {
+      // No está autenticado
+      if (loadingElement) loadingElement.classList.add("hidden");
+      if (unauthorizedElement) unauthorizedElement.classList.remove("hidden");
+    }
+  });
+</script> 

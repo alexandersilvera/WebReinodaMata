@@ -1,0 +1,353 @@
+---
+import MainLayout from "@/layouts/MainLayout.astro";
+import AdminProtection from "@/components/AdminProtection";
+---
+
+<MainLayout title="Configuración | Reino Da Mata">
+  <AdminProtection client:load>
+    <div class="max-w-6xl mx-auto w-full px-4 py-8">
+      <div class="mb-6 flex justify-between items-center">
+        <div>
+          <h1 class="text-3xl font-bold text-green-700 mb-2">Configuración del Sitio</h1>
+          <p class="text-gray-200">Administra la configuración general del sitio web.</p>
+        </div>
+        <a href="/admin" class="text-green-400 hover:text-green-300 flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+          </svg>
+          <span>Volver al panel</span>
+        </a>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Configuración General -->
+        <div class="bg-green-900/30 p-6 rounded-lg backdrop-blur-sm">
+          <h2 class="text-xl font-bold text-green-500 mb-4">Configuración General</h2>
+          <form id="general-settings" class="space-y-4">
+            <div>
+              <label for="site-title" class="block text-white text-sm font-medium mb-2">
+                Título del Sitio
+              </label>
+              <input
+                id="site-title"
+                type="text"
+                value="Centro Umbandista Reino da Mata"
+                class="w-full px-4 py-2 bg-green-700/50 border border-green-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400 text-white"
+              />
+            </div>
+            
+            <div>
+              <label for="site-description" class="block text-white text-sm font-medium mb-2">
+                Descripción del Sitio
+              </label>
+              <textarea
+                id="site-description"
+                rows="3"
+                class="w-full px-4 py-2 bg-green-700/50 border border-green-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400 text-white"
+                placeholder="Descripción breve del sitio web..."
+              ></textarea>
+            </div>
+            
+            <div>
+              <label for="contact-email" class="block text-white text-sm font-medium mb-2">
+                Email de Contacto
+              </label>
+              <input
+                id="contact-email"
+                type="email"
+                class="w-full px-4 py-2 bg-green-700/50 border border-green-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400 text-white"
+              />
+            </div>
+            
+            <button
+              type="submit"
+              class="w-full bg-green-600 hover:bg-green-500 text-white font-medium py-2 px-4 rounded-md transition-colors"
+            >
+              Guardar Configuración General
+            </button>
+          </form>
+        </div>
+
+        <!-- Configuración de SEO -->
+        <div class="bg-green-900/30 p-6 rounded-lg backdrop-blur-sm">
+          <h2 class="text-xl font-bold text-green-500 mb-4">Configuración SEO</h2>
+          <form id="seo-settings" class="space-y-4">
+            <div>
+              <label for="meta-keywords" class="block text-white text-sm font-medium mb-2">
+                Palabras Clave Meta
+              </label>
+              <input
+                id="meta-keywords"
+                type="text"
+                placeholder="umbanda, espiritualidad, religión, brasil"
+                class="w-full px-4 py-2 bg-green-700/50 border border-green-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400 text-white"
+              />
+            </div>
+            
+            <div>
+              <label for="google-analytics" class="block text-white text-sm font-medium mb-2">
+                Google Analytics ID
+              </label>
+              <input
+                id="google-analytics"
+                type="text"
+                placeholder="G-XXXXXXXXXX"
+                class="w-full px-4 py-2 bg-green-700/50 border border-green-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400 text-white"
+              />
+            </div>
+            
+            <div class="flex items-center">
+              <input
+                id="enable-sitemap"
+                type="checkbox"
+                checked
+                class="w-5 h-5 text-green-600 bg-green-700/50 border-green-600 rounded focus:ring-0"
+              />
+              <label for="enable-sitemap" class="ml-2 text-white text-sm font-medium">
+                Generar Sitemap automáticamente
+              </label>
+            </div>
+            
+            <button
+              type="submit"
+              class="w-full bg-green-600 hover:bg-green-500 text-white font-medium py-2 px-4 rounded-md transition-colors"
+            >
+              Guardar Configuración SEO
+            </button>
+          </form>
+        </div>
+
+        <!-- Configuración de Comentarios -->
+        <div class="bg-green-900/30 p-6 rounded-lg backdrop-blur-sm">
+          <h2 class="text-xl font-bold text-green-500 mb-4">Configuración de Comentarios</h2>
+          <form id="comments-settings" class="space-y-4">
+            <div class="flex items-center">
+              <input
+                id="enable-comments"
+                type="checkbox"
+                checked
+                class="w-5 h-5 text-green-600 bg-green-700/50 border-green-600 rounded focus:ring-0"
+              />
+              <label for="enable-comments" class="ml-2 text-white text-sm font-medium">
+                Permitir comentarios en artículos
+              </label>
+            </div>
+            
+            <div class="flex items-center">
+              <input
+                id="moderate-comments"
+                type="checkbox"
+                checked
+                class="w-5 h-5 text-green-600 bg-green-700/50 border-green-600 rounded focus:ring-0"
+              />
+              <label for="moderate-comments" class="ml-2 text-white text-sm font-medium">
+                Moderar comentarios antes de publicar
+              </label>
+            </div>
+            
+            <div class="flex items-center">
+              <input
+                id="require-login"
+                type="checkbox"
+                class="w-5 h-5 text-green-600 bg-green-700/50 border-green-600 rounded focus:ring-0"
+              />
+              <label for="require-login" class="ml-2 text-white text-sm font-medium">
+                Requerir login para comentar
+              </label>
+            </div>
+            
+            <button
+              type="submit"
+              class="w-full bg-green-600 hover:bg-green-500 text-white font-medium py-2 px-4 rounded-md transition-colors"
+            >
+              Guardar Configuración de Comentarios
+            </button>
+          </form>
+        </div>
+
+        <!-- Configuración de Newsletter -->
+        <div class="bg-green-900/30 p-6 rounded-lg backdrop-blur-sm">
+          <h2 class="text-xl font-bold text-green-500 mb-4">Configuración de Newsletter</h2>
+          <form id="newsletter-settings" class="space-y-4">
+            <div class="flex items-center">
+              <input
+                id="enable-newsletter"
+                type="checkbox"
+                checked
+                class="w-5 h-5 text-green-600 bg-green-700/50 border-green-600 rounded focus:ring-0"
+              />
+              <label for="enable-newsletter" class="ml-2 text-white text-sm font-medium">
+                Habilitar suscripción a newsletter
+              </label>
+            </div>
+            
+            <div>
+              <label for="newsletter-frequency" class="block text-white text-sm font-medium mb-2">
+                Frecuencia de envío
+              </label>
+              <select
+                id="newsletter-frequency"
+                class="w-full px-4 py-2 bg-green-700/50 border border-green-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400 text-white"
+              >
+                <option value="weekly">Semanal</option>
+                <option value="biweekly">Quincenal</option>
+                <option value="monthly">Mensual</option>
+              </select>
+            </div>
+            
+            <div>
+              <label for="welcome-email" class="block text-white text-sm font-medium mb-2">
+                Mensaje de bienvenida
+              </label>
+              <textarea
+                id="welcome-email"
+                rows="3"
+                placeholder="Mensaje que se enviará a nuevos suscriptores..."
+                class="w-full px-4 py-2 bg-green-700/50 border border-green-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400 text-white"
+              ></textarea>
+            </div>
+            
+            <button
+              type="submit"
+              class="w-full bg-green-600 hover:bg-green-500 text-white font-medium py-2 px-4 rounded-md transition-colors"
+            >
+              Guardar Configuración de Newsletter
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Mensaje de estado -->
+      <div id="status-message" class="hidden mt-6 p-4 rounded-md">
+        <span id="status-text"></span>
+      </div>
+    </div>
+  </AdminProtection>
+</MainLayout>
+
+<script>
+  import { db } from "@/core/firebase/config";
+  import { doc, setDoc, getDoc } from "firebase/firestore";
+
+  // Elementos del DOM
+  const statusMessage = document.getElementById("status-message");
+  const statusText = document.getElementById("status-text");
+
+  // Función para mostrar mensajes de estado
+  function showStatus(message: string, isError = false) {
+    if (statusMessage && statusText) {
+      statusText.textContent = message;
+      statusMessage.className = `mt-6 p-4 rounded-md ${isError ? 'bg-red-600/80 text-white' : 'bg-green-600/80 text-white'}`;
+      statusMessage.classList.remove("hidden");
+      
+      setTimeout(() => {
+        statusMessage.classList.add("hidden");
+      }, 5000);
+    }
+  }
+
+  // Función para cargar configuración
+  async function loadSettings() {
+    try {
+      const settingsDoc = await getDoc(doc(db, "settings", "general"));
+      if (settingsDoc.exists()) {
+        const settings = settingsDoc.data();
+        
+        // Cargar configuración general
+        const siteTitle = document.getElementById("site-title") as HTMLInputElement;
+        const siteDescription = document.getElementById("site-description") as HTMLTextAreaElement;
+        const contactEmail = document.getElementById("contact-email") as HTMLInputElement;
+        
+        if (siteTitle && settings.siteTitle) siteTitle.value = settings.siteTitle;
+        if (siteDescription && settings.siteDescription) siteDescription.value = settings.siteDescription;
+        if (contactEmail && settings.contactEmail) contactEmail.value = settings.contactEmail;
+        
+        // Cargar configuración SEO
+        const metaKeywords = document.getElementById("meta-keywords") as HTMLInputElement;
+        const googleAnalytics = document.getElementById("google-analytics") as HTMLInputElement;
+        const enableSitemap = document.getElementById("enable-sitemap") as HTMLInputElement;
+        
+        if (metaKeywords && settings.metaKeywords) metaKeywords.value = settings.metaKeywords;
+        if (googleAnalytics && settings.googleAnalytics) googleAnalytics.value = settings.googleAnalytics;
+        if (enableSitemap && typeof settings.enableSitemap === 'boolean') enableSitemap.checked = settings.enableSitemap;
+        
+        // Cargar configuración de comentarios
+        const enableComments = document.getElementById("enable-comments") as HTMLInputElement;
+        const moderateComments = document.getElementById("moderate-comments") as HTMLInputElement;
+        const requireLogin = document.getElementById("require-login") as HTMLInputElement;
+        
+        if (enableComments && typeof settings.enableComments === 'boolean') enableComments.checked = settings.enableComments;
+        if (moderateComments && typeof settings.moderateComments === 'boolean') moderateComments.checked = settings.moderateComments;
+        if (requireLogin && typeof settings.requireLogin === 'boolean') requireLogin.checked = settings.requireLogin;
+        
+        // Cargar configuración de newsletter
+        const enableNewsletter = document.getElementById("enable-newsletter") as HTMLInputElement;
+        const newsletterFrequency = document.getElementById("newsletter-frequency") as HTMLSelectElement;
+        const welcomeEmail = document.getElementById("welcome-email") as HTMLTextAreaElement;
+        
+        if (enableNewsletter && typeof settings.enableNewsletter === 'boolean') enableNewsletter.checked = settings.enableNewsletter;
+        if (newsletterFrequency && settings.newsletterFrequency) newsletterFrequency.value = settings.newsletterFrequency;
+        if (welcomeEmail && settings.welcomeEmail) welcomeEmail.value = settings.welcomeEmail;
+      }
+    } catch (error) {
+      console.error("Error al cargar configuración:", error);
+      showStatus("Error al cargar la configuración", true);
+    }
+  }
+
+  // Función para guardar configuración
+  async function saveSettings(formData: Record<string, any>) {
+    try {
+      await setDoc(doc(db, "settings", "general"), formData, { merge: true });
+      showStatus("Configuración guardada exitosamente");
+    } catch (error) {
+      console.error("Error al guardar configuración:", error);
+      showStatus("Error al guardar la configuración", true);
+    }
+  }
+
+  // Event listeners para los formularios
+  document.getElementById("general-settings")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target as HTMLFormElement);
+    const settings = {
+      siteTitle: (document.getElementById("site-title") as HTMLInputElement).value,
+      siteDescription: (document.getElementById("site-description") as HTMLTextAreaElement).value,
+      contactEmail: (document.getElementById("contact-email") as HTMLInputElement).value,
+    };
+    await saveSettings(settings);
+  });
+
+  document.getElementById("seo-settings")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const settings = {
+      metaKeywords: (document.getElementById("meta-keywords") as HTMLInputElement).value,
+      googleAnalytics: (document.getElementById("google-analytics") as HTMLInputElement).value,
+      enableSitemap: (document.getElementById("enable-sitemap") as HTMLInputElement).checked,
+    };
+    await saveSettings(settings);
+  });
+
+  document.getElementById("comments-settings")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const settings = {
+      enableComments: (document.getElementById("enable-comments") as HTMLInputElement).checked,
+      moderateComments: (document.getElementById("moderate-comments") as HTMLInputElement).checked,
+      requireLogin: (document.getElementById("require-login") as HTMLInputElement).checked,
+    };
+    await saveSettings(settings);
+  });
+
+  document.getElementById("newsletter-settings")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const settings = {
+      enableNewsletter: (document.getElementById("enable-newsletter") as HTMLInputElement).checked,
+      newsletterFrequency: (document.getElementById("newsletter-frequency") as HTMLSelectElement).value,
+      welcomeEmail: (document.getElementById("welcome-email") as HTMLTextAreaElement).value,
+    };
+    await saveSettings(settings);
+  });
+
+  // Cargar configuración al inicializar
+  loadSettings();
+</script> 

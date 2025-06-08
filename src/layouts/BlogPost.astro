@@ -5,47 +5,76 @@ import MainLayout from "@/layouts/MainLayout.astro";
 import FormattedDate from "@/components/FormattedDate.astro";
 type Props = CollectionEntry<"blog">["data"];
 
-const { title, heroImage, pubDate } = Astro.props;
+const { title, description, heroImage, pubDate, tags } = Astro.props;
+
 ---
 
-
-<MainLayout title={title}>
-    <div class="max-w-article-size mx-auto w-full space-y-4 py-6">
-        <a
-          class="text-soft-white border-extra-soft-white inline-flex cursor-pointer items-center gap-2 self-start rounded-full border px-6 py-2 transition-colors duration-200 hover:border-purple-500"
-          href="/blog"
-        >
-          <svg
-            viewBox="0 -960 960 960"
-            xmlns="http://www.w3.org/2000/svg"
-            height="20"
-            width="20"
-            ><path
-              d="m313-440 224 224-57 56-320-320 320-320 57 56-224 224h487v80H313Z"
-              fill="#BFC7D2"></path></svg
-          >
-    
-          Volver a blog
-        </a>
-        <div
-          class="border-extra-soft-white w-full rounded-xl border"
-          transition:name={title}
-        >
-          <article class="min-w-full text-center flex flex-col items-center justify-center">
-            <Image
-              class="rounded-t-xl object-cover w-[1020px] h-[520px]"
-              width={1020}
-              height={520}
-              src={heroImage}
-              alt=""
-            />
-    
-            <div class="text-white px-12 py-12 prose prose-invert">
-              <FormattedDate date={pubDate} />
-    
-              <slot />
-            </div>
-          </article>
-        </div>
-    </div>
+<MainLayout title={title} description={description}>
+	<article class="max-w-4xl mx-auto w-full py-10 px-4">
+		<!-- Navegación de regreso -->
+		<div class="mb-8">
+			<a
+				class="inline-flex items-center gap-2 bg-green-900/30 hover:bg-green-800/50 transition-colors duration-200 text-white px-4 py-2 rounded-full border border-green-700/20"
+				href="/blog"
+			>
+				<svg viewBox="0 -960 960 960" xmlns="http://www.w3.org/2000/svg" height="20" width="20">
+					<path d="m313-440 224 224-57 56-320-320 320-320 57 56-224 224h487v80H313Z" fill="currentColor"></path>
+				</svg>
+				Volver al blog
+			</a>
+		</div>
+		
+		<!-- Encabezado del artículo -->
+		<header class="mb-10">
+			<h1 class="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight">{title}</h1>
+			
+			<div class="flex flex-wrap items-center gap-4 text-gray-300 mb-6">
+				<div class="flex items-center">
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+					</svg>
+					<FormattedDate date={pubDate} />
+				</div>
+				
+				{tags && (
+					<div class="flex flex-wrap gap-2">
+						{tags.map((tag) => (
+							<a href={`/blog/tag/${tag.toLowerCase()}`} class="bg-green-900/40 hover:bg-green-800/60 text-white text-sm px-3 py-1 rounded-full transition-colors">
+								#{tag}
+							</a>
+						))}
+					</div>
+				)}
+			</div>
+			
+			{description && (
+				<p class="text-xl text-gray-300 italic border-l-4 border-green-600 pl-4 py-2 bg-green-900/20 rounded-r-md">
+					{description}
+				</p>
+			)}
+		</header>
+		
+		<!-- Imagen principal -->
+		<div class="relative w-full h-[400px] md:h-[500px] mb-10 rounded-xl overflow-hidden shadow-2xl">
+			<Image
+				class="w-full h-full object-cover"
+				width={1200}
+				height={600}
+				src={heroImage}
+				alt={title}
+			/>
+			<div class="absolute inset-0 bg-gradient-to-t from-green-900/70 to-transparent"></div>
+		</div>
+		
+		<!-- Contenido del artículo -->
+		<div class="prose prose-lg prose-invert max-w-none mx-auto
+			prose-headings:text-green-400 prose-headings:font-bold
+			prose-p:text-gray-300 prose-p:leading-relaxed
+			prose-a:text-green-400 prose-a:no-underline hover:prose-a:underline
+			prose-strong:text-white
+			prose-blockquote:border-green-500 prose-blockquote:bg-green-900/20 
+			prose-li:text-gray-300">
+			<slot />
+		</div>
+	</article>
 </MainLayout>

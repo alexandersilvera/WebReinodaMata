@@ -12,13 +12,215 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-
-# environment variables
+# ====================================================
+# SECURITY & ENVIRONMENT VARIABLES
+# ====================================================
+# Variables de entorno (NUNCA subir al repo)
 .env
+.env.local
+.env.development
 .env.production
+.env.test
+.env.staging
+.env.backup
 
+# EXCEPCIÓN: Permitir archivos de ejemplo (seguros para compartir)
+!.env.example
+!.env.template
+
+# Archivos de configuración sensibles
+config/secrets.json
+config/private.json
+config/credentials.json
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Archivos de Firebase sensibles
+firebase-adminsdk-*.json
+serviceAccountKey.json
+.firebase/
+.firebaserc.local
+
+# Archivos de Mailgun y APIs
+mailgun-config.json
+api-keys.json
+secrets/
+
+# ====================================================
+# DEVELOPMENT & TOOLS
+# ====================================================
 # macOS-specific files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
-# jetbrains setting folder
+# Windows specific files
+*.lnk
+desktop.ini
+
+# Linux specific files
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# IDE & Editor files
 .idea/
+.vscode/settings.json
+.vscode/launch.json
+*.swp
+*.swo
+*~
+.project
+.metadata
+.classpath
+.settings/
+*.sublime-workspace
+*.sublime-project
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+*.cache
+.cache/
+temp/
+tmp/
+
+# ====================================================
+# FIREBASE & FUNCTIONS
+# ====================================================
+# Firebase Functions
+functions/node_modules/
+functions/lib/
+functions/.env
+functions/.env.*
+functions/src/**/*.js
+functions/src/**/*.js.map
+
+# Firebase emulator data
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
+.firebase/
+
+# ====================================================
+# ANALYTICS & MONITORING
+# ====================================================
+# Error tracking
+.sentry-env
+sentry.properties
+
+# Analytics
+analytics/
+metrics/
+reports/
+
+# ====================================================
+# BACKUP & SENSITIVE DATA
+# ====================================================
+# Backups
+*.backup
+*.bak
+backup/
+backups/
+*.sql
+*.dump
+
+# Certificados y llaves
+*.crt
+*.cert
+*.ca-bundle
+*.der
+*.p7b
+*.p7s
+*.cer
+
+# Archivos de configuración del servidor
+.htaccess
+.htpasswd
+robots.txt.backup
+
+# ====================================================
+# TESTING & COVERAGE
+# ====================================================
+# Test coverage
+coverage/
+.nyc_output/
+.coverage
+htmlcov/
+.tox/
+.pytest_cache/
+.jest/
+
+# ====================================================
+# PACKAGE MANAGERS
+# ====================================================
+# npm
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.npm
+.yarn-integrity
+.yarn/
+yarn.lock
+package-lock.json
+
+# pnpm
+.pnpm-debug.log*
+.pnpm-store/
+
+# ====================================================
+# MISC
+# ====================================================
+# Archivos del sistema
+.well-known/
+sitemap.xml
+sitemap-*.xml
+
+# Archivos personales
+TODO.md
+NOTES.md
+PERSONAL.md
+debug.log
+
+# ====================================================
+# PROYECTO ESPECÍFICO - REINO DA MATA
+# ====================================================
+# Configuraciones locales específicas del proyecto
+.env.reino
+.env.mailgun
+config.local.*
+
+# Archivos de debug del proyecto
+debug/
+logs/
+*.debug
+
+# Configuraciones de despliegue sensibles
+deploy-config.json
+deployment.json
+hosting-config.json
+
+# Archivos de pruebas con datos sensibles
+test-data/
+mock-data.json
+sample-emails.json
+
+# Cache específico de Astro y Firebase
+.astro-cache/
+functions/.cache/
+functions/dist/
+
+# Archivos de configuración temporal
+config.temp.*
+temp-config.*
+*.config.backup
