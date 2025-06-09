@@ -5,7 +5,7 @@ import sitemap from "@astrojs/sitemap";
 import react from "@astrojs/react";
 import { fileURLToPath, URL } from "node:url";
 
-import vercel from "@astrojs/vercel";
+import vercel from "@astrojs/vercel/serverless";
 
 // https://astro.build/config
 export default defineConfig({
@@ -23,7 +23,12 @@ export default defineConfig({
 	output: "server",
 	adapter: vercel({
 		webAnalytics: { enabled: true },
-		speedInsights: { enabled: true }
+		speedInsights: { enabled: true },
+		imageService: true,
+		includeFiles: [],
+		excludeFiles: [],
+		isr: false,
+		edgeMiddleware: false
 	}),
 	vite: {
 		resolve: {
