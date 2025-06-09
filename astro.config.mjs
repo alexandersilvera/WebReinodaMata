@@ -22,13 +22,9 @@ export default defineConfig({
 	],
 	output: "server",
 	adapter: vercel({
+		imageService: true,
 		webAnalytics: { enabled: true },
 		speedInsights: { enabled: true },
-		imageService: true,
-		includeFiles: [],
-		excludeFiles: [],
-		isr: false,
-		edgeMiddleware: false
 	}),
 	vite: {
 		resolve: {
