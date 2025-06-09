@@ -23,8 +23,11 @@ export default defineConfig({
 	output: "server",
 	adapter: vercel({
 		webAnalytics: { enabled: true },
-		runtime: "nodejs20.x",
-		functionPerRoute: false
+		isr: false,
+		imagesConfig: {
+			sizes: [320, 640, 1280],
+			domains: []
+		}
 	}),
 	vite: {
 		resolve: {
@@ -32,9 +35,20 @@ export default defineConfig({
 				"@": fileURLToPath(new URL("./src", import.meta.url)),
 			},
 		},
+		build: {
+			rollupOptions: {
+				external: ["firebase-admin"]
+			}
+		},
 		ssr: {
-			noExternal: ["firebase"]
+			noExternal: ["firebase", "@firebase/auth", "@firebase/firestore"]
 		}
 	},
-	outDir: "./dist",
+	build: {
+		inlineStylesheets: "auto"
+	},
+	server: {
+		port: 4321,
+		host: true
+	}
 });
