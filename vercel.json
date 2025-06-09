@@ -1,0 +1,19 @@
+{
+  "functions": {
+    "src/pages/**/*.astro": {
+      "maxDuration": 10
+    },
+    "src/pages/api/**/*.ts": {
+      "maxDuration": 10
+    }
+  },
+  "env": {
+    "NODE_ENV": "production"
+  },
+  "build": {
+    "env": {
+      "NODE_ENV": "production"
+    }
+  },
+  "regions": ["gru1"]
+} 

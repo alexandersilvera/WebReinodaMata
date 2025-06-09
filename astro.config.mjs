@@ -5,7 +5,7 @@ import sitemap from "@astrojs/sitemap";
 import react from "@astrojs/react";
 import { fileURLToPath, URL } from "node:url";
 
-import vercel from "@astrojs/vercel/serverless";
+import vercel from "@astrojs/vercel";
 
 // https://astro.build/config
 export default defineConfig({
@@ -23,7 +23,8 @@ export default defineConfig({
 	output: "server",
 	adapter: vercel({
 		webAnalytics: { enabled: true },
-		runtime: "nodejs20.x" // ¡AÑADE ESTA LÍNEA!
+		runtime: "nodejs20.x",
+		functionPerRoute: false
 	}),
 	vite: {
 		resolve: {
@@ -31,6 +32,9 @@ export default defineConfig({
 				"@": fileURLToPath(new URL("./src", import.meta.url)),
 			},
 		},
+		ssr: {
+			noExternal: ["firebase"]
+		}
 	},
 	outDir: "./dist",
 });
