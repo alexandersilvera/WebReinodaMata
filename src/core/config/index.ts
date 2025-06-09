@@ -31,9 +31,29 @@ interface AppConfig {
  */
 function requireEnvVar(name: string, value: string | undefined): string {
   if (!value || value.trim() === '') {
+    console.error(`Variable de entorno requerida faltante: ${name}`);
+    // En producción, no lanzar error para evitar crashes, usar valores por defecto
+    if (typeof window === 'undefined' && process.env.NODE_ENV === 'production') {
+      console.warn(`Usando valor por defecto para ${name} en producción`);
+      return getDefaultValue(name);
+    }
     throw new Error(`Variable de entorno requerida faltante: ${name}`);
   }
   return value.trim();
+}
+
+/**
+ * Obtiene valores por defecto para variables críticas en producción
+ */
+function getDefaultValue(name: string): string {
+  const defaults: Record<string, string> = {
+    'PUBLIC_ADMIN_EMAILS': 'admin@centroumbandistareinodamata.org',
+    'PUBLIC_SITE_URL': 'https://www.centroumbandistareinodamata.org',
+    'PUBLIC_FIREBASE_PROJECT_ID': 'centro-umbandista-reino',
+    'PUBLIC_FIREBASE_AUTH_DOMAIN': 'centro-umbandista-reino.firebaseapp.com',
+    'PUBLIC_FIREBASE_STORAGE_BUCKET': 'centro-umbandista-reino.appspot.com',
+  };
+  return defaults[name] || '';
 }
 
 /**
@@ -135,7 +155,12 @@ try {
   console.log(`[Config] Configuración cargada exitosamente para entorno: ${config.app.environment}`);
 } catch (error) {
   console.error('[Config] Error en la configuración:', error);
-  throw error;
+  // En producción, continuar con configuración parcial en lugar de fallar completamente
+  if (typeof window === 'undefined' && process.env.NODE_ENV === 'production') {
+    console.warn('[Config] Continuando con configuración parcial en producción');
+  } else {
+    throw error;
+  }
 }
 
 /**
