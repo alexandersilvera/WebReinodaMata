@@ -12,7 +12,11 @@
 			"handle": "filesystem"
 		},
 		{
-			"src": "^\\/_image$",
+			"src": "^\\/_server-islands\\/([^/]+?)\\/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^\\/_image\\/?$",
 			"dest": "_render"
 		},
 		{
@@ -20,7 +24,39 @@
 			"dest": "_render"
 		},
 		{
+			"src": "^\\/admin\\/articles\\/new\\/?$",
+			"dest": "_render"
+		},
+		{
 			"src": "^\\/admin\\/articles\\/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^\\/admin\\/metrics\\/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^\\/admin\\/newsletter\\/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^\\/admin\\/newsletter-test\\/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^\\/admin\\/settings\\/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^\\/admin\\/subscribers\\/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^\\/admin\\/sync\\/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^\\/admin\\/?$",
 			"dest": "_render"
 		},
 		{
@@ -33,6 +69,42 @@
 		},
 		{
 			"src": "^\\/blog(?:\\/(.*?))?\\/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^\\/contacto\\/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^\\/instituto\\/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^\\/login\\/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^\\/nosotros\\/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^\\/perfil\\/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^\\/register\\/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^\\/rss\\.xml\\/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^\\/unsubscribe\\/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^\\/$",
 			"dest": "_render"
 		}
 	]

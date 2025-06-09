@@ -20,7 +20,7 @@ export default defineConfig({
 		sitemap(),
 		react(),
 	],
-	output: "hybrid",
+	output: "server",
 	adapter: vercel({
 		webAnalytics: { enabled: true },
 		runtime: "nodejs20.x" // ¡AÑADE ESTA LÍNEA!
@@ -32,4 +32,5 @@ export default defineConfig({
 			},
 		},
 	},
+	outDir: "./dist",
 });

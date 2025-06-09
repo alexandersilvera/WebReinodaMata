@@ -334,9 +334,9 @@ if (!id) {
 <script>
   import { db } from '@/core/firebase/config';
   import { doc, getDoc, updateDoc, serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore';
-  import RichTextEditor from "@/components/RichTextEditor.tsx";
-  import ImageUploader from "@/components/ImageUploader.tsx";
-  import TagsInput from "@/components/TagsInput.tsx";
+  import RichTextEditor from "@/components/RichTextEditor";
+  import ImageUploader from "@/components/ImageUploader";
+  import TagsInput from "@/components/TagsInput";
 
   // Variables globales
   let articleId: string;
@@ -370,14 +370,10 @@ if (!id) {
   const slugInput = document.getElementById("slug") as HTMLInputElement;
   const authorInput = document.getElementById("author") as HTMLInputElement;
   const excerptInput = document.getElementById("excerpt") as HTMLTextAreaElement;
-  // const contentInput = document.getElementById("content") as HTMLTextAreaElement; // Reemplazado por RichTextEditor
-  // const featuredImageInput = document.getElementById("featuredImage") as HTMLInputElement; // Reemplazado por ImageUploader
   const categoryInput = document.getElementById("category") as HTMLSelectElement;
   const publishedInput = document.getElementById("published") as HTMLInputElement;
   const featuredInput = document.getElementById("featured") as HTMLInputElement;
   const commentsEnabledInput = document.getElementById("commentsEnabled") as HTMLInputElement;
-  // const tagsInput = document.getElementById("tags-input") as HTMLInputElement; // Reemplazado por TagsInput
-  // const tagsDisplay = document.getElementById("tags-display"); // Reemplazado por TagsInput
 
   // Obtener ID del artículo
   const pathParts = window.location.pathname.split('/');
@@ -565,8 +561,6 @@ if (!id) {
         authorInput.value = article.author || '';
         excerptInput.value = article.excerpt || '';
         currentContent = article.content || ''; // Cargar a currentContent
-        // contentInput.value = article.content || ''; // Ya no se usa contentInput
-        // featuredImageInput.value = article.featuredImage || ''; // Ya no se usa featuredImageInput
         originalData.featuredImage = article.featuredImage || ''; // Cargar a originalData
         categoryInput.value = article.category || '';
         publishedInput.checked = article.published || false;
@@ -575,7 +569,6 @@ if (!id) {
         
         // Cargar etiquetas
         currentTags = article.tags || [];
-        // renderTags(); // Eliminado, TagsInput se encarga de su propio renderizado
 
         // Renderizar TagsInput
         const tagsContainer = document.getElementById('tags-input-react-container');
@@ -765,7 +758,7 @@ if (!id) {
       const author = authorInput.value || "Sin autor";
       const excerpt = excerptInput.value || "Sin descripción";
       const content = currentContent || "*No hay contenido para mostrar*"; // Usar currentContent
-      const image = featuredImageInput.value;
+      const image = originalData.featuredImage;
       
       // Verificar que marked y DOMPurify estén disponibles
       if (typeof window !== 'undefined' && (window as any).marked && (window as any).DOMPurify) {

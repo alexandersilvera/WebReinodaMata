@@ -224,3 +224,4 @@ functions/dist/
 config.temp.*
 temp-config.*
 *.config.backup
+.vercel
