@@ -22,12 +22,8 @@ export default defineConfig({
 	],
 	output: "server",
 	adapter: vercel({
-		webAnalytics: { enabled: true },
-		isr: false,
-		imagesConfig: {
-			sizes: [320, 640, 1280],
-			domains: []
-		}
+		imageService: true,
+		webAnalytics: { enabled: true }
 	}),
 	vite: {
 		resolve: {

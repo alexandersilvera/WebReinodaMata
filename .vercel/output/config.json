@@ -2,6 +2,9 @@
 	"version": 3,
 	"routes": [
 		{
+			"handle": "filesystem"
+		},
+		{
 			"src": "^/_astro/(.*)$",
 			"headers": {
 				"cache-control": "public, max-age=31536000, immutable"
@@ -9,103 +12,114 @@
 			"continue": true
 		},
 		{
-			"handle": "filesystem"
-		},
-		{
-			"src": "^\\/_server-islands\\/([^/]+?)\\/?$",
+			"src": "^/_server-islands/([^/]+?)/?$",
 			"dest": "_render"
 		},
 		{
-			"src": "^\\/_image\\/?$",
+			"src": "^/_image/?$",
 			"dest": "_render"
 		},
 		{
-			"src": "^\\/admin\\/articles\\/edit\\/([^/]+?)\\/?$",
+			"src": "^/admin/articles/edit/([^/]+?)/?$",
 			"dest": "_render"
 		},
 		{
-			"src": "^\\/admin\\/articles\\/new\\/?$",
+			"src": "^/admin/articles/new/?$",
 			"dest": "_render"
 		},
 		{
-			"src": "^\\/admin\\/articles\\/?$",
+			"src": "^/admin/articles/?$",
 			"dest": "_render"
 		},
 		{
-			"src": "^\\/admin\\/metrics\\/?$",
+			"src": "^/admin/metrics/?$",
 			"dest": "_render"
 		},
 		{
-			"src": "^\\/admin\\/newsletter\\/?$",
+			"src": "^/admin/newsletter/?$",
 			"dest": "_render"
 		},
 		{
-			"src": "^\\/admin\\/newsletter-test\\/?$",
+			"src": "^/admin/newsletter-test/?$",
 			"dest": "_render"
 		},
 		{
-			"src": "^\\/admin\\/settings\\/?$",
+			"src": "^/admin/settings/?$",
 			"dest": "_render"
 		},
 		{
-			"src": "^\\/admin\\/subscribers\\/?$",
+			"src": "^/admin/subscribers/?$",
 			"dest": "_render"
 		},
 		{
-			"src": "^\\/admin\\/sync\\/?$",
+			"src": "^/admin/sync/?$",
 			"dest": "_render"
 		},
 		{
-			"src": "^\\/admin\\/?$",
+			"src": "^/admin/?$",
 			"dest": "_render"
 		},
 		{
-			"src": "^\\/blog\\/tag\\/([^/]+?)\\/?$",
+			"src": "^/blog/tag/([^/]+?)/?$",
 			"dest": "_render"
 		},
 		{
-			"src": "^\\/blog\\/?$",
+			"src": "^/blog/?$",
 			"dest": "_render"
 		},
 		{
-			"src": "^\\/blog(?:\\/(.*?))?\\/?$",
+			"src": "^/blog(?:/(.*?))?/?$",
 			"dest": "_render"
 		},
 		{
-			"src": "^\\/contacto\\/?$",
+			"src": "^/contacto/?$",
 			"dest": "_render"
 		},
 		{
-			"src": "^\\/instituto\\/?$",
+			"src": "^/instituto/?$",
 			"dest": "_render"
 		},
 		{
-			"src": "^\\/login\\/?$",
+			"src": "^/login/?$",
 			"dest": "_render"
 		},
 		{
-			"src": "^\\/nosotros\\/?$",
+			"src": "^/nosotros/?$",
 			"dest": "_render"
 		},
 		{
-			"src": "^\\/perfil\\/?$",
+			"src": "^/perfil/?$",
 			"dest": "_render"
 		},
 		{
-			"src": "^\\/register\\/?$",
+			"src": "^/register/?$",
 			"dest": "_render"
 		},
 		{
-			"src": "^\\/rss\\.xml\\/?$",
+			"src": "^/rss\\.xml/?$",
 			"dest": "_render"
 		},
 		{
-			"src": "^\\/unsubscribe\\/?$",
+			"src": "^/unsubscribe/?$",
 			"dest": "_render"
 		},
 		{
-			"src": "^\\/$",
+			"src": "^/$",
 			"dest": "_render"
 		}
-	]
+	],
+	"images": {
+		"sizes": [
+			640,
+			750,
+			828,
+			1080,
+			1200,
+			1920,
+			2048,
+			3840
+		],
+		"domains": [],
+		"remotePatterns": []
+	}
 }
