@@ -22,8 +22,8 @@ export default defineConfig({
 	],
 	output: "server",
 	adapter: vercel({
-		imageService: true,
-		webAnalytics: { enabled: true }
+		webAnalytics: { enabled: true },
+		speedInsights: { enabled: true }
 	}),
 	vite: {
 		resolve: {
@@ -39,9 +39,6 @@ export default defineConfig({
 		ssr: {
 			noExternal: ["firebase", "@firebase/auth", "@firebase/firestore"]
 		}
-	},
-	build: {
-		inlineStylesheets: "auto"
 	},
 	server: {
 		port: 4321,
