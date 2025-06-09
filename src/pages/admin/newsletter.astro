@@ -5,6 +5,10 @@ import NewsletterSender from "@/components/NewsletterSender";
 ---
 
 <MainLayout title="Gestión de Newsletter">
+  {/* Scripts para Markdown y sanitización, necesarios para RichTextEditor */}
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" slot="head-scripts"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@2.3.4/dist/purify.min.js" slot="head-scripts"></script>
+
   <AdminProtection client:load>
     <div class="max-w-6xl mx-auto w-full px-4 py-8">
       <div class="mb-6 flex justify-between items-center">

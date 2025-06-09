@@ -1,115 +1,103 @@
 ---
 import MainLayout from "@/layouts/MainLayout.astro";
-import { auth } from "@/core/firebase/config";
+import AdminProtection from "@/components/AdminProtection";
+// import { auth } from "@/core/firebase/config"; // auth ya no se usa directamente aquí para la lógica de isAdmin
 // La autenticación de administrador debería implementarse adecuadamente
 // Esto es solo un ejemplo básico
 ---
 
 <MainLayout title="Administración de Suscriptores | Reino Da Mata">
-  <div class="max-w-6xl mx-auto w-full px-4 py-8">
-    <div class="mb-10">
-      <h1 class="text-3xl font-bold text-green-700 mb-2">Administración de Suscriptores</h1>
-      <p class="text-gray-200">Gestiona los suscriptores del blog.</p>
-    </div>
+  <AdminProtection client:load>
+    <div class="max-w-6xl mx-auto w-full px-4 py-8">
+      <div class="mb-10">
+        <h1 class="text-3xl font-bold text-green-700 mb-2">Administración de Suscriptores</h1>
+        <p class="text-gray-200">Gestiona los suscriptores del blog.</p>
+      </div>
 
-    <div class="bg-green-900/30 p-6 rounded-lg backdrop-blur-sm">
-      <div id="admin-container" class="relative">
-        <!-- Estado de carga inicial -->
-        <div id="loading" class="flex justify-center items-center py-10">
-          <svg class="animate-spin h-10 w-10 text-green-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          <span class="ml-3 text-green-300">Cargando suscriptores...</span>
-        </div>
-
-        <!-- Contenedor para la tabla de suscriptores -->
-        <div id="subscribers-table-container" class="hidden">
-          <!-- Se llenará desde JavaScript -->
-        </div>
-
-        <!-- Mensaje de error -->
-        <div id="error-message" class="hidden bg-red-600/80 text-white p-4 rounded-md text-center my-4">
-          <p class="font-medium">Error al cargar los suscriptores</p>
-          <p class="text-sm mt-1">Por favor, intenta de nuevo más tarde o contacta al administrador del sistema.</p>
-        </div>
-
-        <!-- Mensaje de acceso no autorizado -->
-        <div id="unauthorized" class="hidden text-center py-10">
-          <div class="bg-red-600/80 text-white p-6 rounded-lg inline-block">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-4 text-red-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m0 0v2m0-2h2m-2 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+      <div class="bg-green-900/30 p-6 rounded-lg backdrop-blur-sm">
+        <div id="admin-container" class="relative">
+          <!-- Estado de carga inicial -->
+          <div id="loading" class="flex justify-center items-center py-10">
+            <svg class="animate-spin h-10 w-10 text-green-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <h2 class="text-xl font-bold mb-2">Acceso Restringido</h2>
-            <p class="mb-4">No tienes permiso para acceder a esta página.</p>
-            <a href="/" class="inline-block bg-white text-red-600 px-4 py-2 rounded-md font-medium hover:bg-red-100 transition-colors">
-              Volver al inicio
-            </a>
+            <span class="ml-3 text-green-300">Cargando suscriptores...</span>
           </div>
+
+          <!-- Contenedor para la tabla de suscriptores -->
+          <div id="subscribers-table-container" class="hidden">
+            <!-- Se llenará desde JavaScript -->
+          </div>
+
+          <!-- Mensaje de error -->
+          <div id="error-message" class="hidden bg-red-600/80 text-white p-4 rounded-md text-center my-4">
+            <p class="font-medium">Error al cargar los suscriptores</p>
+            <p class="text-sm mt-1">Por favor, intenta de nuevo más tarde o contacta al administrador del sistema.</p>
+          </div>
+
+          <!-- Mensaje de acceso no autorizado eliminado -->
         </div>
       </div>
     </div>
-  </div>
+  </AdminProtection>
 </MainLayout>
 
 <script>
   import { auth } from "@/core/firebase/config";
   import { getSubscribers, updateSubscriberStatus, deleteSubscriber } from "@/firebase/subscribers";
+  import type { Subscriber } from "@/firebase/subscribers"; // Importar la interfaz
   import { onAuthStateChanged } from "firebase/auth";
   import { Timestamp } from "firebase/firestore";
 
-  // Interfaz para los datos del suscriptor (duplicada del archivo TS para uso en el cliente)
-  interface Subscriber {
-    id: string;
-    firstName: string;
-    lastName?: string;
-    email: string;
-    createdAt: Timestamp;
-    active: boolean;
-  }
+  // Interfaz para los datos del suscriptor (duplicada del archivo TS para uso en el cliente) - Eliminada
+  // interface Subscriber {
+  //   id: string;
+  //   firstName: string;
+  //   lastName?: string;
+  //   email: string;
+  //   createdAt: Timestamp;
+  //   active: boolean;
+  // }
 
   // Elementos del DOM
   const loadingElement = document.getElementById("loading");
   const subscribersTableContainer = document.getElementById("subscribers-table-container");
   const errorMessageElement = document.getElementById("error-message");
-  const unauthorizedElement = document.getElementById("unauthorized");
+  // const unauthorizedElement = document.getElementById("unauthorized"); // Eliminado
 
   // Función para formatear fecha
-  const formatDate = (timestamp: any) => {
-    if (!timestamp) return "Fecha desconocida";
-    
-    let date;
+  const formatDate = (timestamp: any): string => {
+    if (!timestamp) {
+      return "Fecha desconocida";
+    }
+
+    let date: Date;
+
     try {
-      // Si es un objeto Timestamp de Firestore
       if (timestamp.toDate && typeof timestamp.toDate === 'function') {
+        // Prioridad para Timestamps de Firestore
         date = timestamp.toDate();
-      }
-      // Si es un objeto Date
-      else if (timestamp instanceof Date) {
-        date = timestamp;
-      }
-      // Si es un número (timestamp en milisegundos)
-      else if (typeof timestamp === 'number') {
+      } else {
+        // Fallback para strings ISO, números (milisegundos) o Date objects preexistentes
         date = new Date(timestamp);
       }
-      // Si es un string (formato ISO)
-      else if (typeof timestamp === 'string') {
-        date = new Date(timestamp);
+
+      // Verificar si la fecha resultante es válida
+      if (isNaN(date.getTime())) {
+        console.warn("Intento de formatear fecha inválida:", timestamp);
+        return "Fecha inválida";
       }
-      // Si no se pudo convertir
-      else {
-        return "Formato de fecha inválido";
-      }
-      
+
       return new Intl.DateTimeFormat('es-ES', {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
-      }).format(date);  
+      }).format(date);
     } catch (error) {
-      console.error("Error al formatear fecha:", error);
+      console.error("Error al formatear fecha:", error, "Input:", timestamp);
       return "Error de formato";
     }
   };
@@ -119,142 +107,135 @@ import { auth } from "@/core/firebase/config";
     if (loadingElement) loadingElement.classList.remove("hidden");
     
     if (user) {
-      // En un sistema real, deberías verificar si el usuario tiene rol de administrador
-      // Por ejemplo, usando custom claims o una colección específica en Firestore
-      const isAdmin = true; // Simulamos que el usuario es administrador
-      
-      if (isAdmin) {
-        try {
-          // Obtener suscriptores
-          const subscribers = await getSubscribers();
+      // AdminProtection ya ha verificado la autenticación y autorización.
+      // Procedemos a cargar los suscriptores directamente.
+      try {
+        // Obtener suscriptores
+        const subscribers = await getSubscribers();
+
+        // Crear tabla
+        if (subscribersTableContainer) {
+          // Ocultar cargando
+          if (loadingElement) loadingElement.classList.add("hidden");
+          subscribersTableContainer.classList.remove("hidden");
           
-          // Crear tabla
-          if (subscribersTableContainer) {
-            // Ocultar cargando
-            if (loadingElement) loadingElement.classList.add("hidden");
-            subscribersTableContainer.classList.remove("hidden");
-            
-            // Si no hay suscriptores
-            if (subscribers.length === 0) {
-              subscribersTableContainer.innerHTML = `
-                <div class="text-center py-10">
-                  <p class="text-xl text-green-300">No hay suscriptores registrados</p>
-                </div>
-              `;
-              return;
-            }
-            
-            // Crear tabla con datos
-            const tableHTML = `
-              <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-green-700">
-                  <thead class="bg-green-800/50">
-                    <tr>
-                      <th class="px-6 py-3 text-left text-xs font-medium text-green-300 uppercase tracking-wider">Nombre</th>
-                      <th class="px-6 py-3 text-left text-xs font-medium text-green-300 uppercase tracking-wider">Email</th>
-                      <th class="px-6 py-3 text-left text-xs font-medium text-green-300 uppercase tracking-wider">Fecha de suscripción</th>
-                      <th class="px-6 py-3 text-left text-xs font-medium text-green-300 uppercase tracking-wider">Estado</th>
-                      <th class="px-6 py-3 text-right text-xs font-medium text-green-300 uppercase tracking-wider">Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody class="bg-green-900/20 divide-y divide-green-800">
-                    ${subscribers.map((subscriber: Subscriber) => `
-                      <tr data-id="${subscriber.id}" class="hover:bg-green-800/30">
-                        <td class="px-6 py-4 whitespace-nowrap">
-                          <div class="text-sm font-medium text-white">${subscriber.firstName} ${subscriber.lastName || ''}</div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                          <div class="text-sm text-green-200">${subscriber.email}</div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                          <div class="text-sm text-green-200">${formatDate(subscriber.createdAt)}</div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                          <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${subscriber.active ? 'bg-green-600 text-green-100' : 'bg-gray-600 text-gray-100'}">
-                            ${subscriber.active ? 'Activo' : 'Inactivo'}
-                          </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <button class="toggle-status text-${subscriber.active ? 'yellow' : 'green'}-400 hover:text-${subscriber.active ? 'yellow' : 'green'}-300 mr-3">
-                            ${subscriber.active ? 'Desactivar' : 'Activar'}
-                          </button>
-                          <button class="delete-subscriber text-red-400 hover:text-red-300">
-                            Eliminar
-                          </button>
-                        </td>
-                      </tr>
-                    `).join('')}
-                  </tbody>
-                </table>
+          // Si no hay suscriptores
+          if (subscribers.length === 0) {
+            subscribersTableContainer.innerHTML = `
+              <div class="text-center py-10">
+                <p class="text-xl text-green-300">No hay suscriptores registrados</p>
               </div>
             `;
-            
-            subscribersTableContainer.innerHTML = tableHTML;
-            
-            // Agregar event listeners para los botones
-            document.querySelectorAll('.toggle-status').forEach(button => {
-              button.addEventListener('click', async (e) => {
-                const row = (e.target as HTMLElement).closest('tr');
-                if (row) {
-                  const id = row.getAttribute('data-id') as string;
-                  const isActive = (e.target as HTMLElement).textContent?.trim() === 'Desactivar';
-                  
-                  try {
-                    await updateSubscriberStatus(id, !isActive);
-                    // Recargar la página para reflejar los cambios
-                    window.location.reload();
-                  } catch (error) {
-                    console.error('Error al cambiar estado:', error);
-                    alert('Error al cambiar el estado del suscriptor');
-                  }
-                }
-              });
-            });
-            
-            document.querySelectorAll('.delete-subscriber').forEach(button => {
-              button.addEventListener('click', async (e) => {
-                const row = (e.target as HTMLElement).closest('tr');
-                if (row) {
-                  const id = row.getAttribute('data-id') as string;
-                  const email = row.querySelector('td:nth-child(2) div')?.textContent;
-                  
-                  if (confirm(`¿Estás seguro de que deseas eliminar al suscriptor ${email}? Esta acción no se puede deshacer.`)) {
-                    try {
-                      await deleteSubscriber(id);
-                      // Eliminar la fila sin recargar
-                      row.remove();
-                      
-                      // Si no quedan suscriptores, mostrar mensaje
-                      if (document.querySelectorAll('table tbody tr').length === 0) {
-                        subscribersTableContainer.innerHTML = `
-                          <div class="text-center py-10">
-                            <p class="text-xl text-green-300">No hay suscriptores registrados</p>
-                          </div>
-                        `;
-                      }
-                    } catch (error) {
-                      console.error('Error al eliminar:', error);
-                      alert('Error al eliminar el suscriptor');
-                    }
-                  }
-                }
-              });
-            });
+            return;
           }
-        } catch (error) {
-          console.error('Error al cargar suscriptores:', error);
-          if (loadingElement) loadingElement.classList.add("hidden");
-          if (errorMessageElement) errorMessageElement.classList.remove("hidden");
+
+          // Crear tabla con datos
+          const tableHTML = `
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-green-700">
+                <thead class="bg-green-800/50">
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-green-300 uppercase tracking-wider">Nombre</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-green-300 uppercase tracking-wider">Email</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-green-300 uppercase tracking-wider">Fecha de suscripción</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-green-300 uppercase tracking-wider">Estado</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-green-300 uppercase tracking-wider">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody class="bg-green-900/20 divide-y divide-green-800">
+                  ${subscribers.map((subscriber: Subscriber) => `
+                    <tr data-id="${subscriber.id}" class="hover:bg-green-800/30">
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-white">${subscriber.firstName} ${subscriber.lastName || ''}</div>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-green-200">${subscriber.email}</div>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-green-200">${formatDate(subscriber.createdAt)}</div>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${subscriber.active ? 'bg-green-600 text-green-100' : 'bg-gray-600 text-gray-100'}">
+                          ${subscriber.active ? 'Activo' : 'Inactivo'}
+                        </span>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button class="toggle-status text-${subscriber.active ? 'yellow' : 'green'}-400 hover:text-${subscriber.active ? 'yellow' : 'green'}-300 mr-3">
+                          ${subscriber.active ? 'Desactivar' : 'Activar'}
+                        </button>
+                        <button class="delete-subscriber text-red-400 hover:text-red-300">
+                          Eliminar
+                        </button>
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          `;
+
+          subscribersTableContainer.innerHTML = tableHTML;
+
+          // Agregar event listeners para los botones
+          document.querySelectorAll('.toggle-status').forEach(button => {
+            button.addEventListener('click', async (e) => {
+              const row = (e.target as HTMLElement).closest('tr');
+              if (row) {
+                const id = row.getAttribute('data-id') as string;
+                const isActive = (e.target as HTMLElement).textContent?.trim() === 'Desactivar';
+
+                try {
+                  await updateSubscriberStatus(id, !isActive);
+                  // Recargar la página para reflejar los cambios
+                  window.location.reload();
+                } catch (error) {
+                  console.error('Error al cambiar estado:', error);
+                  alert('Error al cambiar el estado del suscriptor');
+                }
+              }
+            });
+          });
+
+          document.querySelectorAll('.delete-subscriber').forEach(button => {
+            button.addEventListener('click', async (e) => {
+              const row = (e.target as HTMLElement).closest('tr');
+              if (row) {
+                const id = row.getAttribute('data-id') as string;
+                const email = row.querySelector('td:nth-child(2) div')?.textContent;
+
+                if (confirm(`¿Estás seguro de que deseas eliminar al suscriptor ${email}? Esta acción no se puede deshacer.`)) {
+                  try {
+                    await deleteSubscriber(id);
+                    // Eliminar la fila sin recargar
+                    row.remove();
+
+                    // Si no quedan suscriptores, mostrar mensaje
+                    if (document.querySelectorAll('table tbody tr').length === 0) {
+                      subscribersTableContainer.innerHTML = `
+                        <div class="text-center py-10">
+                          <p class="text-xl text-green-300">No hay suscriptores registrados</p>
+                        </div>
+                      `;
+                    }
+                  } catch (error) {
+                    console.error('Error al eliminar:', error);
+                    alert('Error al eliminar el suscriptor');
+                  }
+                }
+              }
+            });
+          });
         }
-      } else {
-        // No es administrador
+      } catch (error) {
+        console.error('Error al cargar suscriptores:', error);
         if (loadingElement) loadingElement.classList.add("hidden");
-        if (unauthorizedElement) unauthorizedElement.classList.remove("hidden");
+        if (errorMessageElement) errorMessageElement.classList.remove("hidden");
       }
     } else {
-      // No está autenticado
+      // No está autenticado, AdminProtection debería redirigir o mostrar mensaje.
       if (loadingElement) loadingElement.classList.add("hidden");
-      if (unauthorizedElement) unauthorizedElement.classList.remove("hidden");
+      // Ya no se muestra el mensaje de no autorizado desde aquí.
+      console.log("Usuario no autenticado después de que AdminProtection debió actuar.");
     }
   });
-</script> 
+</script>

@@ -127,15 +127,9 @@ if (!id) {
 
                 <!-- Imagen destacada -->
                 <div class="col-span-1">
-                  <label for="featuredImage" class="block text-white text-sm font-medium mb-2">
-                    Imagen destacada <span class="text-red-400">*</span>
-                  </label>
-                  <input
-                    id="featuredImage"
-                    type="url"
-                    class="w-full px-4 py-3 bg-green-700/50 border border-green-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 text-white transition-all duration-200"
-                    placeholder="https://ejemplo.com/imagen.jpg"
-                  />
+                  <div id="image-uploader-container">
+                    {/* ImageUploader se renderizará aquí */}
+                  </div>
                   <div id="image-error" class="hidden text-red-400 text-xs mt-1"></div>
                 </div>
 
@@ -162,14 +156,8 @@ if (!id) {
                   <label class="block text-white text-sm font-medium mb-2">
                     Etiquetas
                   </label>
-                  <div id="tags-container" class="space-y-2">
-                    <input
-                      id="tags-input"
-                      type="text"
-                      placeholder="Escribe una etiqueta y presiona Enter"
-                      class="w-full px-4 py-3 bg-green-700/50 border border-green-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 text-white transition-all duration-200"
-                    />
-                    <div id="tags-display" class="flex flex-wrap gap-2"></div>
+                  <div id="tags-input-react-container" class="col-span-2 space-y-2">
+                    {/* TagsInput se renderizará aquí */}
                   </div>
                 </div>
 
@@ -234,17 +222,10 @@ if (!id) {
                 <div class="col-span-2">
                   <label class="block text-white text-sm font-medium mb-2">
                     Contenido <span class="text-red-400">*</span>
-                    <span class="text-xs text-gray-400 font-normal ml-2">(Soporta formato Markdown)</span>
                   </label>
-                  <div class="relative">
-                    <textarea
-                      id="content"
-                      rows="20"
-                      class="w-full px-4 py-3 bg-green-700/50 border border-green-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 text-white font-mono transition-all duration-200 resize-y"
-                      placeholder="Escribe tu contenido aquí usando Markdown..."
-                      required
-                    ></textarea>
-                    <div id="word-counter" class="absolute bottom-3 right-3 text-xs text-gray-400 bg-green-900/80 px-2 py-1 rounded">
+                  <div id="rich-text-editor-container" class="col-span-2 relative">
+                     {/* El word-counter se mantiene, su lógica de actualización cambiará */}
+                     <div id="word-counter" class="absolute bottom-3 right-3 text-xs text-gray-400 bg-green-900/80 px-2 py-1 rounded z-10">
                       0 palabras
                     </div>
                   </div>
@@ -347,15 +328,21 @@ if (!id) {
 <!-- Importar bibliotecas necesarias -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dompurify@2.3.4/dist/purify.min.js"></script>
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
 
 <script>
   import { db } from '@/core/firebase/config';
   import { doc, getDoc, updateDoc, serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore';
+  import RichTextEditor from "@/components/RichTextEditor";
+  import ImageUploader from "@/components/ImageUploader";
+  import TagsInput from "@/components/TagsInput";
 
   // Variables globales
   let articleId: string;
   let originalData: any = {};
   let currentTags: string[] = [];
+  let currentContent: string = ''; // Para el RichTextEditor
   let isFormDirty = false;
   let autosaveTimeout: number | null = null;
 
@@ -383,14 +370,10 @@ if (!id) {
   const slugInput = document.getElementById("slug") as HTMLInputElement;
   const authorInput = document.getElementById("author") as HTMLInputElement;
   const excerptInput = document.getElementById("excerpt") as HTMLTextAreaElement;
-  const contentInput = document.getElementById("content") as HTMLTextAreaElement;
-  const featuredImageInput = document.getElementById("featuredImage") as HTMLInputElement;
   const categoryInput = document.getElementById("category") as HTMLSelectElement;
   const publishedInput = document.getElementById("published") as HTMLInputElement;
   const featuredInput = document.getElementById("featured") as HTMLInputElement;
   const commentsEnabledInput = document.getElementById("commentsEnabled") as HTMLInputElement;
-  const tagsInput = document.getElementById("tags-input") as HTMLInputElement;
-  const tagsDisplay = document.getElementById("tags-display");
 
   // Obtener ID del artículo
   const pathParts = window.location.pathname.split('/');
@@ -436,10 +419,41 @@ if (!id) {
     }
   }
 
-  function updateWordCount() {
-    if (wordCounter && contentInput) {
-      const words = contentInput.value.split(/\s+/).filter(w => w.length > 0).length;
+  function updateWordCount() { // Ahora usa currentContent
+    if (wordCounter) {
+      // Simple split for word count, might need refinement if currentContent is HTML
+      const textContent = currentContent.replace(/<[^>]+>/g, ' '); // Basic strip HTML for word count
+      const words = textContent.split(/\s+/).filter(w => w.length > 0).length;
       wordCounter.textContent = `${words} palabras`;
+    }
+  }
+
+  // Manejador para cambios en RichTextEditor
+  function handleContentChange(newContent: string) {
+    currentContent = newContent;
+    isFormDirty = true;
+    scheduleAutosave();
+    updateWordCount(); // Actualizar contador de palabras
+  }
+
+  function handleImageChange(newUrl: string) {
+    originalData.featuredImage = newUrl; // Asumimos que originalData se usa para enviar updates
+    isFormDirty = true;
+    scheduleAutosave();
+    const imageErrorDiv = document.getElementById('image-error');
+    if (imageErrorDiv) {
+      imageErrorDiv.classList.add('hidden');
+      imageErrorDiv.textContent = '';
+    }
+    // Opcional: re-validar si hay una función de validación para la URL de imagen
+    // validateField({ value: newUrl }, imageErrorDiv, validators.image);
+  }
+
+  function handleImageError(errorMsg: string) {
+    const imageErrorDiv = document.getElementById('image-error');
+    if (imageErrorDiv) {
+      imageErrorDiv.textContent = errorMsg;
+      imageErrorDiv.classList.remove('hidden');
     }
   }
 
@@ -466,41 +480,15 @@ if (!id) {
     }
   }
 
-  // Gestión de etiquetas
-  function addTag(tag: string) {
-    const trimmedTag = tag.trim().toLowerCase();
-    if (trimmedTag && !currentTags.includes(trimmedTag)) {
-      currentTags.push(trimmedTag);
-      renderTags();
-      isFormDirty = true;
-      scheduleAutosave();
-    }
-  }
+  // Gestión de etiquetas (eliminada, ahora manejada por TagsInput.tsx)
+  // function addTag(tag: string) { ... }
+  // function removeTag(tag: string) { ... }
+  // function renderTags() { ... }
 
-  function removeTag(tag: string) {
-    currentTags = currentTags.filter(t => t !== tag);
-    renderTags();
+  function handleTagsChange(newTags: string[]) {
+    currentTags = newTags;
     isFormDirty = true;
     scheduleAutosave();
-  }
-
-  function renderTags() {
-    if (tagsDisplay) {
-      tagsDisplay.innerHTML = '';
-      currentTags.forEach(tag => {
-        const tagElement = document.createElement('span');
-        tagElement.className = 'inline-flex items-center px-3 py-1 bg-green-600 text-white text-sm rounded-full';
-        tagElement.innerHTML = `
-          ${tag}
-          <button type="button" class="ml-2 text-green-200 hover:text-white" onclick="removeTag('${tag}')">
-            <svg class="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-            </svg>
-          </button>
-        `;
-        tagsDisplay.appendChild(tagElement);
-      });
-    }
   }
 
   // Autoguardado
@@ -516,8 +504,8 @@ if (!id) {
         slug: slugInput.value,
         author: authorInput.value,
         excerpt: excerptInput.value,
-        content: contentInput.value,
-        featuredImage: featuredImageInput.value,
+        content: currentContent, // Usar currentContent
+        featuredImage: originalData.featuredImage, // Usar originalData.featuredImage
         category: categoryInput.value,
         tags: currentTags,
         published: publishedInput.checked,
@@ -572,8 +560,8 @@ if (!id) {
         slugInput.value = article.slug || '';
         authorInput.value = article.author || '';
         excerptInput.value = article.excerpt || '';
-        contentInput.value = article.content || '';
-        featuredImageInput.value = article.featuredImage || '';
+        currentContent = article.content || ''; // Cargar a currentContent
+        originalData.featuredImage = article.featuredImage || ''; // Cargar a originalData
         categoryInput.value = article.category || '';
         publishedInput.checked = article.published || false;
         featuredInput.checked = article.featured || false;
@@ -581,11 +569,81 @@ if (!id) {
         
         // Cargar etiquetas
         currentTags = article.tags || [];
-        renderTags();
+
+        // Renderizar TagsInput
+        const tagsContainer = document.getElementById('tags-input-react-container');
+        if (tagsContainer && (window as any).React && (window as any).ReactDOM) {
+          const root = (window as any).ReactDOM.createRoot(tagsContainer);
+          const tagsElement = (window as any).React.createElement(TagsInput, {
+            value: currentTags,
+            onChange: handleTagsChange,
+            placeholder: "Añade etiquetas (ej: umbanda, fe, historia)"
+          });
+          root.render(tagsElement);
+        } else {
+          console.error('TagsInput container o React/ReactDOM no encontrado.');
+          // Opcional: Fallback a un input de texto simple si el componente React no carga
+          const fallbackTagsInput = document.createElement('input');
+          fallbackTagsInput.type = 'text';
+          fallbackTagsInput.className = 'w-full px-4 py-2 bg-red-900/50 border border-red-700 text-white';
+          fallbackTagsInput.placeholder = 'Error al cargar TagsInput. Ingrese etiquetas separadas por comas.';
+          fallbackTagsInput.value = currentTags.join(', ');
+          fallbackTagsInput.oninput = (e) => {
+            currentTags = (e.target as HTMLInputElement).value.split(',').map(t => t.trim()).filter(t => t);
+            isFormDirty = true;
+            scheduleAutosave();
+          };
+          if (tagsContainer) tagsContainer.appendChild(fallbackTagsInput);
+        }
         
         // Actualizar contadores
         updateCharCount();
-        updateWordCount();
+        updateWordCount(); // Se llamará con currentContent
+
+        // Renderizar RichTextEditor
+        const editorContainer = document.getElementById('rich-text-editor-container');
+        if (editorContainer && (window as any).React && (window as any).ReactDOM) {
+          const root = (window as any).ReactDOM.createRoot(editorContainer);
+          const editorElement = (window as any).React.createElement(RichTextEditor, {
+            value: currentContent,
+            onChange: handleContentChange,
+            placeholder: "Escribe tu contenido aquí..."
+          });
+          root.render(editorElement);
+        } else {
+          console.error('RichTextEditor container o React/ReactDOM no encontrado.');
+          // Fallback a textarea si el editor no carga
+          const fallbackTextarea = document.createElement('textarea');
+          fallbackTextarea.className = 'w-full px-4 py-3 bg-green-700/50 border border-green-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 text-white font-mono transition-all duration-200 resize-y';
+          fallbackTextarea.rows = 20;
+          fallbackTextarea.placeholder = 'Error al cargar editor. Usando Markdown básico...';
+          fallbackTextarea.value = currentContent;
+          fallbackTextarea.oninput = (e) => handleContentChange((e.target as HTMLTextAreaElement).value);
+          if(editorContainer) editorContainer.appendChild(fallbackTextarea);
+        }
+
+        // Renderizar ImageUploader
+        const imageUploaderContainer = document.getElementById('image-uploader-container');
+        if (imageUploaderContainer && (window as any).React && (window as any).ReactDOM) {
+          const root = (window as any).ReactDOM.createRoot(imageUploaderContainer);
+          const uploaderElement = (window as any).React.createElement(ImageUploader, {
+            value: originalData.featuredImage,
+            onChange: handleImageChange,
+            onError: handleImageError,
+            // Aquí puedes pasar más props si ImageUploader los acepta (ej. placeholder)
+          });
+          root.render(uploaderElement);
+        } else {
+          console.error('ImageUploader container o React/ReactDOM no encontrado.');
+           // Opcional: Fallback a un input de URL simple si el componente React no carga
+          const fallbackImgInput = document.createElement('input');
+          fallbackImgInput.type = 'url';
+          fallbackImgInput.className = 'w-full px-4 py-2 bg-red-900/50 border border-red-700 text-white';
+          fallbackImgInput.placeholder = 'Error al cargar ImageUploader. Ingrese URL manualmente.';
+          fallbackImgInput.value = originalData.featuredImage;
+          fallbackImgInput.oninput = (e) => handleImageChange((e.target as HTMLInputElement).value);
+          if (imageUploaderContainer) imageUploaderContainer.appendChild(fallbackImgInput);
+        }
         
         // Actualizar información del artículo
         const createdDate = document.getElementById('created-date');
@@ -630,7 +688,7 @@ if (!id) {
     e.preventDefault();
     
     // Validaciones básicas
-    if (!titleInput.value.trim() || !contentInput.value.trim()) {
+    if (!titleInput.value.trim() || !currentContent.trim()) { // Usar currentContent
       showError('El título y el contenido son requeridos');
       return;
     }
@@ -661,8 +719,8 @@ if (!id) {
         slug: slugInput.value.trim(),
         author: authorInput.value.trim(),
         excerpt: excerptInput.value.trim(),
-        content: contentInput.value.trim(),
-        featuredImage: featuredImageInput.value.trim(),
+        content: currentContent.trim(), // Usar currentContent
+        featuredImage: originalData.featuredImage.trim(), // Usar originalData.featuredImage
         category: categoryInput.value,
         tags: currentTags,
         published: publishedInput.checked,
@@ -699,8 +757,8 @@ if (!id) {
       const title = titleInput.value || "Sin título";
       const author = authorInput.value || "Sin autor";
       const excerpt = excerptInput.value || "Sin descripción";
-      const content = contentInput.value || "*No hay contenido para mostrar*";
-      const image = featuredImageInput.value;
+      const content = currentContent || "*No hay contenido para mostrar*"; // Usar currentContent
+      const image = originalData.featuredImage;
       
       // Verificar que marked y DOMPurify estén disponibles
       if (typeof window !== 'undefined' && (window as any).marked && (window as any).DOMPurify) {
@@ -763,16 +821,10 @@ if (!id) {
       scheduleAutosave();
     });
     
-    contentInput.addEventListener('input', () => {
-      updateWordCount();
-      isFormDirty = true;
-      scheduleAutosave();
-    });
+    // El listener para contentInput se elimina, RichTextEditor usa su propio onChange.
+    // El updateWordCount y scheduleAutosave se llaman desde handleContentChange.
     
-    featuredImageInput.addEventListener('input', () => {
-      isFormDirty = true;
-      scheduleAutosave();
-    });
+    // El listener para featuredImageInput se elimina, ImageUploader usa su propio onChange.
     
     categoryInput.addEventListener('change', () => {
       isFormDirty = true;
@@ -793,14 +845,8 @@ if (!id) {
       }
     });
     
-    // Etiquetas
-    tagsInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        addTag(tagsInput.value);
-        tagsInput.value = '';
-      }
-    });
+    // Etiquetas - Event listener eliminado, ahora manejado por TagsInput.tsx
+    // tagsInput.addEventListener('keydown', (e) => { ... });
     
     // Botones
     document.getElementById('preview-btn')?.addEventListener('click', showPreview);
@@ -825,8 +871,8 @@ if (!id) {
     });
   }
 
-  // Hacer funciones globales para los botones
-  (window as any).removeTag = removeTag;
+  // Hacer funciones globales para los botones - removeTag ya no es global
+  // (window as any).removeTag = removeTag;
 
   // Inicializar
   setupEventListeners();
@@ -855,10 +901,12 @@ if (!id) {
     }
   }
 
-  /* Estilos para el editor */
-  #content {
+  /* #content se refiere al antiguo textarea, podría eliminarse o adaptarse si es necesario para el contenedor del editor */
+  #rich-text-editor-container textarea, /* Estilo para el fallback textarea */
+  #rich-text-editor-container .ProseMirror { /* Asumiendo que RichTextEditor usa ProseMirror y tiene esa clase */
     font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
     line-height: 1.6;
+    min-height: 300px; /* Asegurar altura mínima para el editor */
   }
 
   /* Estilos para las etiquetas */

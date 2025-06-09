@@ -226,128 +226,112 @@ import AdminProtection from "@/components/AdminProtection";
 </MainLayout>
 
 <script>
-  import { db } from "@/core/firebase/config";
-  import { doc, setDoc, getDoc } from "firebase/firestore";
+  // Firebase imports ya no son necesarios aquí para doc, setDoc, getDoc
+  // import { db } from "@/core/firebase/config";
+  // import { doc, setDoc, getDoc } from "firebase/firestore";
+  import { loadSettings as serviceLoadSettings, saveSettings as serviceSaveSettings } from "@/features/admin/settingsService";
+  import type { SiteSettings } from "@/features/admin/settingsService";
+  import { showUIMessage } from "@/core/utils/uiNotifications"; // Importar la utilidad
+
 
   // Elementos del DOM
-  const statusMessage = document.getElementById("status-message");
-  const statusText = document.getElementById("status-text");
+  // const statusMessage = document.getElementById("status-message"); // Ya no se necesita directamente si showUIMessage lo maneja
+  // const statusText = document.getElementById("status-text"); // Ya no se necesita directamente
 
-  // Función para mostrar mensajes de estado
-  function showStatus(message: string, isError = false) {
-    if (statusMessage && statusText) {
-      statusText.textContent = message;
-      statusMessage.className = `mt-6 p-4 rounded-md ${isError ? 'bg-red-600/80 text-white' : 'bg-green-600/80 text-white'}`;
-      statusMessage.classList.remove("hidden");
-      
-      setTimeout(() => {
-        statusMessage.classList.add("hidden");
-      }, 5000);
-    }
-  }
+  // Función showStatus eliminada, se usará showUIMessage
 
-  // Función para cargar configuración
-  async function loadSettings() {
+  // Función para cargar configuración (ahora usa el servicio)
+  async function populateFormWithSettings() {
     try {
-      const settingsDoc = await getDoc(doc(db, "settings", "general"));
-      if (settingsDoc.exists()) {
-        const settings = settingsDoc.data();
-        
+      const settings = await serviceLoadSettings(); // Llama al servicio
+      if (settings) {
         // Cargar configuración general
-        const siteTitle = document.getElementById("site-title") as HTMLInputElement;
-        const siteDescription = document.getElementById("site-description") as HTMLTextAreaElement;
-        const contactEmail = document.getElementById("contact-email") as HTMLInputElement;
-        
-        if (siteTitle && settings.siteTitle) siteTitle.value = settings.siteTitle;
-        if (siteDescription && settings.siteDescription) siteDescription.value = settings.siteDescription;
-        if (contactEmail && settings.contactEmail) contactEmail.value = settings.contactEmail;
+        (document.getElementById("site-title") as HTMLInputElement).value = settings.siteTitle || "Centro Umbandista Reino da Mata";
+        (document.getElementById("site-description") as HTMLTextAreaElement).value = settings.siteDescription || "";
+        (document.getElementById("contact-email") as HTMLInputElement).value = settings.contactEmail || "";
         
         // Cargar configuración SEO
-        const metaKeywords = document.getElementById("meta-keywords") as HTMLInputElement;
-        const googleAnalytics = document.getElementById("google-analytics") as HTMLInputElement;
-        const enableSitemap = document.getElementById("enable-sitemap") as HTMLInputElement;
-        
-        if (metaKeywords && settings.metaKeywords) metaKeywords.value = settings.metaKeywords;
-        if (googleAnalytics && settings.googleAnalytics) googleAnalytics.value = settings.googleAnalytics;
-        if (enableSitemap && typeof settings.enableSitemap === 'boolean') enableSitemap.checked = settings.enableSitemap;
+        (document.getElementById("meta-keywords") as HTMLInputElement).value = settings.metaKeywords || "";
+        (document.getElementById("google-analytics") as HTMLInputElement).value = settings.googleAnalytics || "";
+        (document.getElementById("enable-sitemap") as HTMLInputElement).checked = typeof settings.enableSitemap === 'boolean' ? settings.enableSitemap : true;
         
         // Cargar configuración de comentarios
-        const enableComments = document.getElementById("enable-comments") as HTMLInputElement;
-        const moderateComments = document.getElementById("moderate-comments") as HTMLInputElement;
-        const requireLogin = document.getElementById("require-login") as HTMLInputElement;
-        
-        if (enableComments && typeof settings.enableComments === 'boolean') enableComments.checked = settings.enableComments;
-        if (moderateComments && typeof settings.moderateComments === 'boolean') moderateComments.checked = settings.moderateComments;
-        if (requireLogin && typeof settings.requireLogin === 'boolean') requireLogin.checked = settings.requireLogin;
+        (document.getElementById("enable-comments") as HTMLInputElement).checked = typeof settings.enableComments === 'boolean' ? settings.enableComments : true;
+        (document.getElementById("moderate-comments") as HTMLInputElement).checked = typeof settings.moderateComments === 'boolean' ? settings.moderateComments : true;
+        (document.getElementById("require-login") as HTMLInputElement).checked = typeof settings.requireLogin === 'boolean' ? settings.requireLogin : false;
         
         // Cargar configuración de newsletter
-        const enableNewsletter = document.getElementById("enable-newsletter") as HTMLInputElement;
-        const newsletterFrequency = document.getElementById("newsletter-frequency") as HTMLSelectElement;
-        const welcomeEmail = document.getElementById("welcome-email") as HTMLTextAreaElement;
-        
-        if (enableNewsletter && typeof settings.enableNewsletter === 'boolean') enableNewsletter.checked = settings.enableNewsletter;
-        if (newsletterFrequency && settings.newsletterFrequency) newsletterFrequency.value = settings.newsletterFrequency;
-        if (welcomeEmail && settings.welcomeEmail) welcomeEmail.value = settings.welcomeEmail;
+        (document.getElementById("enable-newsletter") as HTMLInputElement).checked = typeof settings.enableNewsletter === 'boolean' ? settings.enableNewsletter : true;
+        (document.getElementById("newsletter-frequency") as HTMLSelectElement).value = settings.newsletterFrequency || "monthly";
+        (document.getElementById("welcome-email") as HTMLTextAreaElement).value = settings.welcomeEmail || "";
+      } else {
+        // Valores por defecto si no hay configuración (los placeholders del HTML actuarán o puedes setearlos aquí)
+        (document.getElementById("site-title") as HTMLInputElement).value = "Centro Umbandista Reino da Mata";
+        (document.getElementById("enable-sitemap") as HTMLInputElement).checked = true;
+        (document.getElementById("enable-comments") as HTMLInputElement).checked = true;
+        (document.getElementById("moderate-comments") as HTMLInputElement).checked = true;
+        (document.getElementById("enable-newsletter") as HTMLInputElement).checked = true;
+        (document.getElementById("newsletter-frequency") as HTMLSelectElement).value = "monthly";
       }
     } catch (error) {
-      console.error("Error al cargar configuración:", error);
-      showStatus("Error al cargar la configuración", true);
+      console.error("Error al cargar configuración desde el servicio:", error);
+      showUIMessage(error.message || "Error al cargar la configuración", 'error', 'status-message');
     }
   }
 
-  // Función para guardar configuración
-  async function saveSettings(formData: Record<string, any>) {
-    try {
-      await setDoc(doc(db, "settings", "general"), formData, { merge: true });
-      showStatus("Configuración guardada exitosamente");
-    } catch (error) {
-      console.error("Error al guardar configuración:", error);
-      showStatus("Error al guardar la configuración", true);
-    }
-  }
+  // Las funciones de guardado ahora usarán el servicio
+  // Ya no se necesita una función saveSettings local general, cada form listener llamará al servicio.
 
   // Event listeners para los formularios
   document.getElementById("general-settings")?.addEventListener("submit", async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target as HTMLFormElement);
-    const settings = {
+    const settings: Partial<SiteSettings> = {
       siteTitle: (document.getElementById("site-title") as HTMLInputElement).value,
       siteDescription: (document.getElementById("site-description") as HTMLTextAreaElement).value,
       contactEmail: (document.getElementById("contact-email") as HTMLInputElement).value,
     };
-    await saveSettings(settings);
+    serviceSaveSettings(settings)
+      .then(() => showUIMessage("Configuración general guardada exitosamente.", 'success', 'status-message'))
+      .catch(err => showUIMessage(err.message || "Error al guardar configuración general.", 'error', 'status-message'));
   });
 
   document.getElementById("seo-settings")?.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const settings = {
+    const settings: Partial<SiteSettings> = {
       metaKeywords: (document.getElementById("meta-keywords") as HTMLInputElement).value,
       googleAnalytics: (document.getElementById("google-analytics") as HTMLInputElement).value,
       enableSitemap: (document.getElementById("enable-sitemap") as HTMLInputElement).checked,
     };
-    await saveSettings(settings);
+    serviceSaveSettings(settings)
+      .then(() => showUIMessage("Configuración SEO guardada exitosamente.", 'success', 'status-message'))
+      .catch(err => showUIMessage(err.message || "Error al guardar configuración SEO.", 'error', 'status-message'));
   });
 
   document.getElementById("comments-settings")?.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const settings = {
+    const settings: Partial<SiteSettings> = {
       enableComments: (document.getElementById("enable-comments") as HTMLInputElement).checked,
       moderateComments: (document.getElementById("moderate-comments") as HTMLInputElement).checked,
       requireLogin: (document.getElementById("require-login") as HTMLInputElement).checked,
     };
-    await saveSettings(settings);
+    serviceSaveSettings(settings)
+      .then(() => showUIMessage("Configuración de comentarios guardada exitosamente.", 'success', 'status-message'))
+      .catch(err => showUIMessage(err.message || "Error al guardar configuración de comentarios.", 'error', 'status-message'));
   });
 
   document.getElementById("newsletter-settings")?.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const settings = {
+    const settings: Partial<SiteSettings> = {
       enableNewsletter: (document.getElementById("enable-newsletter") as HTMLInputElement).checked,
-      newsletterFrequency: (document.getElementById("newsletter-frequency") as HTMLSelectElement).value,
+      newsletterFrequency: (document.getElementById("newsletter-frequency") as HTMLSelectElement).value as SiteSettings['newsletterFrequency'],
       welcomeEmail: (document.getElementById("welcome-email") as HTMLTextAreaElement).value,
     };
-    await saveSettings(settings);
+    serviceSaveSettings(settings)
+      .then(() => showUIMessage("Configuración de newsletter guardada exitosamente.", 'success', 'status-message'))
+      .catch(err => showUIMessage(err.message || "Error al guardar configuración de newsletter.", 'error', 'status-message'));
   });
 
   // Cargar configuración al inicializar
-  loadSettings();
+  populateFormWithSettings();
 </script> 

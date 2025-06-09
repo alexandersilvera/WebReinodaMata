@@ -71,6 +71,22 @@ async function syncArticlesToFiles() {
   
   // Asegurarse de que el directorio existe
   await mkdirp(contentDir);
+
+  // 1. Listar Archivos Existentes
+  let existingMdFiles: string[] = [];
+  try {
+    existingMdFiles = fs.readdirSync(contentDir).filter(file => file.endsWith('.md'));
+    console.log('Archivos Markdown existentes en el directorio:', existingMdFiles);
+  } catch (error) {
+    console.error('Error al leer el directorio de contenido:', error);
+    // Si no podemos leer el directorio, es mejor no continuar para evitar eliminaciones accidentales.
+    // O, podríamos optar por continuar solo con la sincronización y omitir la eliminación.
+    // Por ahora, lanzaremos el error para detener la ejecución si el directorio no es legible.
+    throw new Error('No se pudo leer el directorio de contenido para la sincronización.');
+  }
+
+  // 2. Rastrear Archivos Sincronizados
+  const generatedFileNames = new Set<string>();
   
   // Procesar cada artículo
   for (const doc of articlesSnapshot.docs) {
@@ -94,9 +110,24 @@ ${article.content}`;
     // Escribir el archivo
     fs.writeFileSync(filePath, frontmatter, 'utf8');
     console.log(`Artículo sincronizado: ${fileName}`);
+    generatedFileNames.add(fileName); // Añadir a la lista de archivos generados
+  }
+
+  // 3. Eliminar Archivos Huérfanos
+  console.log('Verificando archivos Markdown obsoletos...');
+  for (const orphanFileName of existingMdFiles) {
+    if (!generatedFileNames.has(orphanFileName)) {
+      const orphanFilePath = path.join(contentDir, orphanFileName);
+      try {
+        fs.unlinkSync(orphanFilePath);
+        console.log(`Archivo Markdown obsoleto eliminado: ${orphanFileName}`);
+      } catch (error) {
+        console.error(`Error al eliminar archivo Markdown obsoleto ${orphanFileName}:`, error);
+      }
+    }
   }
   
-  console.log('Sincronización completada');
+  console.log('Sincronización completada y limpieza de archivos obsoletos finalizada.');
 }
 
 /**

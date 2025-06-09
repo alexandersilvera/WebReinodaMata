@@ -72,7 +72,7 @@ import MainLayout from "@/layouts/MainLayout.astro";
 </MainLayout>
 
 <script>
-  import { doc, getDoc, updateDoc } from 'firebase/firestore';
+  import { doc, getDoc, updateDoc, collection, query, where, getDocs, limit } from 'firebase/firestore'; // Added collection, query, where, getDocs, limit
   import { db } from '@/core/firebase/config';
   
   // Elementos del DOM
@@ -85,8 +85,7 @@ import MainLayout from "@/layouts/MainLayout.astro";
   
   // Obtener parámetros de la URL
   const urlParams = new URLSearchParams(window.location.search);
-  const subscriberId = urlParams.get('id');
-  const email = urlParams.get('email');
+  const token = urlParams.get('token'); // Changed to get 'token'
   
   // Función para mostrar un elemento y ocultar los demás
   const showElement = (element) => {
@@ -98,38 +97,41 @@ import MainLayout from "@/layouts/MainLayout.astro";
   
   // Función para verificar los parámetros de la URL
   const verifyUnsubscribeParams = async () => {
-    // Verificar que los parámetros existen
-    if (!subscriberId || !email) {
+    // Verificar que el token existe
+    if (!token) {
+      if (invalidLinkElement) invalidLinkElement.querySelector('p')!.textContent = 'El enlace de cancelación no es válido o le falta el token.';
       showElement(invalidLinkElement);
       return { valid: false };
     }
     
     try {
-      // Obtener documento del suscriptor
-      const subscriberRef = doc(db, 'subscribers', subscriberId);
-      const subscriberDoc = await getDoc(subscriberRef);
+      // Consultar suscriptor por unsubscribeToken
+      const subscribersRef = collection(db, 'subscribers');
+      const q = query(subscribersRef, where("unsubscribeToken", "==", token), limit(1));
+      const querySnapshot = await getDocs(q);
       
-      // Verificar que el documento existe y el email coincide
-      if (!subscriberDoc.exists()) {
+      if (querySnapshot.empty) {
+        if (invalidLinkElement) invalidLinkElement.querySelector('p')!.textContent = 'El token de cancelación no es válido o ya ha sido utilizado.';
         showElement(invalidLinkElement);
         return { valid: false };
       }
       
+      const subscriberDoc = querySnapshot.docs[0];
+      const subscriberRef = subscriberDoc.ref;
       const subscriberData = subscriberDoc.data();
-      if (subscriberData.email !== email) {
-        showElement(invalidLinkElement);
-        return { valid: false };
-      }
       
       // Si el suscriptor ya está inactivo, mostrar éxito
       if (subscriberData.active === false) {
+        if (successElement) successElement.querySelector('p')!.textContent = 'Ya te encuentras desuscrito de nuestro newsletter.';
         showElement(successElement);
-        return { valid: false };
+        return { valid: false }; // No es necesario mostrar el formulario de confirmación
       }
       
+      // El token es válido y el suscriptor está activo
       return { valid: true, subscriberRef };
     } catch (error) {
-      console.error('Error al verificar suscripción:', error);
+      console.error('Error al verificar suscripción por token:', error);
+      if (errorMessageElement) errorMessageElement.textContent = 'Ocurrió un error al verificar tu token. Intenta más tarde.';
       showElement(errorElement);
       return { valid: false };
     }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { FormEvent } from 'react';
 import { httpsCallable } from 'firebase/functions';
+import RichTextEditor from "@/components/RichTextEditor"; // Importar RichTextEditor
 import { functions } from '../core/firebase/config';
 import { getSubscriberStats, handleFirestoreError, retryOperation } from '../utils/firestoreQueries';
 import type { SubscriberStats } from '../utils/firestoreQueries';
@@ -9,6 +10,7 @@ export default function NewsletterSender() {
   const [subject, setSubject] = useState('');
   const [content, setContent] = useState('');
   const [htmlContent, setHtmlContent] = useState('');
+  const [markdownContent, setMarkdownContent] = useState(''); // Nuevo estado para Markdown
   const [fromName, setFromName] = useState('Centro Umbandista Reino Da Mata');
   const [testEmail, setTestEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -46,9 +48,29 @@ export default function NewsletterSender() {
     loadSubscriberStats();
   }, []);
 
+  // Efecto para sincronizar markdownContent a htmlContent y content
+  useEffect(() => {
+    if (typeof window !== 'undefined' && (window as any).marked && (window as any).DOMPurify) {
+      const newHtml = (window as any).DOMPurify.sanitize((window as any).marked.parse(markdownContent));
+      setHtmlContent(newHtml);
+      // Opcional: Sincronizar con el campo de texto plano.
+      // Podrías querer una versión más limpia (sin markdown/html) para 'content'.
+      // Por ahora, si el usuario usa el editor markdown, el texto plano será el markdown.
+      setContent(markdownContent);
+    } else if (markdownContent) { // Si hay markdown pero las librerías no están, al menos pasar el markdown al texto plano.
+      setContent(markdownContent);
+      console.warn("marked o DOMPurify no están disponibles. La vista previa HTML no se actualizará desde Markdown.");
+    }
+  }, [markdownContent]);
+
+  const handleMarkdownChange = (newMarkdown: string) => {
+    setMarkdownContent(newMarkdown);
+    // La lógica de conversión a HTML y texto plano ahora está en el useEffect.
+  };
+
   // Función para enviar un correo de prueba
   const sendTestEmail = async () => {
-    if (!testEmail || !subject || !content) {
+    if (!testEmail || !subject || (!content && !markdownContent)) { // Verificar si hay contenido en markdown o texto plano
       setResult({ success: false, message: 'Por favor completa al menos el asunto, contenido y correo de prueba' });
       return;
     }
@@ -86,7 +108,7 @@ export default function NewsletterSender() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     
-    if (!subject || !content) {
+    if (!subject || (!content && !markdownContent)) { // Verificar si hay contenido en markdown o texto plano
       setResult({ success: false, message: 'Por favor completa al menos el asunto y contenido' });
       return;
     }
@@ -245,15 +267,24 @@ export default function NewsletterSender() {
         
         <div>
           <label htmlFor="htmlContent" className="block text-white text-sm font-medium mb-2">
-            Contenido HTML (opcional)
+            Contenido HTML (generado desde Markdown)
           </label>
-          <textarea
-            id="htmlContent"
-            value={htmlContent}
-            onChange={(e) => setHtmlContent(e.target.value)}
-            rows={10}
-            className="w-full px-4 py-2 bg-green-700/50 border border-green-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400 text-white font-mono text-sm"
+          {/* Se reemplaza el textarea de htmlContent con RichTextEditor para markdownContent */}
+          <RichTextEditor
+            value={markdownContent}
+            onChange={handleMarkdownChange}
+            placeholder="Escribe el contenido del newsletter en Markdown aquí..."
+            className="min-h-[200px] bg-green-700/50 border border-green-600 rounded-md text-white"
           />
+          {/* Opcional: Mostrar el HTML generado solo para debug o si se quiere permitir edición directa HTML también */}
+          {/* <textarea
+            id="htmlContentDebug"
+            value={htmlContent}
+            readOnly
+            rows={5}
+            className="mt-2 w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-md text-gray-300 text-xs"
+            placeholder="HTML generado aparecerá aquí"
+          /> */}
         </div>
         
         {/* Sección para enviar correo de prueba */}
