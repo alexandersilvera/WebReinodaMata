@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import type { FormEvent } from 'react';
 import { httpsCallable } from 'firebase/functions';
 import RichTextEditor from "@/components/RichTextEditor"; // Importar RichTextEditor
