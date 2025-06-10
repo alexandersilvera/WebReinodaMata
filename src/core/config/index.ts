@@ -65,6 +65,18 @@ function getEnvVar(name: string, defaultValue: string = ''): string {
 }
 
 /**
+ * Determina el entorno de la aplicación (development, production, test)
+ * Utiliza VERCEL_ENV en Vercel o NODE_ENV en otros entornos.
+ */
+function getEnvironment(): 'development' | 'production' | 'test' {
+  const vercelEnv = getEnvVar('VERCEL_ENV');
+  if (vercelEnv) {
+    return vercelEnv as 'production' | 'development' | 'test';
+  }
+  return (getEnvVar('NODE_ENV', 'development') as 'development' | 'production' | 'test');
+}
+
+/**
  * Parsea una lista de URLs separadas por coma
  */
 function parseUrlList(urlString: string): string[] {
@@ -113,7 +125,7 @@ export const config: AppConfig = {
   },
   app: {
     siteUrl: getEnvVar('PUBLIC_SITE_URL', 'http://localhost:4321'),
-    environment: (getEnvVar('NODE_ENV', 'development') as 'development' | 'production' | 'test'),
+    environment: getEnvironment(),
   },
   cors: {
     allowedOrigins: parseUrlList(getEnvVar('ALLOWED_ORIGINS', 'http://localhost:4321,https://centroumbandistareinodamata.org')),
