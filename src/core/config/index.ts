@@ -125,7 +125,7 @@ export const config: AppConfig = {
   },
   app: {
     siteUrl: getEnvVar('PUBLIC_SITE_URL', 'http://localhost:4321'),
-    environment: getEnvironment(),
+    environment: import.meta.env.PROD ? 'production' : 'development',
   },
   cors: {
     allowedOrigins: parseUrlList(getEnvVar('ALLOWED_ORIGINS', 'http://localhost:4321,https://centroumbandistareinodamata.org')),

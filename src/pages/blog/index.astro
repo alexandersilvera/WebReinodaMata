@@ -3,13 +3,13 @@ import Article from "@/components/Article.astro";
 import ArticleList from "@/layouts/ArticleList.astro";
 import { getPublishedArticles } from "@/firebase/articles";
 
-// Configurar para renderizado dinámico
+// Configurar para renderizado dinámico en el cliente y evitar errores de SSR
 export const prerender = false;
 
 // Obtener artículos publicados desde Firestore
 const firestoreArticles = await getPublishedArticles();
 
-// Convertir los artículos de Firestore al formato esperado por el componente Article
+// Convertir los artículos de Firestore al formato esperado por el componente
 const posts = firestoreArticles.map(article => ({
 	data: {
 		title: article.title,

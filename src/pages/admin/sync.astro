@@ -2,6 +2,8 @@
 import MainLayout from "@/layouts/MainLayout.astro";
 import AdminProtection from "@/components/AdminProtection";
 import SyncController from "@/features/admin/SyncController";
+
+export const prerender = false;
 ---
 
 <MainLayout title="Gestión de Sincronización | Reino Da Mata">

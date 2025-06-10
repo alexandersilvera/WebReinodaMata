@@ -70,7 +70,7 @@ export default function NewsletterSender() {
 
   // Función para enviar un correo de prueba
   const sendTestEmail = async () => {
-    if (!testEmail || !subject || (!content && !markdownContent)) { // Verificar si hay contenido en markdown o texto plano
+    if (!testEmail || !subject || !markdownContent) {
       setResult({ success: false, message: 'Por favor completa al menos el asunto, contenido y correo de prueba' });
       return;
     }
@@ -84,8 +84,8 @@ export default function NewsletterSender() {
       
       const response = await sendTestNewsletter({
         subject,
-        content,
-        htmlContent,
+        content, // plain text version
+        htmlContent, // html version
         fromName,
         testEmail
       });
@@ -108,7 +108,7 @@ export default function NewsletterSender() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     
-    if (!subject || (!content && !markdownContent)) { // Verificar si hay contenido en markdown o texto plano
+    if (!subject || !markdownContent) {
       setResult({ success: false, message: 'Por favor completa al menos el asunto y contenido' });
       return;
     }
@@ -151,7 +151,7 @@ export default function NewsletterSender() {
         {statsLoading ? (
           <div className="flex items-center text-sm text-green-300 bg-green-900/50 px-3 py-1 rounded-md">
             <svg className="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
             Cargando estadísticas...
@@ -252,39 +252,15 @@ export default function NewsletterSender() {
         </div>
         
         <div>
-          <label htmlFor="content" className="block text-white text-sm font-medium mb-2">
-            Contenido (texto plano)
+          <label htmlFor="rich-text-editor" className="block text-white text-sm font-medium mb-2">
+            Contenido del Newsletter (Markdown)
           </label>
-          <textarea
-            id="content"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            rows={6}
-            className="w-full px-4 py-2 bg-green-700/50 border border-green-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400 text-white"
-            required
-          />
-        </div>
-        
-        <div>
-          <label htmlFor="htmlContent" className="block text-white text-sm font-medium mb-2">
-            Contenido HTML (generado desde Markdown)
-          </label>
-          {/* Se reemplaza el textarea de htmlContent con RichTextEditor para markdownContent */}
           <RichTextEditor
             value={markdownContent}
             onChange={handleMarkdownChange}
             placeholder="Escribe el contenido del newsletter en Markdown aquí..."
             className="min-h-[200px] bg-green-700/50 border border-green-600 rounded-md text-white"
           />
-          {/* Opcional: Mostrar el HTML generado solo para debug o si se quiere permitir edición directa HTML también */}
-          {/* <textarea
-            id="htmlContentDebug"
-            value={htmlContent}
-            readOnly
-            rows={5}
-            className="mt-2 w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-md text-gray-300 text-xs"
-            placeholder="HTML generado aparecerá aquí"
-          /> */}
         </div>
         
         {/* Sección para enviar correo de prueba */}
