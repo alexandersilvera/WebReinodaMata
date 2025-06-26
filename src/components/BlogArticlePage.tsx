@@ -30,14 +30,9 @@ export default function BlogArticlePage({ slug }: BlogArticlePageProps) {
       try {
         setLoading(true);
         
-        // Obtener el artículo por slug
+        // Obtener el artículo por slug (filtrar en memoria para evitar índices complejos)
         const articlesRef = collection(db, 'articles');
-        const q = query(
-          articlesRef,
-          where('slug', '==', slug),
-          where('draft', '==', false),
-          limit(1)
-        );
+        const q = query(articlesRef, where('slug', '==', slug), limit(1));
         
         const querySnapshot = await getDocs(q);
         
@@ -51,18 +46,21 @@ export default function BlogArticlePage({ slug }: BlogArticlePageProps) {
           ...querySnapshot.docs[0].data()
         } as Article;
         
+        // Verificar que no sea borrador
+        if (articleData.draft) {
+          setError('Artículo no encontrado');
+          return;
+        }
+        
         setArticle(articleData);
         
-        // Cargar artículos relacionados
-        const allArticlesQuery = query(
-          articlesRef,
-          where('draft', '==', false)
-        );
+        // Cargar artículos relacionados (obtener todos y filtrar en memoria)
+        const allArticlesQuery = query(articlesRef);
         
         const allArticlesSnapshot = await getDocs(allArticlesQuery);
         const allArticles = allArticlesSnapshot.docs
           .map(doc => ({ id: doc.id, ...doc.data() } as Article))
-          .filter(a => a.slug !== slug);
+          .filter(a => a.slug !== slug && !a.draft); // Filtrar borradores y artículo actual
         
         // Encontrar artículos relacionados por tags
         const related = allArticles

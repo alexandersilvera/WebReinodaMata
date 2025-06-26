@@ -23,19 +23,17 @@ export default function BlogArticlesList() {
       try {
         setLoading(true);
         
-        // Obtener artículos publicados desde Firestore
+        // Obtener artículos desde Firestore (filtrar en memoria para evitar índices complejos)
         const articlesRef = collection(db, 'articles');
-        const q = query(
-          articlesRef,
-          where('draft', '==', false),
-          orderBy('publishDate', 'desc')
-        );
+        const q = query(articlesRef, orderBy('publishDate', 'desc'));
         
         const querySnapshot = await getDocs(q);
-        const articlesData = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        } as Article));
+        const articlesData = querySnapshot.docs
+          .map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          } as Article))
+          .filter(article => !article.draft); // Filtrar borradores en memoria
         
         setArticles(articlesData);
       } catch (err) {
