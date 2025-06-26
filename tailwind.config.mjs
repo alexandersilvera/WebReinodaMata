@@ -7,6 +7,8 @@ export default {
 		'hidden',
 		'flex',
 		'flex-col',
+		'line-clamp-2',
+		'line-clamp-3',
 		// Puedes agregar más clases si alternas otras dinámicamente
 	],
 	theme: {
