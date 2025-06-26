@@ -2,8 +2,8 @@
 import BlogArticlePage from "@/components/BlogArticlePage";
 import MainLayout from "@/layouts/MainLayout.astro";
 
-// Configurar para renderizado estático
-export const prerender = true;
+// Configurar para renderizado dinámico en servidor
+export const prerender = false;
 
 // Obtener el slug de la URL
 const { slug } = Astro.params;
