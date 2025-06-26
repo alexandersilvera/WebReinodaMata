@@ -1,7 +1,7 @@
 ---
 import Article from "@/components/Article.astro";
 import ArticleList from "@/layouts/ArticleList.astro";
-import { getPublishedArticles } from "@/firebase/articles";
+import { getPublishedArticles } from "@/services/articleService";
 
 // Configurar para renderizado dinámico en el cliente y evitar errores de SSR
 export const prerender = false;

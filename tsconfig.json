@@ -9,7 +9,7 @@
 		"jsxImportSource": "react",
 		"module": "ESNext",
 		"moduleResolution": "bundler",
-		"noImplicitReturns": true,
+		"noImplicitReturns": false,
 		"noUnusedLocals": false,
 		"outDir": "lib",
 		"sourceMap": true,
@@ -23,7 +23,6 @@
 		"forceConsistentCasingInFileNames": true,
 		"resolveJsonModule": true,
 		"isolatedModules": true,
-		"noImplicitReturns": false,
 		"types": ["vite/client", "astro/client"]
 	},
 	"include": [

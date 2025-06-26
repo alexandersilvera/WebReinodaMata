@@ -1,5 +1,4 @@
 ---
-// import { ViewTransitions } from 'astro:transitions'; // <-- Comentado para prueba
 import BaseHead from "@/components/BaseHead.astro";
 import NavigationNew from "@/components/NavigationNew.astro";
 import Footer from "@/components/Footer.astro";
@@ -17,7 +16,6 @@ const { title, description } = Astro.props;
 <html lang="es">
 	<head>
 		<BaseHead title={title} description={description} />
-		<!-- <ViewTransitions /> --> <!-- <-- Comentado para prueba -->
 	</head>
 	<body class="bg-dark-blue py-6 flex flex-col min-h-screen">
 		<!-- Auth Recovery Script -->

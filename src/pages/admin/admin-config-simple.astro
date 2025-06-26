@@ -1,0 +1,112 @@
+---
+import MainLayout from "@/layouts/MainLayout.astro";
+import AdminProtection from "@/components/AdminProtection";
+
+export const prerender = false;
+---
+
+<MainLayout title="Configuración de Administradores | Reino Da Mata">
+  <AdminProtection client:load>
+    <div class="max-w-4xl mx-auto w-full px-4 py-8">
+      <div class="mb-8">
+        <h1 class="text-3xl font-bold text-green-700 mb-2">Configuración de Administradores</h1>
+        <p class="text-gray-200">Gestiona los emails de usuarios administradores del sistema</p>
+      </div>
+
+      <div class="space-y-6">
+        <!-- Información actual -->
+        <div class="bg-green-900/30 p-6 rounded-lg backdrop-blur-sm">
+          <h2 class="text-xl font-bold text-white mb-4">Configuración Actual</h2>
+          
+          <div class="mb-4">
+            <p class="text-sm text-gray-400">Fuente de configuración:</p>
+            <p class="text-white font-medium">Variables de entorno (Configuración estática)</p>
+          </div>
+
+          <div>
+            <p class="text-sm text-gray-400 mb-2">Emails de administradores activos:</p>
+            <div class="space-y-1">
+              <span class="inline-block bg-green-600 text-white text-xs px-2 py-1 rounded mr-2 mb-1">alexandersilvera@hotmail.com</span>
+              <span class="inline-block bg-blue-600 text-white text-xs px-2 py-1 rounded mr-2 mb-1">admin@centroumbandistareinodamata.org</span>
+              <span class="inline-block bg-blue-600 text-white text-xs px-2 py-1 rounded mr-2 mb-1">administrador@centroumbandistareinodamata.org</span>
+            </div>
+            <p class="text-xs text-gray-400 mt-2">
+              <span class="text-green-400">●</span> Administrador principal &nbsp;&nbsp;
+              <span class="text-blue-400">●</span> Administradores secundarios
+            </p>
+          </div>
+        </div>
+
+        <!-- Información sobre configuración dinámica -->
+        <div class="bg-blue-900/30 border border-blue-600 p-4 rounded-lg">
+          <div class="flex items-start">
+            <svg class="h-5 w-5 text-blue-400 mt-0.5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <h3 class="text-blue-200 font-medium">Sistema de Configuración Implementado</h3>
+              <p class="text-blue-100 text-sm mt-1">
+                Se ha implementado un sistema de configuración dinámica que permite gestionar administradores desde Firestore. 
+                Actualmente está funcionando en modo fallback usando las variables de entorno mientras se configuran los permisos de Firestore.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Próximos pasos -->
+        <div class="bg-green-900/30 p-6 rounded-lg backdrop-blur-sm">
+          <h2 class="text-xl font-bold text-white mb-4">Próximos Pasos</h2>
+          
+          <div class="space-y-3">
+            <div class="flex items-center text-gray-300">
+              <svg class="h-4 w-4 text-green-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+              </svg>
+              Configuración centralizada implementada
+            </div>
+            
+            <div class="flex items-center text-gray-300">
+              <svg class="h-4 w-4 text-green-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+              </svg>
+              Reglas de Firestore actualizadas
+            </div>
+            
+            <div class="flex items-center text-yellow-300">
+              <svg class="h-4 w-4 text-yellow-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Pendiente: Desplegar reglas de Firestore en producción
+            </div>
+            
+            <div class="flex items-center text-yellow-300">
+              <svg class="h-4 w-4 text-yellow-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Pendiente: Activar interface de gestión dinámica
+            </div>
+          </div>
+        </div>
+
+        <!-- Instrucciones de configuración -->
+        <div class="bg-gray-900/30 p-6 rounded-lg backdrop-blur-sm">
+          <h2 class="text-xl font-bold text-white mb-4">Configuración Manual Actual</h2>
+          
+          <p class="text-gray-300 mb-4">
+            Para agregar o quitar administradores, edita la variable de entorno:
+          </p>
+          
+          <div class="bg-gray-800 p-4 rounded-md">
+            <code class="text-green-400 text-sm">
+              PUBLIC_ADMIN_EMAILS=alexandersilvera@hotmail.com,admin@centroumbandistareinodamata.org
+            </code>
+          </div>
+          
+          <p class="text-sm text-gray-400 mt-2">
+            Después de cambiar esta variable, reinicia el servidor de desarrollo o redespliega en producción.
+          </p>
+        </div>
+      </div>
+    </div>
+  </AdminProtection>
+</MainLayout>

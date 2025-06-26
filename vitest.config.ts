@@ -12,7 +12,7 @@ export default defineConfig(
       exclude: ['node_modules', 'dist', '.astro'],
       
       // Configuración de setup
-      setupFiles: ['./tests/setup.ts'],
+      setupFiles: ['./src/__tests__/setup.ts'],
       
       // Configuración de cobertura
       coverage: {

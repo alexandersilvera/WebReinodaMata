@@ -39,10 +39,15 @@ PUBLIC_FIREBASE_MEASUREMENT_ID=G-XXXXXXXXXX
 # ====================================================
 
 # Lista de emails de administradores separados por comas
-ADMIN_EMAILS=admin1@example.com,admin2@example.com
+# IMPORTANTE: Esta variable debe tener el prefijo PUBLIC_ para Astro
+PUBLIC_ADMIN_EMAILS=alexandersilvera@hotmail.com,admin@centroumbandistareinodamata.org
 
 # Email principal del administrador para notificaciones
 MAIN_ADMIN_EMAIL=admin@example.com
+
+# NOTA: A partir de la versión actual, los emails de administradores se pueden
+# gestionar dinámicamente desde el panel de administración (/admin/admin-config).
+# Esta variable sirve como configuración inicial y fallback.
 
 # ====================================================
 # CONFIGURACIÓN DE CORS

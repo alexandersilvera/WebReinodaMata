@@ -1,12 +1,14 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Lista de emails de administradores (actualizar según necesidades)
+    // Obtener emails de administradores con fallback robusto
     function getAdminEmails() {
+      // Por ahora usar configuración estática mientras implementamos la dinámica
+      // TODO: Implementar lectura dinámica cuando la configuración esté estable
       return [
+        'alexandersilvera@hotmail.com',
         'admin@centroumbandistareinodamata.org',
         'administrador@centroumbandistareinodamata.org'
-        // Agregar más emails de admin aquí si es necesario
       ];
     }
     
@@ -103,10 +105,23 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
     
-    // Reglas para configuración del sitio (si se necesita en el futuro)
+    // Reglas para configuración del sitio
     match /siteConfig/{configId} {
       // Solo administradores pueden gestionar configuración
       allow read, write: if isAdmin();
+    }
+
+    // Reglas específicas para configuración de administradores
+    match /siteConfig/adminEmails {
+      // Permitir lectura a cualquier usuario autenticado (necesario para las reglas)
+      allow read: if isAuthenticated();
+      
+      // Solo administradores pueden actualizar la configuración
+      allow write: if isAdmin() && 
+                   request.resource.data.keys().hasAll(['emails', 'lastUpdated', 'updatedBy']) &&
+                   request.resource.data.emails is list &&
+                   request.resource.data.emails.size() > 0 &&
+                   request.resource.data.updatedBy is string;
     }
     
     // Regla por defecto - denegar acceso a cualquier otra colección

@@ -1,19 +1,25 @@
 // Definiciones de tipos para la aplicación
 
-// Tipo para artículos
+// Tipo para artículos (unificado y consolidado)
 export interface Article {
   id: string;
   title: string;
   slug: string;
   description: string;
-  pubDate: string;
-  updatedDate?: string;
-  heroImage?: string;
   content: string;
+  image: string;
+  heroImage?: string; // Alias para compatibilidad
+  author: string;
   tags: string[];
-  draft?: boolean;
-  featured?: boolean;
-  views?: number;
+  draft: boolean;
+  featured: boolean;
+  commentsEnabled: boolean;
+  views: number;
+  pubDate: string; // Para compatibilidad con frontend (ISO string)
+  publishDate?: any; // Timestamp para Firestore
+  createdAt?: any; // Timestamp para Firestore
+  updatedAt?: any; // Timestamp para Firestore
+  updatedDate?: string; // Alias para compatibilidad
 }
 
 // Tipo para suscriptores

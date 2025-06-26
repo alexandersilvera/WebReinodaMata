@@ -1,7 +1,7 @@
 ---
 import ArticleList from "@/layouts/ArticleList.astro";
 import Article from "@/components/Article.astro";
-import { getArticlesByTag } from "@/firebase/articles";
+import { getArticlesByTag } from "@/services/articleService";
 
 // Configurar para renderizado dinámico
 export const prerender = false;

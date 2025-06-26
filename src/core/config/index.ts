@@ -180,7 +180,8 @@ try {
  */
 export const configUtils = {
   /**
-   * Verifica si un email es administrador
+   * Verifica si un email es administrador (usa configuración estática)
+   * Para verificación dinámica, usar adminConfigService.isAdminEmail()
    */
   isAdminEmail: (email: string): boolean => {
     return config.admin.emails.includes(email.toLowerCase().trim());

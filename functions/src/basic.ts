@@ -4,7 +4,8 @@ import { onSchedule } from "firebase-functions/v2/scheduler";
 import * as admin from "firebase-admin";
 import fetch from "node-fetch";
 import { getMailgunConfig, getAllowedOrigins, isValidEmail, validateEmailList, isAdminUser, getSiteUrlConfig } from "./config/mailgun"; // Importar getSiteUrlConfig
-import { firestore } from "firebase-admin";
+import * as path from "path";
+import * as fs from "fs";
 import { v4 as uuidv4 } from "uuid";
 
 /**

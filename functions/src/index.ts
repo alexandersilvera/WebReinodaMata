@@ -12,14 +12,14 @@ import * as admin from "firebase-admin";
 // Inicializar la aplicación de Firebase Admin
 admin.initializeApp();
 
-// Exportar funciones básicas
+// Exportar funciones básicas (newsletter, suscripciones, métricas)
 export * from "./basic";
 
-// Exportar funciones de sincronización de contenido
-export * from "./content-sync";
+// DESHABILITADO: Funciones de sincronización de contenido (obsoletas)
+// export * from "./content-sync";
 
-// Exportar funciones de migración
-export * from "./migration";
+// DESHABILITADO: Funciones de migración (obsoletas)
+// export * from "./migration";
 
 console.log("Funciones cargadas correctamente");
 

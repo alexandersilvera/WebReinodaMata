@@ -1,10 +1,32 @@
 import React, { useEffect, useState } from 'react';
 import { configUtils } from '@/core/config';
 import { auth, onAuthStateChanged } from '@/core/firebase/config';
+import { isAdminEmail } from '@/features/admin/configService';
+import { getAllArticles, getAllDrafts, deleteArticle, deleteDraft, publishDraftAsArticle, getArticleById, updateArticle, checkSlugExists } from '@/services/articleService';
 
 interface AdminProtectionProps {
   children: React.ReactNode;
   fallback?: React.ReactNode;
+}
+
+// Declaraciones globales para servicios expuestos
+declare global {
+  interface Window {
+    firebaseConfig?: {
+      auth: typeof auth;
+      onAuthStateChanged: typeof onAuthStateChanged;
+    };
+    articleServices?: {
+      getAllArticles: typeof getAllArticles;
+      getAllDrafts: typeof getAllDrafts;
+      deleteArticle: typeof deleteArticle;
+      deleteDraft: typeof deleteDraft;
+      publishDraftAsArticle: typeof publishDraftAsArticle;
+      getArticleById: typeof getArticleById;
+      updateArticle: typeof updateArticle;
+      checkSlugExists: typeof checkSlugExists;
+    };
+  }
 }
 
 export default function AdminProtection({ children, fallback }: AdminProtectionProps) {
@@ -12,12 +34,36 @@ export default function AdminProtection({ children, fallback }: AdminProtectionP
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    // Exponer servicios globalmente para uso en scripts de páginas
+    if (typeof window !== 'undefined') {
+      window.firebaseConfig = { auth, onAuthStateChanged };
+      window.articleServices = { 
+        getAllArticles, 
+        getAllDrafts, 
+        deleteArticle, 
+        deleteDraft, 
+        publishDraftAsArticle,
+        getArticleById,
+        updateArticle,
+        checkSlugExists
+      };
+    }
+
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       try {
         if (user?.email) {
-          const adminStatus = configUtils.isAdminEmail(user.email);
+          // Intentar usar configuración dinámica primero, con fallback a estática
+          let adminStatus: boolean;
+          try {
+            adminStatus = await isAdminEmail(user.email);
+            console.log('Admin verification (dynamic):', { email: user.email, isAdmin: adminStatus });
+          } catch (error) {
+            console.warn('Dynamic admin check failed, using static config:', error);
+            adminStatus = configUtils.isAdminEmail(user.email);
+            console.log('Admin verification (static):', { email: user.email, isAdmin: adminStatus });
+          }
+          
           setIsAdmin(adminStatus);
-          console.log('Admin verification:', { email: user.email, isAdmin: adminStatus });
         } else {
           setIsAdmin(false);
           console.log('No user authenticated');

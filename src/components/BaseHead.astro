@@ -1,5 +1,4 @@
 ---
-import { ViewTransitions } from "astro:transitions";
 import { SEO } from "astro-seo"; 
 import "@/styles/global.css";
 
@@ -104,8 +103,8 @@ const placeOfWorshipSchema = {
 	/>
 
 	<!-- Schema.org JSON-LD -->
-	<script type="application/ld+json" set:html={JSON.stringify(placeOfWorshipSchema)}></script>
-
-	<!-- Transition -->
-	<ViewTransitions />
+	<script type="application/ld+json" is:inline set:html={JSON.stringify(placeOfWorshipSchema)}></script>
+	
+	<!-- Enable view transitions for better page navigation -->
+	<meta name="view-transition" content="same-origin" />
 </head>

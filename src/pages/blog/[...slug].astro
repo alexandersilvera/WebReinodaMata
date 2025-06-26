@@ -2,7 +2,7 @@
 import BlogPost from "@/layouts/BlogPost.astro";
 import Article from "@/components/Article.astro";
 import CommentSectionWrapper from "@/components/CommentSectionWrapper.astro";
-import { getArticleBySlug, getPublishedArticles } from "@/firebase/articles";
+import { getArticleBySlug, getPublishedArticles } from "@/services/articleService";
 import { marked } from "marked";
 
 // Configurar para renderizado dinámico

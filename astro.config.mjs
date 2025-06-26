@@ -5,7 +5,7 @@ import sitemap from "@astrojs/sitemap";
 import react from "@astrojs/react";
 import { fileURLToPath, URL } from "node:url";
 
-import vercel from "@astrojs/vercel/serverless";
+import vercel from "@astrojs/vercel";
 
 // https://astro.build/config
 export default defineConfig({
@@ -20,9 +20,19 @@ export default defineConfig({
 		sitemap(),
 		react(),
 	],
+	// Image configuration
+	image: {
+		domains: ["firebasestorage.googleapis.com"],
+		remotePatterns: [
+			{
+				protocol: "https",
+				hostname: "firebasestorage.googleapis.com",
+			},
+		],
+	},
 	output: "server",
 	adapter: vercel({
-		imageService: true,
+		imageService: false, // Disable Vercel image service for external images
 		webAnalytics: { enabled: true },
 		speedInsights: { enabled: true },
 	}),

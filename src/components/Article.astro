@@ -1,5 +1,4 @@
 ---
-import Image from "astro/components/Image.astro";
 import type { CollectionEntry } from "astro:content";
 import FormattedDate from "@/components/FormattedDate.astro";
 type Props = CollectionEntry<"blog">["data"] & { slug: string };
@@ -7,19 +6,36 @@ const { heroImage, title, tags, pubDate, slug } = Astro.props;
 // Acceder a description de forma segura
 const hasDescription = "description" in Astro.props;
 const postDescription = hasDescription ? Astro.props.description : null;
+
+// Función para determinar si es una imagen externa (Firebase Storage)
+const isExternalImage = (src: string) => {
+	return src.includes('firebasestorage.googleapis.com') || src.startsWith('https://');
+};
 ---
 
 <li class="group overflow-hidden rounded-xl border border-green-900/30 bg-green-900/10 hover:bg-green-900/20 transition-all duration-300 hover:shadow-lg hover:shadow-green-900/20 transform hover:-translate-y-1">
 	<article>
 		<a href={`/blog/${slug}`} class="block h-full">
 			<div class="relative overflow-hidden">
-				<Image
-					src={heroImage}
-					alt={title}
-					width={1020}
-					height={520}
-					class="aspect-[16/9] w-full object-cover transition-transform duration-700 group-hover:scale-105"
-				/>
+				{isExternalImage(heroImage) ? (
+					<img
+						src={heroImage}
+						alt={title}
+						width={1020}
+						height={520}
+						class="aspect-[16/9] w-full object-cover transition-transform duration-700 group-hover:scale-105"
+						loading="lazy"
+					/>
+				) : (
+					<img
+						src={heroImage}
+						alt={title}
+						width={1020}
+						height={520}
+						class="aspect-[16/9] w-full object-cover transition-transform duration-700 group-hover:scale-105"
+						loading="lazy"
+					/>
+				)}
 				<div class="absolute inset-0 bg-gradient-to-b from-transparent to-green-900/80"></div>
 				
 				<!-- Tags sobre la imagen -->

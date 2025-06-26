@@ -288,7 +288,7 @@ import AdminProtection from "@/components/AdminProtection";
   import { httpsCallable } from "firebase/functions";
   
   // Importar el nuevo servicio de artículos
-  import { createArticle, saveDraft, deleteDraft, checkSlugExists, getDraftById, cleanupOldDraftsWithSlug } from "@/firebase/articles";
+  import { createArticle, saveDraft, deleteDraft, checkSlugExists, getDraftById, cleanupOldDraftsWithSlug } from "@/services/articleService";
   import RichTextEditor from "@/components/RichTextEditor.tsx";
   import ImageUploader from "@/components/ImageUploader.tsx";
   import TagsInput from "@/components/TagsInput.tsx";

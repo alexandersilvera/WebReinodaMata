@@ -1,0 +1,376 @@
+---
+import MainLayout from "@/layouts/MainLayout.astro";
+import AdminProtection from "@/components/AdminProtection";
+
+export const prerender = false;
+---
+
+<MainLayout title="Configuración de Administradores | Reino Da Mata">
+  <AdminProtection client:load>
+    <div class="max-w-4xl mx-auto w-full px-4 py-8">
+      <div class="mb-8">
+        <h1 class="text-3xl font-bold text-green-700 mb-2">Configuración de Administradores</h1>
+        <p class="text-gray-200">Gestiona los emails de usuarios administradores del sistema</p>
+      </div>
+
+      <div id="admin-container" class="space-y-6">
+        <!-- Estado de carga -->
+        <div id="loading" class="flex justify-center items-center py-10">
+          <svg class="animate-spin h-8 w-8 text-green-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span class="ml-3 text-green-300">Cargando configuración...</span>
+        </div>
+
+        <!-- Contenido principal -->
+        <div id="content-container" class="hidden space-y-6">
+          <!-- Información actual -->
+          <div class="bg-green-900/30 p-6 rounded-lg backdrop-blur-sm">
+            <h2 class="text-xl font-bold text-white mb-4">Configuración Actual</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <p class="text-sm text-gray-400">Fuente de configuración:</p>
+                <p id="config-source" class="text-white font-medium">-</p>
+              </div>
+              <div>
+                <p class="text-sm text-gray-400">Última actualización:</p>
+                <p id="last-updated" class="text-white font-medium">-</p>
+              </div>
+            </div>
+
+            <div>
+              <p class="text-sm text-gray-400 mb-2">Emails de administradores activos:</p>
+              <div id="current-emails" class="space-y-1">
+                <!-- Se llena desde JavaScript -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Formulario de edición -->
+          <div class="bg-green-900/30 p-6 rounded-lg backdrop-blur-sm">
+            <h2 class="text-xl font-bold text-white mb-4">Actualizar Configuración</h2>
+            
+            <form id="admin-config-form" class="space-y-4">
+              <div>
+                <label for="admin-emails" class="block text-sm font-medium text-gray-300 mb-2">
+                  Emails de Administradores
+                </label>
+                <textarea
+                  id="admin-emails"
+                  rows="4"
+                  placeholder="Ingresa un email por línea o separados por comas&#10;admin1@ejemplo.com&#10;admin2@ejemplo.com"
+                  class="w-full px-3 py-2 bg-green-700/50 border border-green-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400 text-white placeholder-gray-400"
+                ></textarea>
+                <p class="text-xs text-gray-400 mt-1">
+                  Puedes separar los emails con comas o saltos de línea
+                </p>
+              </div>
+
+              <div class="flex justify-between items-center">
+                <button
+                  type="button"
+                  id="restore-defaults"
+                  class="px-4 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded-md transition-colors"
+                >
+                  Restaurar por Defecto
+                </button>
+                
+                <div class="space-x-2">
+                  <button
+                    type="button"
+                    id="cancel-btn"
+                    class="px-4 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded-md transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    id="save-btn"
+                    class="px-6 py-2 bg-green-600 hover:bg-green-500 text-white font-medium rounded-md transition-colors"
+                  >
+                    Guardar Cambios
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          <!-- Alertas sobre el cambio -->
+          <div class="bg-yellow-900/30 border border-yellow-600 p-4 rounded-lg">
+            <div class="flex items-start">
+              <svg class="h-5 w-5 text-yellow-400 mt-0.5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+              <div>
+                <h3 class="text-yellow-200 font-medium">Importante</h3>
+                <p class="text-yellow-100 text-sm mt-1">
+                  Los cambios se aplicarán inmediatamente tanto en el frontend como en las reglas de Firestore. 
+                  Asegúrate de incluir tu propio email para mantener acceso de administrador.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mensajes de estado -->
+        <div id="success-message" class="hidden bg-green-600/80 text-white p-4 rounded-md">
+          <div class="flex items-center">
+            <svg class="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+            </svg>
+            <p class="font-medium" id="success-text">Configuración actualizada exitosamente</p>
+          </div>
+        </div>
+
+        <div id="error-message" class="hidden bg-red-600/80 text-white p-4 rounded-md">
+          <div class="flex items-center">
+            <svg class="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+            </svg>
+            <div>
+              <p class="font-medium">Error</p>
+              <p id="error-details" class="text-sm mt-1"></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal de confirmación -->
+        <div id="confirm-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
+          <div class="bg-green-900 p-6 rounded-lg max-w-md w-full mx-4">
+            <div class="flex items-center mb-4">
+              <svg class="h-6 w-6 text-yellow-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+              <h3 class="text-lg font-bold text-white">Confirmar cambios</h3>
+            </div>
+            <p class="text-gray-300 mb-6" id="confirm-message">
+              ¿Estás seguro de que quieres actualizar la configuración de administradores?
+            </p>
+            <div class="flex justify-end space-x-4">
+              <button
+                id="modal-cancel-btn"
+                class="px-4 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded-md transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                id="modal-confirm-btn"
+                class="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-md transition-colors"
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </AdminProtection>
+</MainLayout>
+
+<script>
+  import { auth } from "@/core/firebase/config";
+  import { onAuthStateChanged } from "firebase/auth";
+  import { 
+    getAdminConfig, 
+    updateAdminConfig, 
+    getAdminEmails,
+    initializeAdminConfig 
+  } from "@/features/admin/configService";
+
+  // Elementos del DOM
+  const loadingElement = document.getElementById("loading");
+  const contentContainer = document.getElementById("content-container");
+  const configSourceElement = document.getElementById("config-source");
+  const lastUpdatedElement = document.getElementById("last-updated");
+  const currentEmailsElement = document.getElementById("current-emails");
+  const adminEmailsTextarea = document.getElementById("admin-emails");
+  const form = document.getElementById("admin-config-form");
+  const restoreDefaultsBtn = document.getElementById("restore-defaults");
+  const cancelBtn = document.getElementById("cancel-btn");
+  const successMessage = document.getElementById("success-message");
+  const successText = document.getElementById("success-text");
+  const errorMessage = document.getElementById("error-message");
+  const errorDetails = document.getElementById("error-details");
+  const confirmModal = document.getElementById("confirm-modal");
+  const confirmMessage = document.getElementById("confirm-message");
+  const modalCancelBtn = document.getElementById("modal-cancel-btn");
+  const modalConfirmBtn = document.getElementById("modal-confirm-btn");
+
+  let currentUser = null;
+  let pendingEmails = null;
+
+  // Cargar configuración actual
+  const loadCurrentConfig = async () => {
+    try {
+      const config = await getAdminConfig();
+      const currentEmails = await getAdminEmails();
+      
+      if (config) {
+        configSourceElement.textContent = "Firestore (Configuración dinámica)";
+        
+        if (config.lastUpdated) {
+          const date = (config.lastUpdated as any).toDate ? 
+            (config.lastUpdated as any).toDate() : 
+            new Date(config.lastUpdated as any);
+          lastUpdatedElement.textContent = date.toLocaleString('es-ES');
+        } else {
+          lastUpdatedElement.textContent = "Información no disponible";
+        }
+      } else {
+        configSourceElement.textContent = "Variables de entorno (Configuración estática)";
+        lastUpdatedElement.textContent = "No aplicable";
+      }
+
+      // Mostrar emails actuales
+      currentEmailsElement.innerHTML = currentEmails.map(email => 
+        `<span class="inline-block bg-green-600 text-white text-xs px-2 py-1 rounded mr-2 mb-1">${email}</span>`
+      ).join('');
+
+      // Llenar el textarea
+      adminEmailsTextarea.value = currentEmails.join('\n');
+      
+    } catch (error) {
+      console.error('Error al cargar configuración:', error);
+      showMessage('error', 'Error al cargar la configuración actual');
+    }
+  };
+
+  // Mostrar mensajes
+  const showMessage = (type, message) => {
+    if (type === 'success') {
+      successText.textContent = message;
+      successMessage.classList.remove('hidden');
+      errorMessage.classList.add('hidden');
+    } else {
+      errorDetails.textContent = message;
+      errorMessage.classList.remove('hidden');
+      successMessage.classList.add('hidden');
+    }
+
+    setTimeout(() => {
+      successMessage.classList.add('hidden');
+      errorMessage.classList.add('hidden');
+    }, 5000);
+  };
+
+  // Mostrar modal de confirmación
+  const showConfirmModal = (emails) => {
+    const emailList = emails.join(', ');
+    confirmMessage.innerHTML = `
+      ¿Estás seguro de que quieres actualizar la configuración con estos emails?<br><br>
+      <strong>Nuevos administradores:</strong><br>
+      <span class="text-green-300">${emailList}</span>
+    `;
+    pendingEmails = emails;
+    confirmModal.classList.remove('hidden');
+  };
+
+  // Ocultar modal
+  const hideConfirmModal = () => {
+    confirmModal.classList.add('hidden');
+    pendingEmails = null;
+  };
+
+  // Parsear emails desde textarea
+  const parseEmails = (text) => {
+    return text
+      .split(/[\n,]/)
+      .map(email => email.trim().toLowerCase())
+      .filter(email => email.length > 0)
+      .filter((email, index, arr) => arr.indexOf(email) === index); // remover duplicados
+  };
+
+  // Validar emails
+  const validateEmails = (emails) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const invalidEmails = emails.filter(email => !emailRegex.test(email));
+    
+    if (invalidEmails.length > 0) {
+      throw new Error(`Emails inválidos: ${invalidEmails.join(', ')}`);
+    }
+
+    if (emails.length === 0) {
+      throw new Error('Debe especificar al menos un email de administrador');
+    }
+  };
+
+  // Event Listeners
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    try {
+      const rawEmails = adminEmailsTextarea.value;
+      const emails = parseEmails(rawEmails);
+      
+      validateEmails(emails);
+      
+      // Verificar que el usuario actual siga siendo admin
+      if (!emails.includes(currentUser.email.toLowerCase())) {
+        throw new Error(`Advertencia: Tu email (${currentUser.email}) no está en la lista. Perderías acceso de administrador.`);
+      }
+      
+      showConfirmModal(emails);
+      
+    } catch (error) {
+      showMessage('error', error.message);
+    }
+  });
+
+  modalConfirmBtn.addEventListener('click', async () => {
+    if (!pendingEmails) return;
+    
+    try {
+      await updateAdminConfig(pendingEmails, currentUser.email);
+      hideConfirmModal();
+      showMessage('success', 'Configuración actualizada exitosamente');
+      
+      // Recargar configuración
+      setTimeout(() => {
+        loadCurrentConfig();
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Error al actualizar configuración:', error);
+      hideConfirmModal();
+      showMessage('error', `Error al actualizar: ${error.message}`);
+    }
+  });
+
+  modalCancelBtn.addEventListener('click', hideConfirmModal);
+  
+  cancelBtn.addEventListener('click', () => {
+    loadCurrentConfig(); // Recargar valores originales
+  });
+  
+  restoreDefaultsBtn.addEventListener('click', () => {
+    adminEmailsTextarea.value = [
+      'admin@centroumbandistareinodamata.org',
+      'administrador@centroumbandistareinodamata.org'
+    ].join('\n');
+  });
+
+  // Cerrar modal con Escape
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !confirmModal.classList.contains('hidden')) {
+      hideConfirmModal();
+    }
+  });
+
+  // Inicializar cuando el usuario esté autenticado
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      currentUser = user;
+      
+      if (loadingElement) loadingElement.classList.add("hidden");
+      if (contentContainer) contentContainer.classList.remove("hidden");
+
+      // Inicializar configuración en Firestore si no existe
+      await initializeAdminConfig();
+      
+      // Cargar configuración actual
+      await loadCurrentConfig();
+    }
+  });
+</script>

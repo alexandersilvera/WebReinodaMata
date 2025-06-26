@@ -36,7 +36,7 @@ export const prerender = false;
         </div>
 
         <!-- Contenido principal -->
-        <div id="content-container" class="hidden space-y-8">
+        <div id="content-container" class="space-y-8">
           <!-- Estadísticas -->
           <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div class="bg-green-900/30 p-6 rounded-lg backdrop-blur-sm">
@@ -210,10 +210,34 @@ export const prerender = false;
   </AdminProtection>
 </MainLayout>
 
-<script type="module">
-  import { auth } from "@/core/firebase/config";
-  import { onAuthStateChanged } from "firebase/auth";
-  import { getAllArticles, getAllDrafts, deleteArticle, deleteDraft, publishDraftAsArticle } from "@/firebase/articles";
+<script>
+  // Importación dinámica de servicios
+  let auth, onAuthStateChanged, getAllArticles, getAllDrafts, deleteArticle, deleteDraft, publishDraftAsArticle;
+  
+  // Función para inicializar con servicios cargados desde el servidor
+  async function loadServices() {
+    try {
+      // Verificar si los servicios ya están disponibles globalmente
+      // (cargados por el AdminProtection component)
+      if (window.firebaseConfig && window.articleServices) {
+        auth = window.firebaseConfig.auth;
+        onAuthStateChanged = window.firebaseConfig.onAuthStateChanged;
+        getAllArticles = window.articleServices.getAllArticles;
+        getAllDrafts = window.articleServices.getAllDrafts;
+        deleteArticle = window.articleServices.deleteArticle;
+        deleteDraft = window.articleServices.deleteDraft;
+        publishDraftAsArticle = window.articleServices.publishDraftAsArticle;
+        
+        initializeAdmin();
+      } else {
+        // Fallback: intentar cargar después de un delay
+        setTimeout(loadServices, 100);
+      }
+    } catch (error) {
+      console.error('Error loading services:', error);
+      showMessage('error', 'Error al cargar los servicios necesarios');
+    }
+  }
 
   // Variables de control
   let articles = [];
@@ -221,41 +245,118 @@ export const prerender = false;
   let currentFilter = 'all';
   let searchTerm = '';
 
-  // Elementos del DOM
-  const loadingElement = document.getElementById("loading");
-  const contentContainer = document.getElementById("content-container");
-  const articlesListElement = document.getElementById("articles-list");
-  const draftsListElement = document.getElementById("drafts-list");
-  const searchInput = document.getElementById("search-input");
-  const statusFilter = document.getElementById("status-filter");
-  const refreshBtn = document.getElementById("refresh-btn");
-  const successMessage = document.getElementById("success-message");
-  const successText = document.getElementById("success-text");
-  const errorMessage = document.getElementById("error-message");
-  const errorDetails = document.getElementById("error-details");
-  const confirmModal = document.getElementById("confirm-modal");
-  const confirmMessage = document.getElementById("confirm-message");
-  const cancelBtn = document.getElementById("cancel-btn");
-  const confirmBtn = document.getElementById("confirm-btn");
+  // Elementos del DOM - se obtendrán dinámicamente
+  let loadingElement, contentContainer, articlesListElement, draftsListElement;
+  let searchInput, statusFilter, refreshBtn;
+  let successMessage, successText, errorMessage, errorDetails;
+  let confirmModal, confirmMessage, cancelBtn, confirmBtn;
 
   // Variables para confirmación
   let pendingAction = null;
 
+  // Función para obtener elementos del DOM
+  const getDOMElements = () => {
+    loadingElement = document.getElementById("loading");
+    contentContainer = document.getElementById("content-container");
+    articlesListElement = document.getElementById("articles-list");
+    draftsListElement = document.getElementById("drafts-list");
+    searchInput = document.getElementById("search-input");
+    statusFilter = document.getElementById("status-filter");
+    refreshBtn = document.getElementById("refresh-btn");
+    successMessage = document.getElementById("success-message");
+    successText = document.getElementById("success-text");
+    errorMessage = document.getElementById("error-message");
+    errorDetails = document.getElementById("error-details");
+    confirmModal = document.getElementById("confirm-modal");
+    confirmMessage = document.getElementById("confirm-message");
+    cancelBtn = document.getElementById("cancel-btn");
+    confirmBtn = document.getElementById("confirm-btn");
+  };
+
+  // Funciones globales para los botones
+  // Usar JavaScript puro para evitar conflictos de TypeScript
+  window['deleteItem'] = function(id, type, title) {
+    showConfirmModal(
+      `¿Estás seguro de que quieres eliminar "${title}"?`,
+      () => handleDelete(id, type)
+    );
+  };
+
+  window['publishDraft'] = function(id) {
+    showConfirmModal(
+      '¿Quieres publicar este borrador? Se convertirá en un artículo público.',
+      () => handlePublishDraft(id)
+    );
+  };
+
   // Cargar datos
   const loadData = async () => {
+    console.log('🔄 Iniciando carga de datos...');
     try {
       const [articlesData, draftsData] = await Promise.all([
         getAllArticles(),
         getAllDrafts()
       ]);
       
+      console.log('📝 Datos obtenidos:', { articlesCount: articlesData.length, draftsCount: draftsData.length });
+      
       articles = articlesData;
       drafts = draftsData;
       
-      filterAndRender();
-      updateStats();
+      // Asegurar que el contenedor principal esté visible
+      getDOMElements();
+      if (contentContainer && contentContainer.classList.contains('hidden')) {
+        contentContainer.classList.remove('hidden');
+        console.log('🔓 Contenedor principal mostrado');
+      }
+      
+      console.log('🔍 Elementos DOM encontrados:', {
+        articlesListElement: !!articlesListElement,
+        draftsListElement: !!draftsListElement,
+        loadingElement: !!loadingElement,
+        contentContainer: !!contentContainer,
+        contentVisible: contentContainer ? !contentContainer.classList.contains('hidden') : 'N/A',
+        contentContainerDisplay: contentContainer ? window.getComputedStyle(contentContainer).display : 'N/A'
+      });
+      
+      // Solo proceder si los elementos principales existen
+      if (articlesListElement && draftsListElement) {
+        console.log('✅ Renderizando contenido...');
+        
+        // Ocultar spinner de carga
+        if (loadingElement && !loadingElement.classList.contains('hidden')) {
+          loadingElement.classList.add('hidden');
+          console.log('✅ Spinner de carga ocultado');
+        }
+        
+        filterAndRender();
+        updateStats();
+      } else {
+        console.warn('⚠️ Elementos DOM no encontrados, reintentando...');
+        setTimeout(() => {
+          getDOMElements();
+          console.log('🔍 Segundo intento - Elementos DOM:', {
+            articlesListElement: !!articlesListElement,
+            draftsListElement: !!draftsListElement
+          });
+          if (articlesListElement && draftsListElement) {
+            console.log('✅ Renderizando contenido (segundo intento)...');
+            
+            // Ocultar spinner de carga
+            if (loadingElement && !loadingElement.classList.contains('hidden')) {
+              loadingElement.classList.add('hidden');
+              console.log('✅ Spinner de carga ocultado (segundo intento)');
+            }
+            
+            filterAndRender();
+            updateStats();
+          } else {
+            console.error('❌ No se pudieron encontrar los elementos DOM después del segundo intento');
+          }
+        }, 500); // Aumenté el tiempo de espera
+      }
     } catch (error) {
-      console.error('Error al cargar datos:', error);
+      console.error('❌ Error al cargar datos:', error);
       showMessage('error', 'Error al cargar los artículos');
     }
   };
@@ -279,35 +380,71 @@ export const prerender = false;
   };
 
   const showMessage = (type, message) => {
+    // Asegurar que los elementos existen
+    if (!successMessage || !successText || !errorMessage || !errorDetails) {
+      getDOMElements();
+    }
+
     if (type === 'success') {
-      successText.textContent = message;
-      successMessage.classList.remove('hidden');
-      errorMessage.classList.add('hidden');
+      if (successText) successText.textContent = message;
+      if (successMessage) successMessage.classList.remove('hidden');
+      if (errorMessage) errorMessage.classList.add('hidden');
     } else {
-      errorDetails.textContent = message;
-      errorMessage.classList.remove('hidden');
-      successMessage.classList.add('hidden');
+      if (errorDetails) errorDetails.textContent = message;
+      if (errorMessage) errorMessage.classList.remove('hidden');
+      if (successMessage) successMessage.classList.add('hidden');
     }
 
     setTimeout(() => {
-      successMessage.classList.add('hidden');
-      errorMessage.classList.add('hidden');
+      if (successMessage) successMessage.classList.add('hidden');
+      if (errorMessage) errorMessage.classList.add('hidden');
     }, 5000);
   };
 
   const showConfirmModal = (message, action) => {
-    confirmMessage.textContent = message;
+    // Asegurar que los elementos existen
+    if (!confirmMessage || !confirmModal) {
+      getDOMElements();
+    }
+
+    if (confirmMessage) confirmMessage.textContent = message;
     pendingAction = action;
-    confirmModal.classList.remove('hidden');
+    if (confirmModal) confirmModal.classList.remove('hidden');
   };
 
   const hideConfirmModal = () => {
-    confirmModal.classList.add('hidden');
+    if (!confirmModal) {
+      getDOMElements();
+    }
+    if (confirmModal) confirmModal.classList.add('hidden');
     pendingAction = null;
   };
 
   // Renderizar artículo
   const renderArticle = (article, isDraft = false) => {
+    console.log('🎨 Renderizando artículo:', { 
+      id: article.id, 
+      title: article.title, 
+      isDraft, 
+      hasDescription: !!article.description,
+      hasAuthor: !!article.author,
+      hasTags: !!article.tags,
+      hasSlug: !!article.slug
+    });
+
+    // Validar datos del artículo
+    if (!article || !article.id || !article.title) {
+      console.error('❌ Artículo inválido:', article);
+      return '<div class="p-6 text-center text-red-400">Error: Artículo con datos incompletos</div>';
+    }
+
+    // Proporcionar valores por defecto para campos que pueden estar undefined
+    const title = article.title || 'Sin título';
+    const description = article.description || 'Sin descripción';
+    const author = article.author || 'Autor desconocido';
+    const tags = article.tags || [];
+    const slug = article.slug || 'sin-slug';
+
     const statusBadge = article.draft ?
       '<span class="px-2 py-1 bg-yellow-600 text-white text-xs rounded-full">Borrador</span>' :
       '<span class="px-2 py-1 bg-green-600 text-white text-xs rounded-full">Publicado</span>';
@@ -319,26 +456,29 @@ export const prerender = false;
       formatDate(article.updatedAt) :
       formatDate(article.publishDate || article.updatedAt);
 
-    return `
+    // Escapar caracteres especiales en el título para evitar problemas en onclick
+    const escapedTitle = title.replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+
+    const articleHTML = `
       <div class="p-6 hover:bg-green-800/20 transition-colors">
         <div class="flex items-start justify-between">
           <div class="flex-1">
             <div class="flex items-center space-x-2 mb-2">
-              <h3 class="text-lg font-semibold text-white">${article.title}</h3>
+              <h3 class="text-lg font-semibold text-white">${title}</h3>
               ${statusBadge}
               ${featuredBadge}
             </div>
-            <p class="text-gray-300 text-sm mb-2">${truncateText(article.description)}</p>
+            <p class="text-gray-300 text-sm mb-2">${truncateText(description)}</p>
             <div class="flex items-center text-xs text-gray-400 space-x-4">
-              <span>Por ${article.author}</span>
+              <span>Por ${author}</span>
               <span>${publishDate}</span>
-              <span>${article.tags.length} etiquetas</span>
+              <span>${tags.length} etiquetas</span>
             </div>
           </div>
           <div class="flex items-center space-x-2 ml-4">
             ${!article.draft ? `
               <a
-                href="/blog/${article.slug}"
+                href="/blog/${slug}"
                 target="_blank"
                 class="p-2 text-blue-400 hover:text-blue-300 transition-colors"
                 title="Ver artículo"
@@ -360,7 +500,7 @@ export const prerender = false;
             </a>
             ${isDraft ? `
               <button
-                onclick="publishDraft('${article.id}')"
+                onclick="window['publishDraft']('${article.id}')"
                 class="p-2 text-blue-400 hover:text-blue-300 transition-colors"
                 title="Publicar borrador"
               >
@@ -370,7 +510,7 @@ export const prerender = false;
               </button>
             ` : ''}
             <button
-              onclick="deleteItem('${article.id}', '${isDraft ? 'draft' : 'article'}', '${article.title}')"
+              onclick="window['deleteItem']('${article.id}', '${isDraft ? 'draft' : 'article'}', '${escapedTitle}')"
               class="p-2 text-red-400 hover:text-red-300 transition-colors"
               title="Eliminar"
             >
@@ -382,12 +522,35 @@ export const prerender = false;
         </div>
       </div>
     `;
+
+    console.log('✅ HTML generado para artículo:', article.id);
+    return articleHTML;
   };
 
   // Filtrar y renderizar contenido
   const filterAndRender = () => {
+    console.log('🎨 Iniciando filterAndRender...');
+    
+    // Asegurar que los elementos existen
+    if (!articlesListElement || !draftsListElement) {
+      console.log('🔍 Reobteniendo elementos DOM en filterAndRender...');
+      getDOMElements();
+    }
+
+    if (!articlesListElement || !draftsListElement) {
+      console.error('❌ No se pueden renderizar: elementos DOM no encontrados');
+      return;
+    }
+
     let filteredArticles = articles;
     let filteredDrafts = drafts;
+
+    console.log('📊 Datos a filtrar:', { 
+      totalArticles: articles.length, 
+      totalDrafts: drafts.length,
+      searchTerm,
+      currentFilter
+    });
 
     // Aplicar filtro de búsqueda
     if (searchTerm) {
@@ -417,34 +580,49 @@ export const prerender = false;
       filteredDrafts = filteredDrafts.filter(draft => draft.featured);
     }
 
-    // Renderizar artículos
-    if (filteredArticles.length === 0) {
-      articlesListElement.innerHTML = '<div class="p-6 text-center text-gray-400">No se encontraron artículos</div>';
+    console.log('📊 Datos filtrados:', { 
+      filteredArticles: filteredArticles.length, 
+      filteredDrafts: filteredDrafts.length 
+    });
+
+    // Renderizar artículos - con verificación de existencia
+    if (articlesListElement) {
+      if (filteredArticles.length === 0) {
+        articlesListElement.innerHTML = '<div class="p-6 text-center text-gray-400">No se encontraron artículos</div>';
+        console.log('📝 Renderizado: No hay artículos para mostrar');
+      } else {
+        const articlesHTML = filteredArticles.map(article => renderArticle(article, false)).join('');
+        console.log('🔤 HTML generado para artículos (primeros 300 chars):', articlesHTML.substring(0, 300) + '...');
+        articlesListElement.innerHTML = articlesHTML;
+        console.log(`📝 Renderizados ${filteredArticles.length} artículos`);
+        console.log('🔍 Elemento DOM después del renderizado:', articlesListElement.children.length, 'elementos hijos');
+        console.log('🔍 Estilos del contenedor:', { 
+          display: window.getComputedStyle(articlesListElement).display, 
+          visibility: window.getComputedStyle(articlesListElement).visibility, 
+          opacity: window.getComputedStyle(articlesListElement).opacity,
+          parentVisible: window.getComputedStyle(articlesListElement.parentElement).display !== 'none',
+          parentClasses: articlesListElement.parentElement.className
+        });
+      }
     } else {
-      articlesListElement.innerHTML = filteredArticles.map(article => renderArticle(article, false)).join('');
+      console.error('❌ No se puede renderizar artículos: articlesListElement es null');
     }
 
-    // Renderizar borradores
-    if (filteredDrafts.length === 0) {
-      draftsListElement.innerHTML = '<div class="p-6 text-center text-gray-400">No se encontraron borradores</div>';
+    // Renderizar borradores - con verificación de existencia
+    if (draftsListElement) {
+      if (filteredDrafts.length === 0) {
+        draftsListElement.innerHTML = '<div class="p-6 text-center text-gray-400">No se encontraron borradores</div>';
+        console.log('📝 Renderizado: No hay borradores para mostrar');
+      } else {
+        const draftsHTML = filteredDrafts.map(draft => renderArticle(draft, true)).join('');
+        console.log('🔤 HTML generado para borradores (primeros 200 chars):', draftsHTML.substring(0, 200) + '...');
+        draftsListElement.innerHTML = draftsHTML;
+        console.log(`📝 Renderizados ${filteredDrafts.length} borradores`);
+        console.log('🔍 Elemento DOM después del renderizado:', draftsListElement.children.length, 'elementos hijos');
+      }
     } else {
-      draftsListElement.innerHTML = filteredDrafts.map(draft => renderArticle(draft, true)).join('');
+      console.error('❌ No se puede renderizar borradores: draftsListElement es null');
     }
-  };
-
-  // Funciones globales para los botones
-  window.deleteItem = (id, type, title) => {
-    showConfirmModal(
-      `¿Estás seguro de que quieres eliminar "${title}"?`,
-      () => handleDelete(id, type)
-    );
-  };
-
-  window.publishDraft = (id) => {
-    showConfirmModal(
-      '¿Quieres publicar este borrador? Se convertirá en un artículo público.',
-      () => handlePublishDraft(id)
-    );
   };
 
   // Manejar eliminación
@@ -490,14 +668,22 @@ export const prerender = false;
 
   // Actualizar estadísticas
   const updateStats = () => {
-    document.getElementById('total-articles').textContent = articles.length;
-    document.getElementById('total-drafts').textContent = drafts.length;
-    document.getElementById('featured-count').textContent = articles.filter(a => a.featured).length;
-    document.getElementById('published-count').textContent = articles.filter(a => !a.draft).length;
+    const totalArticlesEl = document.getElementById('total-articles');
+    const totalDraftsEl = document.getElementById('total-drafts');
+    const featuredCountEl = document.getElementById('featured-count');
+    const publishedCountEl = document.getElementById('published-count');
+
+    if (totalArticlesEl) totalArticlesEl.textContent = String(articles.length);
+    if (totalDraftsEl) totalDraftsEl.textContent = String(drafts.length);
+    if (featuredCountEl) featuredCountEl.textContent = String(articles.filter(a => a.featured).length);
+    if (publishedCountEl) publishedCountEl.textContent = String(articles.filter(a => !a.draft).length);
   };
 
   // Event listeners
   const setupEventListeners = () => {
+    // Asegurar que tenemos todos los elementos DOM
+    getDOMElements();
+
     // Búsqueda
     if (searchInput) {
       searchInput.addEventListener('input', (e) => {
@@ -552,14 +738,41 @@ export const prerender = false;
     }
   };
 
-  // Inicializar cuando el usuario esté autenticado
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      if (loadingElement) loadingElement.classList.add("hidden");
-      if (contentContainer) contentContainer.classList.remove("hidden");
+  // Función de inicialización principal
+  function initializeAdmin() {
+    // Obtener elementos DOM al inicializar
+    getDOMElements();
 
-      setupEventListeners();
-      loadData();
-    }
-  });
+    // Inicializar cuando el usuario esté autenticado
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // Verificar que los elementos de loading existan antes de ocultarlos
+        setTimeout(() => {
+          getDOMElements(); // Volver a obtener elementos para asegurar que estén disponibles
+          
+          console.log('🎭 Estado de elementos de UI:', {
+            loadingElement: !!loadingElement,
+            contentContainer: !!contentContainer,
+            loadingHidden: loadingElement ? loadingElement.classList.contains('hidden') : 'N/A',
+            contentVisible: contentContainer ? !contentContainer.classList.contains('hidden') : 'N/A'
+          });
+          
+          if (loadingElement) {
+            loadingElement.classList.add("hidden");
+            console.log('✅ Loading ocultado');
+          }
+          if (contentContainer) {
+            contentContainer.classList.remove("hidden");
+            console.log('✅ Content container mostrado');
+          }
+
+          setupEventListeners();
+          loadData();
+        }, 100); // Pequeño delay para asegurar que el DOM esté listo
+      }
+    });
+  }
+
+  // Cargar servicios cuando la página se cargue
+  document.addEventListener('DOMContentLoaded', loadServices);
 </script> 

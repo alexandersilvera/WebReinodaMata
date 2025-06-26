@@ -1,12 +1,10 @@
 ---
-import Image from "astro/components/Image.astro";
 import { type CollectionEntry } from "astro:content";
 import MainLayout from "@/layouts/MainLayout.astro";
 import FormattedDate from "@/components/FormattedDate.astro";
 type Props = CollectionEntry<"blog">["data"];
 
 const { title, description, heroImage, pubDate, tags } = Astro.props;
-
 ---
 
 <MainLayout title={title} description={description}>
@@ -55,16 +53,19 @@ const { title, description, heroImage, pubDate, tags } = Astro.props;
 		</header>
 		
 		<!-- Imagen principal -->
-		<div class="relative w-full h-[400px] md:h-[500px] mb-10 rounded-xl overflow-hidden shadow-2xl">
-			<Image
-				class="w-full h-full object-cover"
-				width={1200}
-				height={600}
-				src={heroImage}
-				alt={title}
-			/>
-			<div class="absolute inset-0 bg-gradient-to-t from-green-900/70 to-transparent"></div>
-		</div>
+		{heroImage && (
+			<div class="relative w-full h-[400px] md:h-[500px] mb-10 rounded-xl overflow-hidden shadow-2xl">
+				<img
+					class="w-full h-full object-cover"
+					width={1200}
+					height={600}
+					src={heroImage}
+					alt={title}
+					loading="eager"
+				/>
+				<div class="absolute inset-0 bg-gradient-to-t from-green-900/70 to-transparent"></div>
+			</div>
+		)}
 		
 		<!-- Contenido del artículo -->
 		<div class="prose prose-lg prose-invert max-w-none mx-auto
