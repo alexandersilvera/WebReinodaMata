@@ -1,31 +1,25 @@
 ---
-import Article from "@/components/Article.astro";
-import ArticleList from "@/layouts/ArticleList.astro";
-import { getPublishedArticles } from "@/services/articleService";
+import BlogArticlesList from "@/components/BlogArticlesList";
+import MainLayout from "@/layouts/MainLayout.astro";
 
-// Configurar para renderizado dinámico en el cliente y evitar errores de SSR
-export const prerender = false;
-
-// Obtener artículos publicados desde Firestore
-const firestoreArticles = await getPublishedArticles();
-
-// Convertir los artículos de Firestore al formato esperado por el componente
-const posts = firestoreArticles.map(article => ({
-	data: {
-		title: article.title,
-		description: article.description,
-		pubDate: article.publishDate.toDate(), // Convertir Timestamp a Date
-		heroImage: article.image,
-		tags: article.tags,
-		author: article.author
-	},
-	slug: article.slug
-}));
+// Configurar para renderizado estático en build time
+export const prerender = true;
 ---
 
-<ArticleList 
+<MainLayout 
 	title="Blog | Ile Axe Reino Da Mata"
 	description="Artículos y publicaciones sobre Umbanda, estudios Afro-amerindios, historia y prácticas ritualísticas del Ile Axe Reino Da Mata."
 >
-	{posts.map((post) => <Article {...post.data} slug={post.slug} />)}
-</ArticleList>
+	<main class="min-h-screen bg-black text-white">
+		<div class="container mx-auto px-4 py-12">
+			<header class="text-center mb-12">
+				<h1 class="text-4xl font-bold text-green-400 mb-4">Blog</h1>
+				<p class="text-xl text-gray-300 max-w-2xl mx-auto">
+					Artículos y publicaciones sobre Umbanda, estudios Afro-amerindios, historia y prácticas ritualísticas del Ile Axe Reino Da Mata.
+				</p>
+			</header>
+			
+			<BlogArticlesList client:load />
+		</div>
+	</main>
+</MainLayout>

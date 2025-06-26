@@ -1,90 +1,19 @@
 ---
-import BlogPost from "@/layouts/BlogPost.astro";
-import Article from "@/components/Article.astro";
-import CommentSectionWrapper from "@/components/CommentSectionWrapper.astro";
-import { getArticleBySlug, getPublishedArticles } from "@/services/articleService";
-import { marked } from "marked";
+import BlogArticlePage from "@/components/BlogArticlePage";
+import MainLayout from "@/layouts/MainLayout.astro";
 
-// Configurar para renderizado dinámico
-export const prerender = false;
+// Configurar para renderizado estático
+export const prerender = true;
 
 // Obtener el slug de la URL
 const { slug } = Astro.params;
 
+// Si no hay slug, redirigir
 if (!slug) {
 	return Astro.redirect("/blog");
 }
-
-// Obtener el artículo desde Firestore
-const article = await getArticleBySlug(slug);
-
-if (!article || article.draft) {
-	return Astro.redirect("/404");
-}
-
-// Obtener todos los artículos para encontrar relacionados
-const allArticles = await getPublishedArticles();
-
-// Encontrar artículos relacionados basados en etiquetas compartidas
-// Excluir el artículo actual y limitar a 3 artículos relacionados
-const relatedArticles = allArticles
-	.filter(a => a.slug !== article.slug) // Excluir artículo actual
-	.filter(a => a.tags.some(tag => article.tags.includes(tag))) // Encontrar artículos con etiquetas compartidas
-	.sort(() => Math.random() - 0.5) // Mezclar para mostrar diferentes cada vez
-	.slice(0, 3); // Limitar a 3 artículos
-
-// Si no hay suficientes relacionados, agregar artículos aleatorios
-let articlesToShow = [...relatedArticles];
-if (articlesToShow.length < 3) {
-	const randomArticles = allArticles
-		.filter(a => a.slug !== article.slug && !articlesToShow.some(ra => ra.slug === a.slug))
-		.sort(() => Math.random() - 0.5)
-		.slice(0, 3 - articlesToShow.length);
-	articlesToShow = [...articlesToShow, ...randomArticles];
-}
-
-// Convertir artículos relacionados al formato esperado por el componente Article
-const relatedPosts = articlesToShow.map(a => ({
-	data: {
-		title: a.title,
-		description: a.description,
-		pubDate: a.publishDate.toDate(),
-		heroImage: a.image,
-		tags: a.tags,
-		author: a.author
-	},
-	slug: a.slug
-}));
-
-// Convertir el contenido Markdown a HTML
-const htmlContent = marked(article.content);
-
-// Preparar datos del artículo para el layout BlogPost
-const postData = {
-	title: article.title,
-	description: article.description,
-	pubDate: article.publishDate.toDate(),
-	heroImage: article.image,
-	tags: article.tags,
-	author: article.author
-};
 ---
 
-<BlogPost {...postData}>
-	<div class="prose prose-invert prose-green max-w-none" set:html={htmlContent} />
-	
-	<!-- Sección de comentarios -->
-	<CommentSectionWrapper postId={article.slug} postTitle={article.title} />
-	
-	<!-- Artículos relacionados -->
-	{relatedPosts.length > 0 && (
-		<section class="mt-16 pt-10 border-t border-green-900/30">
-			<h2 class="text-2xl font-bold text-green-400 mb-8">Artículos relacionados</h2>
-			<div class="grid gap-6 md:grid-cols-3">
-				{relatedPosts.map(p => (
-					<Article {...p.data} slug={p.slug} />
-				))}
-			</div>
-		</section>
-	)}
-</BlogPost>
+<MainLayout title="Blog | Ile Axe Reino Da Mata">
+	<BlogArticlePage slug={slug} client:load />
+</MainLayout>
