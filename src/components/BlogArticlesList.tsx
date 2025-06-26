@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '@/core/firebase/config';
 
 interface Article {
@@ -11,6 +11,7 @@ interface Article {
   tags: string[];
   author: string;
   publishDate: any;
+  draft?: boolean;
 }
 
 export default function BlogArticlesList() {

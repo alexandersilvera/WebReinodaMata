@@ -13,6 +13,7 @@ interface Article {
   tags: string[];
   author: string;
   publishDate: any;
+  draft?: boolean;
 }
 
 interface BlogArticlePageProps {
