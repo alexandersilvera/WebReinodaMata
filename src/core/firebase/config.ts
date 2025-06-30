@@ -5,7 +5,7 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore, doc, setDoc, serverTimestamp, collection, query, where, getDocs, enableNetwork, disableNetwork, orderBy, deleteDoc } from "firebase/firestore";
 import { getAuth, setPersistence, browserLocalPersistence, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { getStorage } from "firebase/storage";
-import { getFunctions, httpsCallable } from "firebase/functions";
+import { getFunctions, httpsCallable, connectFunctionsEmulator } from "firebase/functions";
 import { config, configUtils } from '../config';
 
 // NOTA: En aplicaciones web de Firebase, la apiKey es segura para incluir en el código del cliente.
@@ -40,11 +40,16 @@ export { doc, setDoc, serverTimestamp, collection, query, where, getDocs, enable
 // Exportar funciones de Firebase Functions para uso en scripts del cliente
 export { httpsCallable };
 
-// Conectar al emulador de funciones en desarrollo local
+// Conectar al emulador de funciones en desarrollo local solo si está disponible
 if (configUtils.isDevelopment() && typeof window !== 'undefined') {
-  // Descomentar estas líneas para usar emuladores locales durante el desarrollo
-  // connectFunctionsEmulator(functions, 'localhost', 5001);
-  console.log('[Firebase] Modo desarrollo detectado');
+  // Solo conectar al emulador si la variable de entorno está habilitada
+  const useEmulator = localStorage.getItem('useFirebaseEmulator') === 'true';
+  if (useEmulator) {
+    connectFunctionsEmulator(functions, 'localhost', 5001);
+    console.log('[Firebase] Modo desarrollo detectado - usando emulador local en puerto 5001');
+  } else {
+    console.log('[Firebase] Modo desarrollo detectado - usando funciones de producción');
+  }
 }
 
 // Set persistence to LOCAL (sobrevive cierre de pestañas/navegador)

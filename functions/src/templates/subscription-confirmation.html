@@ -1,24 +1,105 @@
-<html>
-<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-  <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-    <h2 style="color: #2d5016;">¡Bienvenido/a al Newsletter!</h2>
-
-    <p>Hola <strong>{{firstName}}!</strong></p>
-
-    <p>Gracias por suscribirte al newsletter del <strong>Centro Umbandista Reino Da Mata</strong>.</p>
-
-    <p>A partir de ahora recibirás nuestras actualizaciones, artículos y noticias directamente en tu correo electrónico.</p>
-
-    <p>{{unsubscribeParagraph}}</p>
-
-    <p style="margin-top: 30px;"><strong>¡Axé!</strong></p>
-
-    <div style="border-top: 2px solid #2d5016; padding-top: 20px; margin-top: 30px;">
-      <p style="color: #666; font-size: 14px;">
-        <strong>Centro Umbandista Reino Da Mata</strong><br>
-        Este correo fue enviado porque te suscribiste a nuestro newsletter.
-      </p>
-    </div>
-  </div>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¡Bienvenido/a! - Centro Umbandista Reino Da Mata</title>
+    <style>
+        @media screen and (max-width: 600px) {
+            .container { width: 100% !important; }
+            .content { padding: 15px !important; }
+            h1 { font-size: 24px !important; }
+        }
+    </style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+    
+    <table role="presentation" style="width: 100%; border-collapse: collapse;">
+        <tr>
+            <td style="padding: 20px 0;">
+                
+                <table class="container" role="presentation" style="width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                    
+                    <!-- Header con bienvenida -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #2d5016 0%, #4a7c2a 100%); color: white; padding: 40px 30px; text-align: center; border-radius: 8px 8px 0 0;">
+                            <div style="font-size: 48px; margin-bottom: 15px;">🌿</div>
+                            <h1 style="font-size: 28px; font-weight: 600; margin-bottom: 8px; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                                ¡Bienvenido/a!
+                            </h1>
+                            <p style="font-size: 16px; opacity: 0.9; margin: 0;">
+                                Te has unido a nuestra comunidad espiritual
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Content -->
+                    <tr>
+                        <td class="content" style="padding: 40px 30px;">
+                            
+                            <p style="font-size: 18px; color: #2d5016; font-weight: 600; margin-bottom: 20px;">
+                                Hola {{firstName}},
+                            </p>
+                            
+                            <p style="color: #333; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+                                Gracias por suscribirte al newsletter del <strong>Centro Umbandista Reino Da Mata</strong>. 
+                                Es un honor tenerte en nuestra comunidad espiritual.
+                            </p>
+                            
+                            <div style="background-color: #f8fbf5; border-left: 4px solid #4a7c2a; padding: 20px; margin: 25px 0; border-radius: 0 4px 4px 0;">
+                                <h3 style="color: #2d5016; font-size: 18px; margin-bottom: 15px; font-weight: 600;">
+                                    ¿Qué puedes esperar?
+                                </h3>
+                                <ul style="color: #333; font-size: 15px; line-height: 1.6; margin: 0; padding-left: 20px;">
+                                    <li style="margin-bottom: 8px;">✨ Artículos sobre espiritualidad y sabiduría ancestral</li>
+                                    <li style="margin-bottom: 8px;">🌿 Noticias y eventos de nuestro centro</li>
+                                    <li style="margin-bottom: 8px;">🙏 Reflexiones y enseñanzas espirituales</li>
+                                    <li>📅 Invitaciones a ceremonias y actividades especiales</li>
+                                </ul>
+                            </div>
+                            
+                            <p style="color: #333; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+                                Todas nuestras comunicaciones están llenas de luz, amor y respeto por las tradiciones umbandistas.
+                            </p>
+                            
+                            <!-- Unsubscribe info -->
+                            <div style="background-color: #fafafa; padding: 15px; border-radius: 4px; margin: 25px 0;">
+                                <p style="color: #666; font-size: 14px; line-height: 1.5; margin: 0;">
+                                    {{unsubscribeParagraph}}
+                                </p>
+                            </div>
+                            
+                            <!-- Greeting -->
+                            <div style="text-align: center; margin-top: 35px; padding-top: 25px; border-top: 1px solid #e0e0e0;">
+                                <p style="color: #2d5016; font-weight: 600; font-size: 20px; margin-bottom: 5px;">
+                                    ¡Axé!
+                                </p>
+                                <p style="color: #666; font-size: 14px;">
+                                    Centro Umbandista Reino Da Mata
+                                </p>
+                            </div>
+                            
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #f8f8f8; padding: 25px 30px; text-align: center; border-radius: 0 0 8px 8px;">
+                            <p style="color: #4a7c2a; font-size: 14px; margin-bottom: 15px; font-weight: 500;">
+                                🌿 Espiritualidad • ✨ Sabiduría • 🙏 Comunidad
+                            </p>
+                            <p style="color: #999; font-size: 12px; line-height: 1.4; margin: 0;">
+                                Centro Umbandista Reino Da Mata<br>
+                                Este correo fue enviado porque te suscribiste a nuestro newsletter.
+                            </p>
+                        </td>
+                    </tr>
+                    
+                </table>
+                
+            </td>
+        </tr>
+    </table>
+    
 </body>
 </html>

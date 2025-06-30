@@ -3,6 +3,9 @@ import { configUtils } from '@/core/config';
 import { auth, onAuthStateChanged } from '@/core/firebase/config';
 import { isAdminEmail } from '@/features/admin/configService';
 import { getAllArticles, getAllDrafts, deleteArticle, deleteDraft, publishDraftAsArticle, getArticleById, updateArticle, checkSlugExists } from '@/services/articleService';
+import { getAllSubscribers, deleteSubscriber as deleteSubscriberService } from '@/features/newsletter/subscriberService';
+import { updateSubscriberStatus } from '@/firebase/subscribers';
+import { functions } from '@/core/firebase/config';
 
 interface AdminProtectionProps {
   children: React.ReactNode;
@@ -15,6 +18,7 @@ declare global {
     firebaseConfig?: {
       auth: typeof auth;
       onAuthStateChanged: typeof onAuthStateChanged;
+      functions: typeof functions;
     };
     articleServices?: {
       getAllArticles: typeof getAllArticles;
@@ -26,6 +30,11 @@ declare global {
       updateArticle: typeof updateArticle;
       checkSlugExists: typeof checkSlugExists;
     };
+    subscriberServices?: {
+      getSubscribers: typeof getAllSubscribers;
+      updateSubscriberStatus: typeof updateSubscriberStatus;
+      deleteSubscriber: typeof deleteSubscriberService;
+    };
   }
 }
 
@@ -36,7 +45,7 @@ export default function AdminProtection({ children, fallback }: AdminProtectionP
   useEffect(() => {
     // Exponer servicios globalmente para uso en scripts de páginas
     if (typeof window !== 'undefined') {
-      window.firebaseConfig = { auth, onAuthStateChanged };
+      window.firebaseConfig = { auth, onAuthStateChanged, functions };
       window.articleServices = { 
         getAllArticles, 
         getAllDrafts, 
@@ -46,6 +55,11 @@ export default function AdminProtection({ children, fallback }: AdminProtectionP
         getArticleById,
         updateArticle,
         checkSlugExists
+      };
+      window.subscriberServices = {
+        getSubscribers: () => getAllSubscribers(false), // false = include all subscribers, not just active ones
+        updateSubscriberStatus,
+        deleteSubscriber: deleteSubscriberService
       };
     }
 

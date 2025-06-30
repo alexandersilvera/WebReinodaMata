@@ -3,9 +3,8 @@ import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import * as admin from "firebase-admin";
 import fetch from "node-fetch";
-import { getMailgunConfig, getAllowedOrigins, isValidEmail, validateEmailList, isAdminUser, getSiteUrlConfig } from "./config/mailgun"; // Importar getSiteUrlConfig
-import * as path from "path";
-import * as fs from "fs";
+import { getMailgunConfig, isValidEmail, validateEmailList, isAdminUser, getSiteUrlConfig } from "./config/mailgun";
+import { loadEmailTemplate, formatContentForHtml, createCallToAction, EmailTemplateData } from "./utils/emailTemplates";
 import { v4 as uuidv4 } from "uuid";
 
 /**
@@ -14,10 +13,22 @@ import { v4 as uuidv4 } from "uuid";
 export const sendNewsletterToSubscribers = onCall(
   { 
     memory: "1GiB",
-    cors: getAllowedOrigins()
+    cors: true
   },
   async (request) => {
     try {
+      // Verificar autenticación de admin
+      if (!request.auth) {
+        throw new Error('Usuario no autenticado');
+      }
+
+      const userEmail = request.auth.token.email;
+      if (!userEmail || !isAdminUser(userEmail)) {
+        throw new Error('Sin permisos de administrador');
+      }
+
+      console.log('Usuario admin autenticado:', userEmail);
+
       // Obtener configuración segura de Mailgun
       const mailgunConfig = getMailgunConfig();
       
@@ -64,11 +75,36 @@ export const sendNewsletterToSubscribers = onCall(
         };
       }
 
-      // Preparar contenido
+      // Preparar contenido con plantillas profesionales
       const subject = data.subject;
       const textContent = data.content;
-      const htmlContent = data.htmlContent || `<html><body><p>${textContent.replace(/\n/g, "<br>")}</p></body></html>`;
       const senderName = data.fromName || mailgunConfig.fromName;
+      
+      // Generar HTML usando plantillas profesionales
+      let htmlContent: string;
+      if (data.htmlContent) {
+        // Si viene HTML personalizado, usarlo
+        htmlContent = data.htmlContent;
+      } else {
+        // Formatear contenido de texto para HTML
+        const formattedContent = formatContentForHtml(textContent);
+        
+        // Crear call-to-action si hay URL
+        let callToAction = '';
+        if (data.actionUrl && data.actionText) {
+          callToAction = createCallToAction(data.actionText, data.actionUrl);
+        }
+        
+        // Usar plantilla profesional
+        const templateData: EmailTemplateData = {
+          subject: subject,
+          content: formattedContent,
+          callToAction: callToAction,
+          siteUrl: getSiteUrlConfig().url
+        };
+        
+        htmlContent = loadEmailTemplate('newsletter-base', templateData);
+      }
 
       const BATCH_SIZE = 500;
       let successfulBatches = 0;
@@ -190,49 +226,35 @@ export const sendSubscriptionConfirmation = onDocumentCreated(
 
       console.log(`Enviando correo de confirmación a: ${email}`);
 
-      // Contenido del correo de confirmación (texto plano)
-      let textContent = `
+      // Generar contenido usando la nueva plantilla
+      const textContent = `
 ¡Hola ${firstName || "Suscriptor"}!
 
 Gracias por suscribirte al newsletter del Centro Umbandista Reino Da Mata.
 
-A partir de ahora recibirás nuestras actualizaciones, artículos y noticias directamente en tu correo electrónico.
-`;
-      const unsubscribeTextParagraph = unsubscribeLink
-        ? `Si deseas cancelar tu suscripción en cualquier momento, visita: ${unsubscribeLink}`
-        : `Si deseas cancelar tu suscripción en cualquier momento, puedes hacerlo desde nuestro sitio web.`;
-      textContent += `\n\n${unsubscribeTextParagraph}`;
-      textContent += `
+Es un honor tenerte en nuestra comunidad espiritual. A partir de ahora recibirás nuestras actualizaciones, artículos y noticias directamente en tu correo electrónico.
+
+¿Qué puedes esperar?
+- Artículos sobre espiritualidad y sabiduría ancestral
+- Noticias y eventos de nuestro centro
+- Reflexiones y enseñanzas espirituales
+- Invitaciones a ceremonias y actividades especiales
+
+${unsubscribeLink ? `Si deseas cancelar tu suscripción en cualquier momento, visita: ${unsubscribeLink}` : 'Si deseas cancelar tu suscripción en cualquier momento, puedes hacerlo desde nuestro sitio web.'}
 
 ¡Axé!
 
 Centro Umbandista Reino Da Mata
       `.trim();
 
-      // Contenido HTML desde plantilla
-      let htmlContent: string;
-      try {
-        // Asumimos que 'templates' está al mismo nivel que el archivo JS compilado (e.g., en 'lib/templates')
-        const templatePath = path.join(__dirname, 'templates', 'subscription-confirmation.html');
-        const emailHtmlTemplate = fs.readFileSync(templatePath, 'utf8');
+      // Usar la nueva plantilla profesional
+      const templateData: EmailTemplateData = {
+        firstName: firstName || "Suscriptor",
+        unsubscribeLink: unsubscribeLink || undefined,
+        siteUrl: siteUrlConfig.url
+      };
 
-        const unsubscribeHtmlParagraph = unsubscribeLink
-          ? `Si deseas cancelar tu suscripción, <a href="${unsubscribeLink}" style="color: #1a73e8;">haz clic aquí</a>.`
-          : `Si deseas cancelar tu suscripción en cualquier momento, puedes hacerlo desde nuestro sitio web.`;
-
-        htmlContent = emailHtmlTemplate.replace('{{firstName}}', firstName || "Suscriptor");
-        htmlContent = htmlContent.replace('{{unsubscribeParagraph}}', unsubscribeHtmlParagraph);
-      } catch (templateError) {
-        console.error("Error al leer o procesar la plantilla de correo HTML:", templateError);
-        // Fallback a un HTML simple si la plantilla falla
-        htmlContent = `
-          <html><body>
-            <p>Hola ${firstName || "Suscriptor"},</p>
-            <p>Gracias por suscribirte.</p>
-            <p>${unsubscribeTextParagraph}</p>
-            <p>¡Axé!</p>
-          </body></html>`;
-      }
+      const htmlContent = loadEmailTemplate('subscription-confirmation', templateData);
 
       // Enviar correo usando Mailgun
       const auth = Buffer.from(`api:${mailgunConfig.apiKey}`).toString("base64");
@@ -278,10 +300,29 @@ Centro Umbandista Reino Da Mata
 export const sendTestNewsletter = onCall(
   { 
     memory: "512MiB",
-    cors: getAllowedOrigins()
+    cors: true
   },
   async (request) => {
     try {
+      // En desarrollo local, permitir sin autenticación para testing
+      const isDevelopment = process.env.FUNCTIONS_EMULATOR === 'true';
+      
+      if (!isDevelopment) {
+        // Verificar autenticación de admin solo en producción
+        if (!request.auth) {
+          throw new Error('Usuario no autenticado');
+        }
+
+        const userEmail = request.auth.token.email;
+        if (!userEmail || !isAdminUser(userEmail)) {
+          throw new Error('Sin permisos de administrador');
+        }
+
+        console.log('Usuario admin autenticado:', userEmail);
+      } else {
+        console.log('Modo desarrollo: saltando verificación de autenticación');
+      }
+
       // Obtener configuración segura de Mailgun
       const mailgunConfig = getMailgunConfig();
       
@@ -300,46 +341,48 @@ export const sendTestNewsletter = onCall(
       // Preparar contenido
       const subject = data.subject;
       const textContent = data.content;
-      const htmlContent = data.htmlContent || `<html><body><p>${textContent.replace(/\n/g, "<br>")}</p></body></html>`;
       const senderName = data.fromName || mailgunConfig.fromName;
       const testEmail = data.testEmail;
 
-      // Enviar correo usando Mailgun
-      const auth = Buffer.from(`api:${mailgunConfig.apiKey}`).toString("base64");
-      const formData = new URLSearchParams();
+      // Usar plantilla profesional para emails de prueba
+      const formattedContent = formatContentForHtml(textContent);
       
-      formData.append("from", `${senderName} <${mailgunConfig.fromEmail}>`);
-      formData.append("to", testEmail);
-      formData.append("subject", `[PRUEBA] ${subject}`);
-      formData.append("text", `[CORREO DE PRUEBA] \n\n${textContent}\n\nEste es un correo de prueba. No se ha enviado a ningún suscriptor.`);
+      // Crear call-to-action si hay URL de prueba
+      let callToAction = '';
+      if (data.actionUrl && data.actionText) {
+        callToAction = createCallToAction(data.actionText, data.actionUrl);
+      }
       
-      // Modificar el HTML para indicar que es una prueba
-      const testBanner = `
-        <div style="background-color: #f8d7da; color: #721c24; padding: 10px; margin-bottom: 15px; border: 1px solid #f5c6cb; border-radius: 5px;">
-          <strong>CORREO DE PRUEBA</strong><br>
-          Este es un correo de prueba. No se ha enviado a ningún suscriptor.
-        </div>
-      `;
+      const templateData: EmailTemplateData = {
+        subject: subject,
+        content: formattedContent,
+        callToAction: callToAction,
+        siteUrl: getSiteUrlConfig().url
+      };
       
-      const testHtmlContent = htmlContent.replace('<body>', `<body>${testBanner}`);
-      formData.append("html", testHtmlContent);
+      const htmlContent = loadEmailTemplate('test-email', templateData);
+      
+      const formData = new URLSearchParams({
+        'from': `${senderName} <${mailgunConfig.fromEmail}>`,
+        'to': testEmail,
+        'subject': `[PRUEBA] ${subject}`,
+        'html': htmlContent,
+        'text': `[CORREO DE PRUEBA]\n\n${textContent}\n\nEste es un correo de prueba. No se ha enviado a ningún suscriptor.`
+      });
 
-      const response = await fetch(
-        `${mailgunConfig.baseUrl}/${mailgunConfig.domain}/messages`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Basic ${auth}`,
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          body: formData,
-        }
-      );
+      const response = await fetch(`${mailgunConfig.baseUrl}/${mailgunConfig.domain}/messages`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${Buffer.from(`api:${mailgunConfig.apiKey}`).toString('base64')}`,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: formData.toString()
+      });
 
       if (!response.ok) {
-        const errorData = await response.text();
-        console.error("Error en Mailgun:", errorData);
-        throw new Error(`Error al enviar el correo de prueba: ${response.statusText}`);
+        const errorText = await response.text();
+        console.error('Error enviando email de prueba:', errorText);
+        throw new Error(`Error enviando email: ${response.statusText}`);
       }
 
       const responseData = await response.json();
@@ -416,7 +459,7 @@ export const cleanupInactiveSubscribers = onSchedule(
 export const recordPageView = onCall(
   { 
     memory: "256MiB",
-    cors: ["http://localhost:4321", "https://centroumbandistareinodamata.org", "https://website-reino-da-mata.web.app"]
+    cors: true
   },
   async (request) => {
     try {
@@ -513,7 +556,7 @@ export const cleanupOldPageViews = onSchedule(
 export const subscribeEmail = onCall(
   { 
     memory: "256MiB",
-    cors: getAllowedOrigins()
+    cors: true
   },
   async (request) => {
     try {
@@ -576,23 +619,91 @@ export const subscribeEmail = onCall(
 );
 
 /**
+ * Función simple para enviar email de prueba - NUEVA VERSION
+ */
+export const sendSimpleTestEmail = onCall(
+  { 
+    memory: "256MiB",
+    cors: true
+  },
+  async (request) => {
+    try {
+      const { testEmail, subject, content } = request.data;
+
+      if (!testEmail || !subject || !content) {
+        throw new Error('Faltan parámetros requeridos: testEmail, subject, content');
+      }
+
+      // Usar configuración desde variables de entorno
+      const mailgunConfig = getMailgunConfig();
+
+      // Construir form data string manually
+      const formBody = [
+        `from=Centro Umbandista Reino Da Mata <${mailgunConfig.fromEmail}>`,
+        `to=${testEmail}`,
+        `subject=[SIMPLE TEST] ${subject}`,
+        `html=<h1>Simple Test Email</h1><p>${content}</p><p>Enviado desde sendSimpleTestEmail function.</p>`
+      ].map(part => encodeURIComponent(part.split('=')[0]) + '=' + encodeURIComponent(part.split('=')[1])).join('&');
+
+      const response = await fetch(`https://api.mailgun.net/v3/${mailgunConfig.domain}/messages`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${Buffer.from(`api:${mailgunConfig.apiKey}`).toString('base64')}`,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: formBody
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        return {
+          success: false,
+          message: `Error ${response.status}: ${errorText}`
+        };
+      }
+
+      const result = await response.json();
+      return { 
+        success: true, 
+        message: `Email enviado exitosamente a ${testEmail}`,
+        mailgunResponse: result
+      };
+
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      return {
+        success: false,
+        message: `Error: ${errorMessage}`
+      };
+    }
+  }
+);
+
+/**
  * Función para enviar email de prueba (solo para testing)
  */
 export const sendTestEmail = onCall(
   { 
     memory: "256MiB",
-    cors: getAllowedOrigins()
+    cors: true
   },
   async (request) => {
     try {
-      // Verificar autenticación de admin
-      if (!request.auth) {
-        throw new Error('Usuario no autenticado');
-      }
+      // En desarrollo local, permitir sin autenticación para testing
+      const isDevelopment = process.env.FUNCTIONS_EMULATOR === 'true';
+      
+      if (!isDevelopment) {
+        // Verificar autenticación de admin solo en producción
+        if (!request.auth) {
+          throw new Error('Usuario no autenticado');
+        }
 
-      const userEmail = request.auth.token.email;
-      if (!userEmail || !isAdminUser(userEmail)) {
-        throw new Error('Sin permisos de administrador');
+        const userEmail = request.auth.token.email;
+        if (!userEmail || !isAdminUser(userEmail)) {
+          throw new Error('Sin permisos de administrador');
+        }
+      } else {
+        console.log('Modo desarrollo: saltando verificación de autenticación');
       }
 
       const { to, subject, content } = request.data;
@@ -611,7 +722,8 @@ export const sendTestEmail = onCall(
       const response = await fetch(`${config.baseUrl}/${config.domain}/messages`, {
         method: 'POST',
         headers: {
-          'Authorization': `Basic ${Buffer.from(`api:${config.apiKey}`).toString('base64')}`
+          'Authorization': `Basic ${Buffer.from(`api:${config.apiKey}`).toString('base64')}`,
+          'Content-Type': 'application/x-www-form-urlencoded'
         },
         body: formData
       });

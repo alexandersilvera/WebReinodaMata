@@ -329,6 +329,9 @@ export const prerender = false;
           console.log('✅ Spinner de carga ocultado');
         }
         
+        // Configurar event listeners ahora que todos los elementos están disponibles
+        setupEventListeners();
+        
         filterAndRender();
         updateStats();
       } else {
@@ -347,6 +350,9 @@ export const prerender = false;
               loadingElement.classList.add('hidden');
               console.log('✅ Spinner de carga ocultado (segundo intento)');
             }
+            
+            // Configurar event listeners ahora que todos los elementos están disponibles
+            setupEventListeners();
             
             filterAndRender();
             updateStats();
@@ -628,6 +634,16 @@ export const prerender = false;
   // Manejar eliminación
   const handleDelete = async (id, type) => {
     try {
+      if (typeof deleteArticle !== 'function' || typeof deleteDraft !== 'function') {
+        showMessage('error', 'Servicios no cargados. Recarga la página.');
+        return;
+      }
+      
+      if (!auth?.currentUser) {
+        showMessage('error', 'Debes estar autenticado para eliminar elementos');
+        return;
+      }
+      
       if (type === 'article') {
         await deleteArticle(id);
         articles = articles.filter(article => article.id !== id);
@@ -640,8 +656,23 @@ export const prerender = false;
       updateStats();
       showMessage('success', `${type === 'article' ? 'Artículo' : 'Borrador'} eliminado con éxito`);
     } catch (error) {
-      console.error('Error al eliminar:', error);
-      showMessage('error', 'Error al eliminar el elemento');
+      console.error('❌ Error completo al eliminar:', error);
+      console.error('❌ Código de error:', error.code);
+      console.error('❌ Mensaje de error:', error.message);
+      console.error('❌ Stack trace:', error.stack);
+      
+      let errorMessage = 'Error al eliminar el elemento';
+      
+      if (error.code === 'permission-denied') {
+        errorMessage = 'Sin permisos para eliminar. Verifica que seas administrador.';
+        console.error('🔒 Error de permisos - usuario actual:', auth?.currentUser?.email);
+      } else if (error.code === 'not-found') {
+        errorMessage = 'El elemento no existe o ya fue eliminado.';
+      } else if (error.code === 'unavailable') {
+        errorMessage = 'Problema de conexión. Intenta de nuevo.';
+      }
+      
+      showMessage('error', errorMessage);
     }
   };
 
@@ -766,7 +797,6 @@ export const prerender = false;
             console.log('✅ Content container mostrado');
           }
 
-          setupEventListeners();
           loadData();
         }, 100); // Pequeño delay para asegurar que el DOM esté listo
       }

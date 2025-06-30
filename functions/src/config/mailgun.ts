@@ -1,9 +1,9 @@
 /**
- * Configuración de Mailgun para Firebase Functions
- * Este archivo maneja las credenciales de Mailgun de forma segura
+ * Configuración de Mailgun para Firebase Functions v2
+ * Este archivo maneja las credenciales de Mailgun usando variables de entorno
  */
 
-import * as functions from 'firebase-functions';
+import { defineString } from 'firebase-functions/params';
 
 // Configuración de Mailgun
 export interface MailgunConfig {
@@ -19,42 +19,52 @@ export interface SiteUrlConfig {
   url: string;
 }
 
+// Definir parámetros de configuración para Firebase Functions v2
+const mailgunApiKey = defineString('MAILGUN_API_KEY');
+
+const mailgunDomain = defineString('MAILGUN_DOMAIN', {
+  default: 'centroumbandistareinodamata.org'
+});
+
+const mailgunFromEmail = defineString('MAILGUN_FROM_EMAIL', {
+  default: 'noreply@centroumbandistareinodamata.org'
+});
+
+const mailgunFromName = defineString('MAILGUN_FROM_NAME', {
+  default: 'Centro Umbandista Reino Da Mata'
+});
+
 /**
- * Obtiene la configuración de Mailgun desde Firebase Functions config
+ * Obtiene la configuración de Mailgun usando variables de entorno v2
  */
 export function getMailgunConfig(): MailgunConfig {
-  const config = functions.config();
-  
-  // Usar la configuración legacy de Firebase Functions
-  const apiKey = config.mailgun?.api_key || config.mailgun?.key;
-  const domain = config.mailgun?.domain;
-  const fromEmail = config.mailgun?.from_email || 'noreply@centroumbandistareinodamata.org';
-  const fromName = config.mailgun?.from_name || 'Centro Umbandista Reino Da Mata';
-  
-  if (!apiKey) {
-    throw new Error('MAILGUN_API_KEY no está configurado. Ejecuta: firebase functions:config:set mailgun.api_key="tu-api-key"');
-  }
-
-  if (!domain) {
-    throw new Error('MAILGUN_DOMAIN no está configurado. Ejecuta: firebase functions:config:set mailgun.domain="tu-dominio"');
-  }
-
   return {
-    domain,
-    apiKey,
-    fromEmail,
-    fromName,
+    domain: mailgunDomain.value(),
+    apiKey: mailgunApiKey.value(),
+    fromEmail: mailgunFromEmail.value(),
+    fromName: mailgunFromName.value(),
     baseUrl: 'https://api.mailgun.net/v3'
   };
 }
+
+// Definir parámetros adicionales
+const allowedOrigins = defineString('ALLOWED_ORIGINS', {
+  default: 'http://localhost:4321,https://centroumbandistareinodamata.vercel.app,https://www.centroumbandistareinodamata.org'
+});
+
+const adminEmails = defineString('ADMIN_EMAILS', {
+  default: 'admin@centroumbandistareinodamata.org,administrador@centroumbandistareinodamata.org,alexandersilvera@hotmail.com'
+});
+
+const siteUrl = defineString('SITE_URL', {
+  default: 'https://www.centroumbandistareinodamata.org'
+});
 
 /**
  * Obtiene los orígenes permitidos para CORS
  */
 export function getAllowedOrigins(): string[] {
-  const config = functions.config();
-  const origins = config.app?.allowed_origins || 'http://localhost:4321,https://centroumbandistareinodamata.vercel.app,https://www.centroumbandistareinodamata.org';
-  return origins.split(',').map((origin: string) => origin.trim());
+  return allowedOrigins.value().split(',').map((origin: string) => origin.trim());
 }
 
 /**
@@ -86,9 +96,7 @@ export function validateEmailList(emails: string[]): string[] {
  * Verifica si un usuario es administrador
  */
 export function isAdminUser(email: string): boolean {
-  const config = functions.config();
-  const adminEmails = config.app?.admin_emails || 'admin@centroumbandistareinodamata.org,administrador@centroumbandistareinodamata.org';
-  const admins = adminEmails.split(',').map((e: string) => e.trim().toLowerCase());
+  const admins = adminEmails.value().split(',').map((e: string) => e.trim().toLowerCase());
   return admins.includes(email.toLowerCase().trim());
 }
 
@@ -96,8 +104,5 @@ export function isAdminUser(email: string): boolean {
  * Obtiene la configuración de URL del sitio
  */
 export function getSiteUrlConfig(): SiteUrlConfig {
-  const config = functions.config();
-  const url = config.app?.site_url || 'https://www.centroumbandistareinodamata.org';
-  
-  return { url };
+  return { url: siteUrl.value() };
 }

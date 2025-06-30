@@ -77,6 +77,13 @@ export default function NewsletterSender() {
     
     setIsSendingTest(true);
     try {
+      console.log('Intentando enviar correo de prueba...', {
+        subject,
+        testEmail,
+        contentLength: content.length,
+        htmlContentLength: htmlContent.length
+      });
+
       const sendTestNewsletter = httpsCallable<
         { subject: string; content: string; htmlContent?: string; fromName?: string; testEmail: string },
         { success: boolean; message: string }
@@ -90,10 +97,18 @@ export default function NewsletterSender() {
         testEmail
       });
       
+      console.log('Respuesta de Firebase Function:', response);
       setResult(response.data);
     } catch (error) {
       console.error('Error al enviar correo de prueba:', error);
-      setResult({ success: false, message: 'Error al enviar el correo de prueba' });
+      
+      // Mostrar más detalles del error
+      let errorMessage = 'Error al enviar el correo de prueba';
+      if (error instanceof Error) {
+        errorMessage += `: ${error.message}`;
+      }
+      
+      setResult({ success: false, message: errorMessage });
     } finally {
       setIsSendingTest(false);
     }

@@ -1,30 +1,238 @@
 ---
 import MainLayout from "@/layouts/MainLayout.astro";
 import AdminProtection from "@/components/AdminProtection";
-import NewsletterSender from "@/components/NewsletterSender";
 
 export const prerender = false; 
 ---
 
-<MainLayout title="Enviar Newsletter (Nuevo) | Reino Da Mata">
+<MainLayout title="Test de Newsletter">
   <AdminProtection client:load>
-    <div class="max-w-6xl mx-auto w-full px-4 py-8">
-      <div class="mb-6 flex justify-between items-center">
-        <div>
-          <h1 class="text-3xl font-bold text-green-700 mb-2">Enviar Newsletter (Nuevo)</h1>
-          <p class="text-gray-200">Envía correos a todos los suscriptores del blog.</p>
-        </div>
-        <a href="/admin" class="text-green-400 hover:text-green-300 flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
-          </svg>
-          <span>Volver al panel</span>
-        </a>
+    <div class="max-w-4xl mx-auto w-full px-4 py-8">
+      <div class="mb-6">
+        <h1 class="text-3xl font-bold text-green-700 mb-2">Test de Newsletter</h1>
+        <p class="text-gray-200">Prueba el servicio de envío de emails masivos.</p>
       </div>
 
-      <div>
-        <NewsletterSender client:only="react" />
+      <div class="bg-green-900/30 p-6 rounded-lg backdrop-blur-sm">
+        <div id="test-results" class="mb-6 hidden">
+          <!-- Los resultados aparecerán aquí -->
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label for="test-email" class="block text-white text-sm font-medium mb-2">
+              Email de prueba
+            </label>
+            <input
+              id="test-email"
+              type="email"
+              value="alexandersilvera@hotmail.com"
+              class="w-full px-4 py-2 bg-green-700/50 border border-green-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400 text-white"
+              required
+            />
+          </div>
+
+          <div>
+            <label for="test-subject" class="block text-white text-sm font-medium mb-2">
+              Asunto del test
+            </label>
+            <input
+              id="test-subject"
+              type="text"
+              value="[TEST] Newsletter - Centro Umbandista Reino Da Mata"
+              class="w-full px-4 py-2 bg-green-700/50 border border-green-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400 text-white"
+              required
+            />
+          </div>
+
+          <div>
+            <label for="test-content" class="block text-white text-sm font-medium mb-2">
+              Contenido del test
+            </label>
+            <textarea
+              id="test-content"
+              rows="6"
+              class="w-full px-4 py-2 bg-green-700/50 border border-green-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400 text-white"
+              required
+            >Este es un test de envío de newsletter. 
+
+Si recibes este correo, el servicio está funcionando correctamente.
+
+**Detalles de la prueba:**
+- Servicio: Mailgun API
+- Dominio: centroumbandistareinodamata.org
+- Función: sendTestNewsletter
+
+¡Axé!
+Centro Umbandista Reino Da Mata</textarea>
+          </div>
+
+          <div class="flex flex-wrap gap-4">
+            <button
+              id="debug-services"
+              class="px-4 py-2 bg-gray-600 hover:bg-gray-500 text-white text-sm font-medium rounded-md transition-colors"
+            >
+              Debug Services
+            </button>
+
+            <button
+              id="test-direct-mailgun"
+              class="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-md transition-colors"
+            >
+              Test Directo cURL
+            </button>
+
+            <button
+              id="test-firebase-function"
+              class="px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded-md transition-colors"
+            >
+              Test Firebase Function
+            </button>
+
+            <button
+              id="test-newsletter-component"
+              class="px-6 py-3 bg-green-600 hover:bg-green-500 text-white font-medium rounded-md transition-colors"
+            >
+              Test Componente Newsletter
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </AdminProtection>
 </MainLayout>
+
+<script>
+  // Esperar a que tanto el DOM como AdminProtection estén listos
+  function initializeTestPage() {
+    console.log('Initializing test page...');
+    
+    const resultDiv = document.getElementById('test-results');
+    if (!resultDiv) {
+      console.error('test-results div not found');
+      setTimeout(initializeTestPage, 500);
+      return;
+    }
+    
+    function showMessage(type, text) {
+      const color = type === 'success' ? 'bg-green-600' : type === 'error' ? 'bg-red-600' : 'bg-blue-600';
+      resultDiv.innerHTML = `<div class="${color} text-white p-4 rounded">${text}</div>`;
+      resultDiv.classList.remove('hidden');
+    }
+    
+    function getFormData() {
+      return {
+        email: document.getElementById('test-email')?.value || 'alexandersilvera@hotmail.com',
+        subject: document.getElementById('test-subject')?.value || '[TEST] Newsletter',
+        content: document.getElementById('test-content')?.value || 'Test de contenido'
+      };
+    }
+    
+    // Debug button
+    const debugBtn = document.getElementById('debug-services');
+    if (debugBtn) {
+      debugBtn.addEventListener('click', function() {
+        const info = {
+          hasFirebaseConfig: !!window.firebaseConfig,
+          hasAuth: !!window.firebaseConfig?.auth,
+          hasFunctions: !!window.firebaseConfig?.functions,
+          windowKeys: Object.keys(window).filter(k => k.includes('firebase') || k.includes('Services')),
+          elementsFound: {
+            debugBtn: !!document.getElementById('debug-services'),
+            mailgunBtn: !!document.getElementById('test-direct-mailgun'),
+            functionBtn: !!document.getElementById('test-firebase-function'),
+            resultDiv: !!document.getElementById('test-results')
+          }
+        };
+        showMessage('info', 'Debug: ' + JSON.stringify(info, null, 2));
+        console.log('Debug info:', info);
+      });
+    } else {
+      console.error('debug-services button not found');
+    }
+    
+    // Test directo usando cURL (simulación)
+    const mailgunBtn = document.getElementById('test-direct-mailgun');
+    if (mailgunBtn) {
+      mailgunBtn.addEventListener('click', async function() {
+        const data = getFormData();
+        
+        const curlCommand = `curl --user "api:YOUR_MAILGUN_API_KEY" \\
+     https://api.mailgun.net/v3/centroumbandistareinodamata.org/messages \\
+     -F from='Centro Umbandista Reino Da Mata <noreply@centroumbandistareinodamata.org>' \\
+     -F to='${data.email}' \\
+     -F subject='[TEST DIRECTO] ${data.subject}' \\
+     -F text='${data.content}' \\
+     -F html='<h2>Test Mailgun Directo</h2><p>${data.content}</p>'`;
+        
+        showMessage('info', `
+          Test directo con Mailgun API:
+          
+          Para probar el envío masivo, ejecuta este comando en tu terminal:
+          
+          ${curlCommand}
+          
+          Este comando enviará un email directamente usando la API de Mailgun.
+        `);
+      });
+    }
+    
+    // Firebase function test
+    const functionBtn = document.getElementById('test-firebase-function');
+    if (functionBtn) {
+      functionBtn.addEventListener('click', async function() {
+        showMessage('info', 'Probando Firebase Function...');
+        
+        try {
+          // Esperar a que Firebase esté disponible
+          let attempts = 0;
+          while (attempts < 20 && (!window.firebaseConfig?.functions)) {
+            await new Promise(resolve => setTimeout(resolve, 200));
+            attempts++;
+          }
+          
+          if (!window.firebaseConfig?.functions) {
+            throw new Error('Firebase Functions no disponible');
+          }
+          
+          const { httpsCallable } = await import('firebase/functions');
+          const sendTestNewsletter = httpsCallable(window.firebaseConfig.functions, 'sendTestNewsletter');
+          
+          const data = getFormData();
+          const result = await sendTestNewsletter({
+            subject: '[TEST FUNCTION] ' + data.subject,
+            content: data.content,
+            htmlContent: '<h2>Test Firebase Function</h2><p>' + data.content + '</p>',
+            fromName: 'Centro Umbandista Reino Da Mata',
+            testEmail: data.email
+          });
+          
+          showMessage('success', 'Email enviado: ' + JSON.stringify(result.data));
+        } catch (error) {
+          showMessage('error', 'Error: ' + error.message);
+          console.error('Error:', error);
+        }
+      });
+    }
+    
+    // Newsletter component redirect
+    const newsletterBtn = document.getElementById('test-newsletter-component');
+    if (newsletterBtn) {
+      newsletterBtn.addEventListener('click', function() {
+        showMessage('info', 'Redirigiendo al newsletter...');
+        setTimeout(() => {
+          window.location.href = '/admin/newsletter';
+        }, 1000);
+      });
+    }
+    
+    // Initial message
+    showMessage('info', 'Página de test cargada. Haz clic en Debug Services primero para verificar.');
+  }
+  
+  // Inicializar cuando el DOM esté listo
+  document.addEventListener('DOMContentLoaded', initializeTestPage);
+  
+  // Fallback si AdminProtection tarda en cargar
+  setTimeout(initializeTestPage, 2000);
+</script>
