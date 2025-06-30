@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { configUtils } from '@/core/config';
-import { auth, onAuthStateChanged } from '@/core/firebase/config';
+import { auth, onAuthStateChanged, httpsCallable } from '@/core/firebase/config';
 import { isAdminEmail } from '@/features/admin/configService';
 import { getAllArticles, getAllDrafts, deleteArticle, deleteDraft, publishDraftAsArticle, getArticleById, updateArticle, checkSlugExists } from '@/services/articleService';
 import { getAllSubscribers, deleteSubscriber as deleteSubscriberService } from '@/features/newsletter/subscriberService';
@@ -19,6 +19,7 @@ declare global {
       auth: typeof auth;
       onAuthStateChanged: typeof onAuthStateChanged;
       functions: typeof functions;
+      httpsCallable: typeof httpsCallable;
     };
     articleServices?: {
       getAllArticles: typeof getAllArticles;
@@ -45,7 +46,7 @@ export default function AdminProtection({ children, fallback }: AdminProtectionP
   useEffect(() => {
     // Exponer servicios globalmente para uso en scripts de páginas
     if (typeof window !== 'undefined') {
-      window.firebaseConfig = { auth, onAuthStateChanged, functions };
+      window.firebaseConfig = { auth, onAuthStateChanged, functions, httpsCallable };
       window.articleServices = { 
         getAllArticles, 
         getAllDrafts, 
