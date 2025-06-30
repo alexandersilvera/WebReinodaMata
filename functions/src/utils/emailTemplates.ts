@@ -21,9 +21,13 @@ export interface EmailTemplateData {
 export function processTemplate(templateContent: string, data: EmailTemplateData): string {
   let processed = templateContent;
   
+  // Optimizar contenido para deliverability
+  const optimizedContent = data.content ? optimizeContentForDeliverability(data.content) : '';
+  const optimizedSubject = data.subject ? optimizeContentForDeliverability(data.subject) : '';
+  
   // Reemplazar variables básicas
-  processed = processed.replace(/\{\{subject\}\}/g, data.subject || '');
-  processed = processed.replace(/\{\{content\}\}/g, data.content || '');
+  processed = processed.replace(/\{\{subject\}\}/g, optimizedSubject);
+  processed = processed.replace(/\{\{content\}\}/g, optimizedContent);
   processed = processed.replace(/\{\{firstName\}\}/g, data.firstName || 'Suscriptor');
   processed = processed.replace(/\{\{siteUrl\}\}/g, data.siteUrl || getSiteUrlConfig().url);
   
@@ -61,6 +65,22 @@ export function loadEmailTemplate(templateName: string, data: EmailTemplateData)
     // Fallback a HTML básico
     return generateFallbackHtml(data);
   }
+}
+
+/**
+ * Mejora el contenido para evitar filtros de spam
+ */
+function optimizeContentForDeliverability(content: string): string {
+  // Evitar palabras que triggean spam filters
+  const spamWords = ['URGENTE', 'GRATIS', 'OFERTA LIMITADA', '100% GRATIS', 'CLICK AQUÍ'];
+  let optimized = content;
+  
+  spamWords.forEach(word => {
+    const regex = new RegExp(word, 'gi');
+    optimized = optimized.replace(regex, word.toLowerCase());
+  });
+  
+  return optimized;
 }
 
 /**

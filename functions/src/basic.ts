@@ -125,6 +125,13 @@ export const sendNewsletterToSubscribers = onCall(
         formData.append("subject", subject);
         formData.append("text", textContent);
         formData.append("html", htmlContent);
+        
+        // Headers adicionales para mejorar deliverability
+        formData.append("h:Reply-To", mailgunConfig.fromEmail);
+        formData.append("h:List-Unsubscribe", `<${getSiteUrlConfig().url}/unsubscribe>`);
+        formData.append("h:List-Id", "Centro Umbandista Reino Da Mata Newsletter");
+        formData.append("h:X-Mailgun-Native-Send", "true");
+        
         // Mailgun specific: add recipient variables if you use them for per-recipient data
         // formData.append('recipient-variables', JSON.stringify(batchRecipientVariables));
 
@@ -265,6 +272,12 @@ Centro Umbandista Reino Da Mata
       formData.append("subject", "Confirmación de suscripción - Centro Umbandista Reino Da Mata");
       formData.append("text", textContent);
       formData.append("html", htmlContent);
+      
+      // Headers adicionales para mejorar deliverability
+      formData.append("h:Reply-To", mailgunConfig.fromEmail);
+      formData.append("h:List-Unsubscribe", unsubscribeLink ? `<${unsubscribeLink}>` : `<${siteUrlConfig.url}/unsubscribe>`);
+      formData.append("h:List-Id", "Centro Umbandista Reino Da Mata Newsletter");
+      formData.append("h:X-Mailgun-Native-Send", "true");
 
       const response = await fetch(
         `${mailgunConfig.baseUrl}/${mailgunConfig.domain}/messages`,
