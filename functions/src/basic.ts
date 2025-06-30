@@ -632,6 +632,123 @@ export const subscribeEmail = onCall(
 );
 
 /**
+ * Sincroniza todos los usuarios autenticados con la colección de suscriptores
+ */
+export const syncAuthUsersToSubscribers = onCall(
+  { 
+    memory: "512MiB",
+    cors: true
+  },
+  async (request) => {
+    try {
+      // Verificar autenticación de admin
+      if (!request.auth) {
+        throw new Error('Usuario no autenticado');
+      }
+
+      const userEmail = request.auth.token.email;
+      if (!userEmail || !isAdminUser(userEmail)) {
+        throw new Error('Sin permisos de administrador');
+      }
+
+      console.log('Iniciando sincronización de usuarios Auth a suscriptores...');
+
+      // Obtener todos los usuarios de Auth
+      const authUsers: admin.auth.UserRecord[] = [];
+      let nextPageToken: string | undefined;
+      
+      do {
+        const listUsersResult = await admin.auth().listUsers(1000, nextPageToken);
+        authUsers.push(...listUsersResult.users);
+        nextPageToken = listUsersResult.pageToken;
+      } while (nextPageToken);
+
+      console.log(`Encontrados ${authUsers.length} usuarios en Firebase Auth`);
+
+      // Obtener suscriptores existentes
+      const subscribersSnapshot = await admin.firestore()
+        .collection('subscribers')
+        .get();
+
+      const existingEmails = new Set(
+        subscribersSnapshot.docs.map(doc => doc.data().email?.toLowerCase())
+      );
+
+      let syncedCount = 0;
+      let skippedCount = 0;
+
+      // Sincronizar cada usuario
+      for (const user of authUsers) {
+        if (!user.email) {
+          skippedCount++;
+          continue;
+        }
+
+        const email = user.email.toLowerCase();
+        
+        // Si ya existe en suscriptores, saltarlo
+        if (existingEmails.has(email)) {
+          skippedCount++;
+          continue;
+        }
+
+        // Agregar a suscriptores
+        try {
+          const unsubscribeToken = uuidv4();
+          
+          await admin.firestore().collection('subscribers').add({
+            email: email,
+            name: user.displayName || '',
+            firstName: user.displayName?.split(' ')[0] || '',
+            lastName: user.displayName?.split(' ').slice(1).join(' ') || '',
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            active: true,
+            unsubscribeToken,
+            source: 'auth_sync',
+            authUid: user.uid,
+            syncedAt: admin.firestore.FieldValue.serverTimestamp()
+          });
+
+          syncedCount++;
+          console.log(`Sincronizado: ${email}`);
+        } catch (error) {
+          console.error(`Error sincronizando ${email}:`, error);
+          skippedCount++;
+        }
+      }
+
+      const message = `Sincronización completada. ${syncedCount} usuarios agregados, ${skippedCount} omitidos (ya existían o sin email).`;
+      console.log(message);
+
+      return {
+        success: true,
+        message,
+        totalAuthUsers: authUsers.length,
+        syncedCount,
+        skippedCount
+      };
+
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      console.error('Error en sincronización:', error);
+      
+      return {
+        success: false,
+        message: `Error al sincronizar: ${errorMessage}`
+      };
+    }
+  }
+);
+
+// NOTA: La función onUserCreate requiere configuración adicional en Firebase Functions v2
+// Por ahora está comentada. Se puede agregar después de configurar los triggers correctamente.
+/*
+export const onUserCreate = functions.auth.user().onCreate(async (user) => {
+  // Funcionalidad de auto-sync comentada temporalmente
+});
+*/
+
+/**
  * Función simple para enviar email de prueba - NUEVA VERSION
  */
 export const sendSimpleTestEmail = onCall(

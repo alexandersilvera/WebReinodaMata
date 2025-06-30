@@ -23,10 +23,15 @@ export interface Subscriber {
   id: string;
   firstName: string;
   lastName?: string;
+  name?: string;
   email: string;
   createdAt: Timestamp;
   active: boolean;
   deleted?: boolean;
+  source?: 'web' | 'auth_sync' | 'auth_auto' | 'manual';
+  authUid?: string;
+  unsubscribeToken?: string;
+  syncedAt?: Timestamp;
 }
 
 // Obtener todos los suscriptores
