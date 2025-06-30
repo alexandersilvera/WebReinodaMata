@@ -407,7 +407,7 @@ export const prerender = false;
       console.log('✅ Botón de sincronización configurado correctamente');
       
       // Test manual en la consola
-      window.testSyncButton = () => {
+      (window as any).testSyncButton = () => {
         console.log('🧪 Test manual del botón de sincronización...');
         syncAuthUsers();
       };
