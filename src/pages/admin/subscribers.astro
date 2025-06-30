@@ -300,10 +300,23 @@ export const prerender = false;
 
   // Función para sincronizar usuarios de Auth
   async function syncAuthUsers() {
+    console.log('🔄 Iniciando sincronización de usuarios Auth...');
+    
     const syncButton = document.getElementById('sync-auth-users');
-    if (!syncButton) return;
+    if (!syncButton) {
+      console.error('❌ No se encontró el botón de sincronización');
+      return;
+    }
 
     try {
+      // Verificar que las dependencias estén disponibles
+      console.log('🔍 Verificando dependencias:', { 
+        functions: !!functions, 
+        httpsCallable: !!httpsCallable,
+        auth: !!auth,
+        firebaseConfig: !!window.firebaseConfig
+      });
+
       // Cambiar estado del botón
       syncButton.disabled = true;
       syncButton.innerHTML = `
@@ -316,22 +329,27 @@ export const prerender = false;
 
       // Llamar a la función Firebase
       if (!functions || !httpsCallable) {
-        throw new Error('Firebase Functions no disponible');
+        throw new Error('Firebase Functions no disponible. Verifica la configuración.');
       }
 
+      console.log('📞 Llamando a la función syncAuthUsersToSubscribers...');
       const syncFunction = httpsCallable(functions, 'syncAuthUsersToSubscribers');
       const result = await syncFunction();
 
-      if (result.data.success) {
+      console.log('📤 Respuesta de la función:', result);
+
+      if (result.data?.success) {
+        console.log('✅ Sincronización exitosa:', result.data.message);
         alert(`✅ ${result.data.message}`);
         // Recargar la lista de suscriptores
         await loadData();
       } else {
-        alert(`❌ Error: ${result.data.message}`);
+        console.error('❌ Error en la función:', result.data?.message);
+        alert(`❌ Error: ${result.data?.message || 'Error desconocido'}`);
       }
 
     } catch (error) {
-      console.error('Error en sincronización:', error);
+      console.error('❌ Error en sincronización:', error);
       alert(`❌ Error al sincronizar: ${error.message}`);
     } finally {
       // Restaurar botón
@@ -347,26 +365,69 @@ export const prerender = false;
 
   // Función de inicialización principal
   function initializeAdmin() {
+    console.log('🚀 Inicializando panel de administración de suscriptores...');
+    
     // Obtener elementos DOM al inicializar
     getDOMElements();
 
     // Configurar botón de sincronización
-    const syncButton = document.getElementById('sync-auth-users');
-    if (syncButton) {
-      syncButton.addEventListener('click', syncAuthUsers);
-    }
+    setupSyncButton();
 
     // Inicializar cuando el usuario esté autenticado
     onAuthStateChanged(auth, (user) => {
       if (user) {
+        console.log('👤 Usuario autenticado, cargando datos...', user.email);
         setTimeout(() => {
           getDOMElements();
           loadData();
+          
+          // Reconfigurar el botón después de cargar los datos (por si el DOM cambió)
+          setupSyncButton();
         }, 100);
+      } else {
+        console.log('🚫 Usuario no autenticado');
       }
     });
   }
 
+  // Función para configurar el botón de sincronización
+  function setupSyncButton() {
+    const syncButton = document.getElementById('sync-auth-users');
+    if (syncButton && !syncButton.hasAttribute('data-listener-configured')) {
+      console.log('🔧 Configurando botón de sincronización...');
+      
+      // Agregar evento de debugging primero
+      syncButton.addEventListener('click', (e) => {
+        console.log('🖱️ Click detectado en botón de sincronización', e);
+      });
+      
+      // Agregar la función principal
+      syncButton.addEventListener('click', syncAuthUsers);
+      syncButton.setAttribute('data-listener-configured', 'true');
+      console.log('✅ Botón de sincronización configurado correctamente');
+      
+      // Test manual en la consola
+      window.testSyncButton = () => {
+        console.log('🧪 Test manual del botón de sincronización...');
+        syncAuthUsers();
+      };
+      console.log('💡 Prueba manual disponible: testSyncButton()');
+    } else if (syncButton) {
+      console.log('⚠️ Botón ya configurado');
+    } else {
+      console.log('❌ Botón de sincronización no encontrado en el DOM');
+    }
+  }
+
   // Cargar servicios cuando la página se cargue
-  document.addEventListener('DOMContentLoaded', loadServices);
+  document.addEventListener('DOMContentLoaded', () => {
+    console.log('📄 DOM cargado, inicializando...');
+    loadServices();
+    
+    // Configurar botón inmediatamente si está disponible
+    setupSyncButton();
+    
+    // También intentar configurar después de un pequeño delay
+    setTimeout(setupSyncButton, 500);
+  });
 </script>
