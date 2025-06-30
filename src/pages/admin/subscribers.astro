@@ -392,7 +392,26 @@ export const prerender = false;
 
   // Función para configurar el botón de sincronización
   function setupSyncButton() {
+    console.log('🔍 Buscando botón con ID "sync-auth-users"...');
+    console.log('🔍 Elementos con ID en el DOM:', document.querySelectorAll('[id]').length);
+    console.log('🔍 AdminProtection container presente:', !!document.querySelector('[data-admin-protection]') || !!document.querySelector('.admin-protection'));
+    
     const syncButton = document.getElementById('sync-auth-users');
+    console.log('🔍 Resultado de getElementById("sync-auth-users"):', syncButton);
+    
+    // Buscar de forma alternativa
+    const syncButtonAlt = document.querySelector('#sync-auth-users');
+    console.log('🔍 Resultado de querySelector("#sync-auth-users"):', syncButtonAlt);
+    
+    // Verificar si hay algún botón con texto similar
+    const allButtons = document.querySelectorAll('button');
+    console.log('🔍 Total de botones en la página:', allButtons.length);
+    allButtons.forEach((btn, index) => {
+      if (btn.textContent?.includes('Sincronizar')) {
+        console.log(`🔍 Botón ${index} con texto "Sincronizar":`, btn);
+      }
+    });
+    
     if (syncButton && !syncButton.hasAttribute('data-listener-configured')) {
       console.log('🔧 Configurando botón de sincronización...');
       
@@ -416,18 +435,94 @@ export const prerender = false;
       console.log('⚠️ Botón ya configurado');
     } else {
       console.log('❌ Botón de sincronización no encontrado en el DOM');
+      console.log('🔍 DOM actual:', document.body.innerHTML.substring(0, 500) + '...');
     }
+  }
+
+  // Función para esperar a que el botón esté disponible usando MutationObserver
+  function waitForSyncButtonWithObserver() {
+    console.log('👀 Iniciando observador de mutaciones para detectar el botón...');
+    
+    const syncButton = document.getElementById('sync-auth-users');
+    if (syncButton) {
+      console.log('✅ Botón ya está presente, configurando...');
+      setupSyncButton();
+      return;
+    }
+    
+    // Configurar MutationObserver para detectar cuando aparece el botón
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (node.nodeType === Node.ELEMENT_NODE) {
+            const element = node as Element;
+            
+            // Verificar si el nodo agregado es el botón o lo contiene
+            if (element.id === 'sync-auth-users' || element.querySelector('#sync-auth-users')) {
+              console.log('🎉 Botón detectado por MutationObserver!');
+              setupSyncButton();
+              observer.disconnect(); // Dejar de observar
+            }
+          }
+        });
+      });
+    });
+    
+    // Comenzar a observar cambios en el documento
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+    
+    // Timeout de seguridad para desconectar el observer después de 30 segundos
+    setTimeout(() => {
+      observer.disconnect();
+      console.log('⏰ Observer timeout - desconectado después de 30 segundos');
+    }, 30000);
+  }
+
+  // Función para esperar a que el botón esté disponible (método fallback)
+  function waitForSyncButton(maxAttempts = 15, delay = 1000) {
+    let attempts = 0;
+    
+    const checkButton = () => {
+      attempts++;
+      console.log(`🔄 Intento ${attempts}/${maxAttempts} de encontrar el botón...`);
+      
+      const syncButton = document.getElementById('sync-auth-users');
+      if (syncButton) {
+        console.log('✅ Botón encontrado en intento', attempts);
+        setupSyncButton();
+        return;
+      }
+      
+      if (attempts < maxAttempts) {
+        setTimeout(checkButton, delay);
+      } else {
+        console.log('❌ Botón no encontrado después de', maxAttempts, 'intentos');
+        console.log('🔍 Contenido final del body:', document.body.innerHTML.substring(0, 1000));
+      }
+    };
+    
+    checkButton();
   }
 
   // Cargar servicios cuando la página se cargue
   document.addEventListener('DOMContentLoaded', () => {
     console.log('📄 DOM cargado, inicializando...');
+    console.log('ℹ️ IMPORTANTE: AdminProtection usa client:load, el botón aparecerá después de la verificación de permisos');
     loadServices();
     
-    // Configurar botón inmediatamente si está disponible
+    // Configurar botón inmediatamente si está disponible (probablemente no estará)
     setupSyncButton();
     
-    // También intentar configurar después de un pequeño delay
-    setTimeout(setupSyncButton, 500);
+    // Usar MutationObserver para detectar cuando el botón aparece
+    waitForSyncButtonWithObserver();
+    
+    // También usar método de reintentos como fallback
+    setTimeout(() => {
+      console.log('🔄 Iniciando método de reintentos como fallback...');
+      waitForSyncButton();
+    }, 2000);
   });
 </script>
