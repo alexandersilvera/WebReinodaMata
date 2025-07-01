@@ -72,7 +72,8 @@ import MainLayout from "@/layouts/MainLayout.astro";
 </MainLayout>
 
 <script>
-  import { doc, getDoc, updateDoc, collection, query, where, getDocs, limit } from 'firebase/firestore'; // Added collection, query, where, getDocs, limit
+  import { updateDoc, collection, query, where, getDocs, limit } from 'firebase/firestore';
+  // doc, getDoc available but not used in this implementation
   import { db } from '@/core/firebase/config';
   
   // Elementos del DOM

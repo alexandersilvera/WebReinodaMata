@@ -1,9 +1,13 @@
 ---
 import MainLayout from "@/layouts/MainLayout.astro";
+import AuthSync from "@/components/AuthSync";
 // No need to import auth here as it's used only client-side
 ---
 
 <MainLayout title="Registrarse - Reino da Mata" description="Crea una nueva cuenta.">
+  <!-- Componente para sincronización automática -->
+  <AuthSync client:load />
+  
   <div class="container mx-auto px-4 py-12 max-w-md">
     <h1 class="text-3xl font-bold text-center text-[#F08F4A] mb-8">Crear Cuenta</h1>
     <form id="register-form" class="space-y-6 bg-[#1f1e23] p-8 rounded-lg shadow-lg">

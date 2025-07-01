@@ -278,8 +278,6 @@ import AdminProtection from "@/components/AdminProtection";
 <!-- Importar bibliotecas necesarias -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dompurify@2.3.4/dist/purify.min.js"></script>
-<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
 
 <script>
   import { auth, functions } from "@/core/firebase/config";
@@ -289,9 +287,6 @@ import AdminProtection from "@/components/AdminProtection";
   
   // Importar el nuevo servicio de artículos
   import { createArticle, saveDraft, deleteDraft, checkSlugExists, getDraftById, cleanupOldDraftsWithSlug } from "@/services/articleService";
-  import RichTextEditor from "@/components/RichTextEditor.tsx";
-  import ImageUploader from "@/components/ImageUploader.tsx";
-  import TagsInput from "@/components/TagsInput.tsx";
 
   // Función para sincronizar contenido
   const syncContentToFiles = httpsCallable(functions, 'syncContentToFiles');
@@ -315,37 +310,103 @@ import AdminProtection from "@/components/AdminProtection";
   let autosaveTimeout: number | null = null;
   let currentDraftId: string | null = null;
 
-  // Elementos del DOM
-  const loadingElement = document.getElementById("loading");
-  const articleFormContainer = document.getElementById("article-form-container");
-  const articleForm = document.getElementById("article-form") as HTMLFormElement | null;
-  const successMessage = document.getElementById("success-message");
-  const syncMessage = document.getElementById("sync-message");
-  const syncStatusElement = document.getElementById("sync-status");
-  const syncContentBtn = document.getElementById("sync-content-btn");
-  const errorMessage = document.getElementById("error-message");
-  const errorDetails = document.getElementById("error-details");
-  const viewArticleLink = document.getElementById("view-article-link") as HTMLAnchorElement | null;
-  const previewBtn = document.getElementById("preview-btn");
-  const saveDraftBtn = document.getElementById("save-draft-btn");
-  const submitBtn = document.getElementById("submit-btn") as HTMLButtonElement | null;
-  const previewModal = document.getElementById("preview-modal");
-  const previewContent = document.getElementById("preview-content");
-  const closePreviewBtn = document.getElementById("close-preview");
-  const autosaveIndicator = document.getElementById("autosave-indicator");
-  const autosaveText = document.getElementById("autosave-text");
-  const lastSaved = document.getElementById("last-saved");
-  const saveTime = document.getElementById("save-time");
+  // Variables para elementos del DOM - se definirán dinámicamente
+  let loadingElement: HTMLElement | null;
+  let articleFormContainer: HTMLElement | null;
+  let articleForm: HTMLFormElement | null;
+  let successMessage: HTMLElement | null;
+  let syncMessage: HTMLElement | null;
+  let syncStatusElement: HTMLElement | null;
+  let syncContentBtn: HTMLElement | null;
+  let errorMessage: HTMLElement | null;
+  let errorDetails: HTMLElement | null;
+  let viewArticleLink: HTMLAnchorElement | null;
+  let previewBtn: HTMLElement | null;
+  let saveDraftBtn: HTMLElement | null;
+  let submitBtn: HTMLButtonElement | null;
+  let previewModal: HTMLElement | null;
+  let previewContent: HTMLElement | null;
+  let closePreviewBtn: HTMLElement | null;
+  let autosaveIndicator: HTMLElement | null;
+  let autosaveText: HTMLElement | null;
+  let lastSaved: HTMLElement | null;
+  let saveTime: HTMLElement | null;
+  let titleInput: HTMLInputElement | null;
+  let slugInput: HTMLInputElement | null;
+  let authorInput: HTMLInputElement | null;
+  let descriptionInput: HTMLTextAreaElement | null;
+  let draftCheckbox: HTMLInputElement | null;
+  let commentsEnabledCheckbox: HTMLInputElement | null;
+  let featuredCheckbox: HTMLInputElement | null;
+  let charCount: HTMLElement | null;
 
-  // Elementos de formulario básicos
-  const titleInput = document.getElementById("title") as HTMLInputElement | null;
-  const slugInput = document.getElementById("slug") as HTMLInputElement | null;
-  const authorInput = document.getElementById("author") as HTMLInputElement | null;
-  const descriptionInput = document.getElementById("description") as HTMLTextAreaElement | null;
-  const draftCheckbox = document.getElementById("draft") as HTMLInputElement | null;
-  const commentsEnabledCheckbox = document.getElementById("comments-enabled") as HTMLInputElement | null;
-  const featuredCheckbox = document.getElementById("featured") as HTMLInputElement | null;
-  const charCount = document.getElementById("char-count");
+  // Función para esperar a que AdminProtection renderice el contenido
+  const waitForAdminProtection = (): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      let attempts = 0;
+      const maxAttempts = 50; // 5 segundos máximo
+      
+      const checkElements = () => {
+        const loading = document.getElementById("loading");
+        const container = document.getElementById("article-form-container");
+        
+        console.log(`[AdminProtection] Intento ${attempts + 1}/${maxAttempts} - Loading:`, !!loading, 'Container:', !!container);
+        
+        if (loading && container) {
+          console.log('[AdminProtection] ✅ Elementos encontrados, AdminProtection completado');
+          resolve();
+        } else if (attempts >= maxAttempts) {
+          console.error('[AdminProtection] ⏰ Timeout esperando AdminProtection');
+          reject(new Error('AdminProtection rendering timeout'));
+        } else {
+          attempts++;
+          setTimeout(checkElements, 100);
+        }
+      };
+      
+      checkElements();
+    });
+  };
+
+  // Función para inicializar elementos del DOM
+  const initializeDOMElements = (): void => {
+    console.log('[DOM] Inicializando elementos del DOM...');
+    
+    loadingElement = document.getElementById("loading");
+    articleFormContainer = document.getElementById("article-form-container");
+    articleForm = document.getElementById("article-form") as HTMLFormElement | null;
+    successMessage = document.getElementById("success-message");
+    syncMessage = document.getElementById("sync-message");
+    syncStatusElement = document.getElementById("sync-status");
+    syncContentBtn = document.getElementById("sync-content-btn");
+    errorMessage = document.getElementById("error-message");
+    errorDetails = document.getElementById("error-details");
+    viewArticleLink = document.getElementById("view-article-link") as HTMLAnchorElement | null;
+    previewBtn = document.getElementById("preview-btn");
+    saveDraftBtn = document.getElementById("save-draft-btn");
+    submitBtn = document.getElementById("submit-btn") as HTMLButtonElement | null;
+    previewModal = document.getElementById("preview-modal");
+    previewContent = document.getElementById("preview-content");
+    closePreviewBtn = document.getElementById("close-preview");
+    autosaveIndicator = document.getElementById("autosave-indicator");
+    autosaveText = document.getElementById("autosave-text");
+    lastSaved = document.getElementById("last-saved");
+    saveTime = document.getElementById("save-time");
+    titleInput = document.getElementById("title") as HTMLInputElement | null;
+    slugInput = document.getElementById("slug") as HTMLInputElement | null;
+    authorInput = document.getElementById("author") as HTMLInputElement | null;
+    descriptionInput = document.getElementById("description") as HTMLTextAreaElement | null;
+    draftCheckbox = document.getElementById("draft") as HTMLInputElement | null;
+    commentsEnabledCheckbox = document.getElementById("comments-enabled") as HTMLInputElement | null;
+    featuredCheckbox = document.getElementById("featured") as HTMLInputElement | null;
+    charCount = document.getElementById("char-count");
+    
+    console.log('[DOM] ✅ Elementos clave encontrados:');
+    console.log('- Loading:', !!loadingElement);
+    console.log('- Form Container:', !!articleFormContainer);
+    console.log('- Title Input:', !!titleInput);
+    console.log('- Content Container:', !!document.getElementById('rich-text-editor-container'));
+  };
 
   // Tipos para validadores
   type ValidatorResult = string | true;
@@ -616,134 +677,928 @@ import AdminProtection from "@/components/AdminProtection";
     });
   };
 
-  // Inicializar componentes React simplificados
-  const initializeReactComponents = (): void => {
+  // Función para cargar componentes (forzando fallbacks por compatibilidad)
+  const loadReactComponents = async (): Promise<void> => {
+    console.log('[Components] Usando componentes fallback optimizados para máxima compatibilidad');
+    
+    // Esperar a que los contenedores estén disponibles
+    try {
+      await waitForContainers();
+      initializeFallbackComponents();
+    } catch (error) {
+      console.warn('[Components] Contenedores no disponibles inmediatamente, reintentando...');
+      setTimeout(() => {
+        initializeFallbackComponents();
+      }, 1000);
+    }
+  };
+
+  // Función para esperar a que los contenedores del DOM estén disponibles
+  const waitForContainers = (): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      let attempts = 0;
+      const maxAttempts = 30; // 3 segundos máximo
+      
+      const checkContainers = () => {
+        const richTextContainer = document.getElementById('rich-text-editor-container');
+        const imageContainer = document.getElementById('image-uploader-container');
+        const tagsContainer = document.getElementById('tags-input-container');
+        
+        console.log('[Containers] Verificando contenedores - RichText:', !!richTextContainer, 'Image:', !!imageContainer, 'Tags:', !!tagsContainer);
+        
+        if (richTextContainer && imageContainer && tagsContainer) {
+          console.log('[Containers] ✅ Todos los contenedores encontrados');
+          resolve();
+        } else if (attempts >= maxAttempts) {
+          console.warn('[Containers] ⏰ Timeout esperando contenedores DOM');
+          reject(new Error('DOM containers not ready'));
+        } else {
+          attempts++;
+          setTimeout(checkContainers, 100);
+        }
+      };
+      
+      checkContainers();
+    });
+  };
+
+  // Función para esperar a que React esté disponible
+  const waitForReact = (): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      let attempts = 0;
+      const maxAttempts = 20; // 2 segundos máximo
+      
+      const checkReact = () => {
+        if ((window as any).React && (window as any).ReactDOM) {
+          console.log('[React] ✅ React y ReactDOM cargados exitosamente');
+          console.log('[React] React version:', (window as any).React.version);
+          resolve();
+        } else if (attempts >= maxAttempts) {
+          console.warn('[React] ⏰ Timeout esperando React - usando fallbacks');
+          reject(new Error('React CDN timeout'));
+        } else {
+          attempts++;
+          setTimeout(checkReact, 100);
+        }
+      };
+      
+      checkReact();
+    });
+  };
+
+  // Inicializar componentes React con las referencias cargadas
+  const initializeReactComponents = (RichTextEditor: any, ImageUploader: any, TagsInput: any): void => {
+    console.log('[Components] Inicializando componentes React...');
+    console.log('[Components] React disponible:', !!((window as any).React));
+    console.log('[Components] ReactDOM disponible:', !!((window as any).ReactDOM));
+    
     // RichTextEditor integrado
     const richTextEditorContainer = document.getElementById('rich-text-editor-container');
+    console.log('[Components] RichTextEditor container encontrado:', !!richTextEditorContainer);
+    
     if (richTextEditorContainer && (window as any).React && (window as any).ReactDOM) {
-      const root = (window as any).ReactDOM.createRoot(richTextEditorContainer);
-      const editorElement = (window as any).React.createElement(RichTextEditor, {
-        value: formData.content,
-        onChange: (newContent: string) => {
-          formData.content = newContent;
-          isFormDirty = true;
-          scheduleAutosave();
-          // Validar en cada cambio para feedback inmediato, o considerar hacerlo en blur si es muy pesado
-          validateField(
-            { value: formData.content },
-            document.getElementById('content-error'),
-            validators.content
-          );
-          // Actualizar contador de palabras (si RichTextEditor no lo provee internamente)
-          // const words = newContent.replace(/<[^>]+>/g, ' ').split(/\s+/).filter(w => w.length > 0).length;
-          // let counter = richTextEditorContainer.querySelector('.word-counter');
-          // if (!counter) {
-          //   // counter logic
-          // }
-          // counter.textContent = `${words} palabras`;
-        },
-        placeholder: 'Escribe tu contenido aquí...',
-        // Aquí puedes pasar más props si RichTextEditor los acepta
-      });
-      root.render(editorElement);
+      try {
+        const root = (window as any).ReactDOM.createRoot(richTextEditorContainer);
+        const editorElement = (window as any).React.createElement(RichTextEditor, {
+          value: formData.content,
+          onChange: (newContent: string) => {
+            formData.content = newContent;
+            isFormDirty = true;
+            scheduleAutosave();
+            validateField(
+              { value: formData.content },
+              document.getElementById('content-error'),
+              validators.content
+            );
+          },
+          placeholder: 'Escribe tu contenido aquí...',
+        });
+        root.render(editorElement);
+        console.log('[Components] RichTextEditor inicializado correctamente');
+      } catch (error) {
+        console.error('[Components] Error al inicializar RichTextEditor:', error);
+        createFallbackEditor();
+      }
     } else {
-      console.error('RichTextEditor container o React/ReactDOM no encontrado.');
-      // Fallback a textarea si React no carga (opcional)
-      const textarea = document.createElement('textarea');
-      textarea.id = 'content';
-      textarea.rows = 20;
-      textarea.className = 'w-full px-4 py-2 bg-green-700/50 border border-green-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400 text-white font-mono transition-colors resize-y';
-      textarea.placeholder = 'Error al cargar editor. Usando Markdown básico...';
-      textarea.value = formData.content;
-      textarea.addEventListener('input', () => {
-        formData.content = textarea.value;
-        isFormDirty = true;
-        scheduleAutosave();
-      });
-      textarea.addEventListener('blur', () => {
-        validateField(
-          { value: formData.content }, 
-          document.getElementById('content-error'), 
-          validators.content
-        );
-      });
-      if(richTextEditorContainer) richTextEditorContainer.appendChild(textarea);
+      console.error('[Components] RichTextEditor: requisitos no cumplidos');
+      createFallbackEditor();
     }
 
     // ImageUploader integrado
     const imageUploaderContainer = document.getElementById('image-uploader-container');
+    console.log('[Components] ImageUploader container encontrado:', !!imageUploaderContainer);
+    
     if (imageUploaderContainer && (window as any).React && (window as any).ReactDOM) {
-      const root = (window as any).ReactDOM.createRoot(imageUploaderContainer);
-      const imageUploaderElement = (window as any).React.createElement(ImageUploader, {
-        value: formData.image,
-        onChange: (newUrl: string) => {
-          formData.image = newUrl;
-          isFormDirty = true;
-          scheduleAutosave();
-          // Limpiar error si la URL cambia (asumimos que la nueva URL es válida o será validada por el componente)
-          const imageErrorDiv = document.getElementById('image-error');
-          if (imageErrorDiv) {
-            imageErrorDiv.classList.add('hidden');
-            imageErrorDiv.textContent = '';
-          }
-           validateField( // Re-validar con el nuevo valor
-            { value: newUrl },
-            document.getElementById('image-error'),
-            validators.image
-          );
-        },
-        onError: (errorMsg: string) => {
-          const imageErrorDiv = document.getElementById('image-error');
-          if (imageErrorDiv) {
-            imageErrorDiv.textContent = errorMsg;
-            imageErrorDiv.classList.remove('hidden');
-          }
-        },
-        // Props adicionales del ImageUploader (maxSizeInMB, acceptedTypes, etc.)
-        // pueden ser pasados aquí si es necesario, usando los valores por defecto del componente
-        // o obteniéndolos de alguna configuración si se desea.
-      });
-      root.render(imageUploaderElement);
+      try {
+        const root = (window as any).ReactDOM.createRoot(imageUploaderContainer);
+        const imageUploaderElement = (window as any).React.createElement(ImageUploader, {
+          value: formData.image,
+          onChange: (newUrl: string) => {
+            formData.image = newUrl;
+            isFormDirty = true;
+            scheduleAutosave();
+            const imageErrorDiv = document.getElementById('image-error');
+            if (imageErrorDiv) {
+              imageErrorDiv.classList.add('hidden');
+              imageErrorDiv.textContent = '';
+            }
+            validateField(
+              { value: newUrl },
+              document.getElementById('image-error'),
+              validators.image
+            );
+          },
+          onError: (errorMsg: string) => {
+            const imageErrorDiv = document.getElementById('image-error');
+            if (imageErrorDiv) {
+              imageErrorDiv.textContent = errorMsg;
+              imageErrorDiv.classList.remove('hidden');
+            }
+          },
+        });
+        root.render(imageUploaderElement);
+        console.log('[Components] ImageUploader inicializado correctamente');
+      } catch (error) {
+        console.error('[Components] Error al inicializar ImageUploader:', error);
+        createFallbackImageUploader();
+      }
     } else {
-      console.error('ImageUploader container o React/ReactDOM no encontrado.');
-      // Opcional: Fallback a un input de URL simple si el componente React no carga
-      const fallbackInput = document.createElement('input');
-      fallbackInput.type = 'url';
-      fallbackInput.className = 'w-full px-4 py-2 bg-red-900/50 border border-red-700 text-white'; // Estilo de error
-      fallbackInput.placeholder = 'Error al cargar ImageUploader. Ingrese URL manualmente.';
-      fallbackInput.oninput = (e) => { formData.image = (e.target as HTMLInputElement).value; isFormDirty = true; scheduleAutosave(); };
-      if (imageUploaderContainer) imageUploaderContainer.appendChild(fallbackInput);
+      console.error('[Components] ImageUploader: requisitos no cumplidos');
+      createFallbackImageUploader();
     }
 
     // TagsInput integrado
     const tagsInputContainer = document.getElementById('tags-input-container');
+    console.log('[Components] TagsInput container encontrado:', !!tagsInputContainer);
+    
     if (tagsInputContainer && (window as any).React && (window as any).ReactDOM) {
-      const root = (window as any).ReactDOM.createRoot(tagsInputContainer);
-      const tagsInputElement = (window as any).React.createElement(TagsInput, {
-        value: formData.tags,
-        onChange: (newTags: string[]) => {
-          formData.tags = newTags;
-          isFormDirty = true;
-          scheduleAutosave();
-        },
-        placeholder: "Añade etiquetas (ej: umbanda, fe, historia)",
-        // Aquí puedes pasar más props si TagsInput los acepta
-      });
-      root.render(tagsInputElement);
+      try {
+        const root = (window as any).ReactDOM.createRoot(tagsInputContainer);
+        const tagsInputElement = (window as any).React.createElement(TagsInput, {
+          value: formData.tags,
+          onChange: (newTags: string[]) => {
+            formData.tags = newTags;
+            isFormDirty = true;
+            scheduleAutosave();
+          },
+          placeholder: "Añade etiquetas (ej: umbanda, fe, historia)",
+        });
+        root.render(tagsInputElement);
+        console.log('[Components] TagsInput inicializado correctamente');
+      } catch (error) {
+        console.error('[Components] Error al inicializar TagsInput:', error);
+        createFallbackTagsInput();
+      }
     } else {
-      console.error('TagsInput container o React/ReactDOM no encontrado.');
-      // Opcional: Fallback a un input de texto simple si el componente React no carga
+      console.error('[Components] TagsInput: requisitos no cumplidos');
+      createFallbackTagsInput();
+    }
+  };
+
+  // Fallback components optimizados
+  const initializeFallbackComponents = (): void => {
+    console.log('[Components] ✨ Inicializando componentes optimizados...');
+    
+    // Esperar a que los contenedores estén disponibles para fallbacks
+    const waitAndInitializeFallbacks = async () => {
+      try {
+        await waitForContainers();
+        createFallbackEditor();
+        createFallbackImageUploader();
+        createFallbackTagsInput();
+        console.log('[Components] ✅ Todos los componentes inicializados correctamente');
+        showOptimizedNotification();
+      } catch (error) {
+        console.warn('[Components] Contenedores no disponibles, reintentando...');
+        setTimeout(() => {
+          createFallbackEditor();
+          createFallbackImageUploader();
+          createFallbackTagsInput();
+          showOptimizedNotification();
+        }, 1000);
+      }
+    };
+    
+    waitAndInitializeFallbacks();
+  };
+
+  // Mostrar notificación optimizada
+  const showOptimizedNotification = (): void => {
+    const container = document.getElementById('article-form-container');
+    if (container) {
+      const notification = document.createElement('div');
+      notification.className = 'mb-4 p-3 bg-green-600/20 border border-green-500/30 rounded-md';
+      notification.innerHTML = `
+        <div class="flex items-center text-green-300 text-sm">
+          <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+          </svg>
+          <span><strong>✨ Editor optimizado:</strong> Formulario listo para crear artículos con máxima compatibilidad.</span>
+        </div>
+      `;
+      container.insertBefore(notification, container.firstChild);
+    }
+  };
+
+  const createFallbackEditor = (): void => {
+    let richTextEditorContainer = document.getElementById('rich-text-editor-container');
+    
+    // Si el contenedor no existe, intentar encontrar el contenedor padre y crearlo
+    if (!richTextEditorContainer) {
+      const parentContainer = document.querySelector('.col-span-2:has(label)');
+      if (parentContainer) {
+        richTextEditorContainer = document.createElement('div');
+        richTextEditorContainer.id = 'rich-text-editor-container';
+        parentContainer.appendChild(richTextEditorContainer);
+      } else {
+        console.error('[Fallback] No se puede crear el contenedor del editor');
+        return;
+      }
+    }
+    
+    // Limpiar contenedor antes de agregar fallback
+    richTextEditorContainer.innerHTML = '';
+    
+    // Crear el editor avanzado
+    const editorWrapper = document.createElement('div');
+    editorWrapper.className = 'space-y-3';
+    
+    // Header con título y controles
+    const header = document.createElement('div');
+    header.className = 'flex items-center justify-between';
+    
+    const label = document.createElement('label');
+    label.className = 'block text-sm font-medium text-gray-300';
+    label.textContent = 'Contenido del artículo';
+    
+    const controls = document.createElement('div');
+    controls.className = 'flex items-center space-x-2';
+    
+    // Botón de vista previa
+    const previewToggle = document.createElement('button');
+    previewToggle.type = 'button';
+    previewToggle.className = 'px-3 py-1 text-xs bg-blue-600 hover:bg-blue-500 text-white rounded transition-colors';
+    previewToggle.textContent = 'Vista previa';
+    
+    // Botón pantalla completa
+    const fullscreenToggle = document.createElement('button');
+    fullscreenToggle.type = 'button';
+    fullscreenToggle.className = 'px-3 py-1 text-xs bg-gray-600 hover:bg-gray-500 text-white rounded transition-colors';
+    fullscreenToggle.textContent = '⛶ Pantalla completa';
+    
+    // Contador de palabras
+    const wordCount = document.createElement('span');
+    wordCount.className = 'text-xs text-gray-400';
+    wordCount.textContent = '0 palabras, 0 caracteres';
+    
+    controls.appendChild(previewToggle);
+    controls.appendChild(fullscreenToggle);
+    controls.appendChild(wordCount);
+    
+    header.appendChild(label);
+    header.appendChild(controls);
+    
+    // Barra de herramientas Markdown
+    const toolbar = document.createElement('div');
+    toolbar.className = 'bg-green-800/30 border border-green-600 rounded-md p-2';
+    
+    const toolbarContent = document.createElement('div');
+    toolbarContent.className = 'flex flex-wrap items-center gap-1';
+    
+    // Crear botones de herramientas organizados por grupos
+    const toolGroups = [
+      // Grupo 1: Formato básico
+      [
+        { icon: '𝐁', title: 'Negrita (Ctrl+B)', action: () => insertMarkdown('**', '**', 'texto en negrita') },
+        { icon: '𝐼', title: 'Cursiva (Ctrl+I)', action: () => insertMarkdown('*', '*', 'texto en cursiva') },
+        { icon: '𝐔', title: 'Subrayado', action: () => insertMarkdown('<u>', '</u>', 'texto subrayado') },
+        { icon: '~', title: 'Tachado', action: () => insertMarkdown('~~', '~~', 'texto tachado') },
+        { icon: '`', title: 'Código inline (Ctrl+`)', action: () => insertMarkdown('`', '`', 'código') }
+      ],
+      // Grupo 2: Encabezados
+      [
+  { icon: 'H1', title: 'Encabezado 1 (Ctrl+1)', action: () => insertHeading(1) },
+        { icon: 'H2', title: 'Encabezado 2 (Ctrl+2)', action: () => insertHeading(2) },
+        { icon: 'H3', title: 'Encabezado 3 (Ctrl+3)', action: () => insertHeading(3) },
+        { icon: 'H4', title: 'Encabezado 4 (Ctrl+4)', action: () => insertHeading(4) },
+        { icon: 'H5', title: 'Encabezado 5 (Ctrl+5)', action: () => insertHeading(5) },
+        { icon: 'H6', title: 'Encabezado 6 (Ctrl+6)', action: () => insertHeading(6) }
+      ],
+      // Grupo 3: Listas y estructura
+      [
+        { icon: '•', title: 'Lista con viñetas (Ctrl+Shift+8)', action: () => insertList(false) },
+        { icon: '1.', title: 'Lista numerada (Ctrl+Shift+7)', action: () => insertList(true) },
+        { icon: '☑', title: 'Lista de tareas', action: () => insertTaskList() },
+        { icon: '❝', title: 'Cita (Ctrl+Shift+.)', action: () => insertQuote() },
+        { icon: '📋', title: 'Tabla (Ctrl+Shift+T)', action: () => insertTable() }
+      ],
+      // Grupo 4: Media y enlaces
+      [
+        { icon: '🔗', title: 'Enlace (Ctrl+K)', action: () => insertLink() },
+        { icon: '🖼️', title: 'Imagen', action: () => insertImage() },
+        { icon: '🎥', title: 'Video', action: () => insertVideo() },
+        { icon: '📄', title: 'Archivo', action: () => insertFile() }
+      ],
+      // Grupo 5: Código y avanzado
+      [
+        { icon: '¶', title: 'Bloque de código (Ctrl+Shift+C)', action: () => insertCodeBlock() },
+        { icon: '🔧', title: 'HTML', action: () => insertHTML() },
+        { icon: '📐', title: 'Fórmula matemática', action: () => insertMath() },
+        { icon: '⚠️', title: 'Nota/Advertencia', action: () => insertAlert() }
+      ],
+      // Grupo 6: Formato especial
+      [
+        { icon: '📝', title: 'Resaltado (Ctrl+Shift+H)', action: () => insertMarkdown('==', '==', 'texto resaltado') },
+        { icon: '↩️', title: 'Salto de línea', action: () => insertLineBreak() },
+        { icon: '📊', title: 'Línea horizontal (Ctrl+Shift+L)', action: () => insertMarkdown('\n---\n') },
+        { icon: '🔀', title: 'Texto centrado', action: () => insertCentered() },
+        { icon: '📋', title: 'Copiar contenido', action: () => copyToClipboard() },
+        { icon: '🎯', title: 'Ir a línea', action: () => goToLine() }
+      ]
+    ];
+    
+    // Renderizar grupos de herramientas con separadores
+    toolGroups.forEach((group, groupIndex) => {
+      if (groupIndex > 0) {
+        // Agregar separador entre grupos
+        const separator = document.createElement('div');
+        separator.className = 'w-px h-6 bg-green-600 mx-1';
+        toolbarContent.appendChild(separator);
+      }
+      
+      group.forEach(tool => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'px-2 py-1 text-sm text-gray-300 hover:text-white hover:bg-green-700 rounded transition-colors min-w-[28px] text-center';
+        button.innerHTML = tool.icon;
+        button.title = tool.title;
+        button.onclick = tool.action;
+        toolbarContent.appendChild(button);
+      });
+    });
+    
+    toolbar.appendChild(toolbarContent);
+    
+    // Container principal del editor
+    const editorContainer = document.createElement('div');
+    editorContainer.className = 'grid grid-cols-1 gap-4';
+    
+    // Textarea principal
+    const textarea = document.createElement('textarea');
+    textarea.id = 'content';
+    textarea.rows = 25;
+    textarea.className = 'w-full px-4 py-3 bg-green-700/50 border border-green-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400 text-white font-mono text-sm leading-relaxed transition-colors resize-y';
+    textarea.placeholder = 'Escribe tu contenido usando Markdown...\n\n**Ejemplos:**\n# Encabezado principal\n## Subencabezado\n\n**Texto en negrita**\n*Texto en cursiva*\n\n- Lista con viñetas\n- Otro elemento\n\n1. Lista numerada\n2. Segundo elemento\n\n[Enlace](https://ejemplo.com)\n![Imagen](url-imagen)\n\n> Cita importante\n\n```\nBbloque de código\n```';
+    textarea.value = formData.content;
+    
+    // Vista previa
+    const previewContainer = document.createElement('div');
+    previewContainer.className = 'bg-green-800/20 border border-green-600 rounded-md p-4 prose prose-invert prose-green max-w-none overflow-auto hidden';
+    previewContainer.style.height = '600px';
+    
+    editorContainer.appendChild(textarea);
+    editorContainer.appendChild(previewContainer);
+    
+    // Variables de estado
+    let isPreviewMode = false;
+    let isFullscreen = false;
+    
+    // Funciones auxiliares
+    function insertMarkdown(before: string, after: string = '', placeholder: string = '') {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const selectedText = textarea.value.substring(start, end);
+      const textToInsert = selectedText || placeholder;
+      
+      const newText = textarea.value.substring(0, start) + before + textToInsert + after + textarea.value.substring(end);
+      textarea.value = newText;
+      formData.content = newText;
+      isFormDirty = true;
+      scheduleAutosave();
+      updateWordCount();
+      
+      // Restaurar foco y selección
+      textarea.focus();
+      const newCursorPos = start + before.length + textToInsert.length + after.length;
+      textarea.setSelectionRange(newCursorPos, newCursorPos);
+    }
+    
+    function insertLink() {
+      const url = prompt('Ingresa la URL del enlace:');
+      if (url) {
+        insertMarkdown('[', `](${url})`, 'texto del enlace');
+      }
+    }
+    
+    function insertImage() {
+      const url = prompt('Ingresa la URL de la imagen:');
+      if (url) {
+        const alt = prompt('Descripción de la imagen (opcional):') || 'imagen';
+        insertMarkdown(`![${alt}](${url})`);
+      }
+    }
+    
+    function insertHeading(level: number) {
+      const prefix = '#'.repeat(level) + ' ';
+      const lineStart = getLineStart();
+      // Si ya hay un encabezado en la línea, reemplazarlo
+      const currentLine = getCurrentLine();
+      if (currentLine.match(/^#+\s/)) {
+        replaceCurrentLine(prefix + currentLine.replace(/^#+\s/, ''));
+      } else {
+        insertAtLineStart(prefix);
+      }
+    }
+    
+    function insertList(ordered: boolean) {
+      const prefix = ordered ? '1. ' : '- ';
+      insertAtLineStart(prefix);
+    }
+    
+    function insertTaskList() {
+      insertAtLineStart('- [ ] ');
+    }
+    
+    function insertQuote() {
+      insertAtLineStart('> ');
+    }
+    
+    function insertTable() {
+      const cols = prompt('¿Cuántas columnas? (2-6)', '3');
+      const rows = prompt('¿Cuántas filas? (2-10)', '3');
+      const numCols = Math.min(Math.max(parseInt(cols || '3'), 2), 6);
+      const numRows = Math.min(Math.max(parseInt(rows || '3'), 2), 10);
+      
+      let table = '\n\n';
+      // Header
+      table += '| ' + Array(numCols).fill('Columna').map((col, i) => `${col} ${i + 1}`).join(' | ') + ' |\n';
+      // Separator
+      table += '|' + Array(numCols).fill('-----------|').join('') + '\n';
+      // Rows
+      for (let i = 0; i < numRows - 1; i++) {
+        table += '| ' + Array(numCols).fill('Celda').map((cell, j) => `${cell} ${i + 1}.${j + 1}`).join(' | ') + ' |\n';
+      }
+      table += '\n';
+      insertMarkdown(table);
+    }
+    
+    function insertVideo() {
+      const url = prompt('URL del video (YouTube, Vimeo, etc.):');
+      if (url) {
+        // Detectar tipo de video y crear embed apropiado
+        if (url.includes('youtube.com') || url.includes('youtu.be')) {
+          const videoId = extractYouTubeId(url);
+          if (videoId) {
+            insertMarkdown(`\n<iframe width="560" height="315" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allowfullscreen></iframe>\n`);
+          }
+        } else if (url.includes('vimeo.com')) {
+          const videoId = url.split('/').pop();
+          insertMarkdown(`\n<iframe src="https://player.vimeo.com/video/${videoId}" width="560" height="315" frameborder="0" allowfullscreen></iframe>\n`);
+        } else {
+          insertMarkdown(`\n<video width="560" height="315" controls>\n  <source src="${url}" type="video/mp4">\n  Tu navegador no soporta el elemento video.\n</video>\n`);
+        }
+      }
+    }
+    
+    function insertFile() {
+      const url = prompt('URL del archivo:');
+      const name = prompt('Nombre del archivo:') || 'Descargar archivo';
+      if (url) {
+        insertMarkdown(`[📄 ${name}](${url})`);
+      }
+    }
+    
+    function insertCodeBlock() {
+      const language = prompt('Lenguaje de programación (opcional):', 'javascript');
+      const lang = language || '';
+      insertMarkdown(`\n\`\`\`${lang}\n`, '\n\`\`\`\n', 'código aquí');
+    }
+    
+    function insertHTML() {
+      const html = prompt('HTML a insertar:');
+      if (html) {
+        insertMarkdown(`\n${html}\n`);
+      }
+    }
+    
+    function insertMath() {
+      const formula = prompt('Fórmula matemática (LaTeX):');
+      if (formula) {
+        insertMarkdown('$$', '$$', formula || 'E = mc^2');
+      }
+    }
+    
+    function insertAlert() {
+      const types = ['info', 'warning', 'success', 'error'];
+      const type = prompt(`Tipo de alerta (${types.join(', ')}):`, 'info');
+      const title = prompt('Título de la alerta:', 'Nota importante');
+      const alertType = types.includes(type || '') ? type : 'info';
+      
+      const alertMarkdown = `\n> **${title}**
+> 
+> Contenido de la alerta aquí.
+{: .alert .alert-${alertType}}\n`;
+      insertMarkdown(alertMarkdown);
+    }
+    
+    function insertLineBreak() {
+      insertMarkdown('  \n');
+    }
+    
+    function insertCentered() {
+      insertMarkdown('\n<div align="center">\n\n', '\n\n</div>\n', 'Texto centrado aquí');
+    }
+    
+    function copyToClipboard() {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(textarea.value).then(() => {
+          showTemporaryMessage('✅ Contenido copiado al portapapeles');
+        }).catch(() => {
+          // Fallback para navegadores sin soporte de clipboard API
+          textarea.select();
+          document.execCommand('copy');
+          showTemporaryMessage('✅ Contenido copiado');
+        });
+      } else {
+        textarea.select();
+        document.execCommand('copy');
+        showTemporaryMessage('✅ Contenido copiado');
+      }
+    }
+    
+    function goToLine() {
+      const lineNumber = prompt('Ir a la línea número:');
+      if (lineNumber && !isNaN(parseInt(lineNumber))) {
+        const lines = textarea.value.split('\n');
+        const targetLine = Math.max(1, Math.min(parseInt(lineNumber), lines.length));
+        
+        let position = 0;
+        for (let i = 0; i < targetLine - 1; i++) {
+          position += lines[i].length + 1; // +1 para el \n
+        }
+        
+        textarea.focus();
+        textarea.setSelectionRange(position, position);
+        textarea.scrollTop = textarea.scrollHeight * ((targetLine - 1) / lines.length);
+        
+        showTemporaryMessage(`📍 Línea ${targetLine}`);
+      }
+    }
+    
+    function showTemporaryMessage(message: string) {
+      const messageEl = document.createElement('div');
+      messageEl.className = 'fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded-md shadow-lg z-50 transition-all';
+      messageEl.textContent = message;
+      document.body.appendChild(messageEl);
+      
+      setTimeout(() => {
+        messageEl.style.opacity = '0';
+        setTimeout(() => {
+          document.body.removeChild(messageEl);
+        }, 300);
+      }, 2000);
+    }
+    
+    // Funciones auxiliares para manipulación de líneas
+    function getLineStart() {
+      const text = textarea.value;
+      const cursor = textarea.selectionStart;
+      return text.lastIndexOf('\n', cursor - 1) + 1;
+    }
+    
+    function getCurrentLine() {
+      const text = textarea.value;
+      const cursor = textarea.selectionStart;
+      const lineStart = text.lastIndexOf('\n', cursor - 1) + 1;
+      const lineEnd = text.indexOf('\n', cursor);
+      return text.substring(lineStart, lineEnd === -1 ? text.length : lineEnd);
+    }
+    
+    function replaceCurrentLine(newLine: string) {
+      const text = textarea.value;
+      const cursor = textarea.selectionStart;
+      const lineStart = text.lastIndexOf('\n', cursor - 1) + 1;
+      const lineEnd = text.indexOf('\n', cursor);
+      const actualLineEnd = lineEnd === -1 ? text.length : lineEnd;
+      
+      const newText = text.substring(0, lineStart) + newLine + text.substring(actualLineEnd);
+      textarea.value = newText;
+      formData.content = newText;
+      isFormDirty = true;
+      scheduleAutosave();
+      updateWordCount();
+      
+      // Posicionar cursor al final de la nueva línea
+      const newCursor = lineStart + newLine.length;
+      textarea.focus();
+      textarea.setSelectionRange(newCursor, newCursor);
+    }
+    
+    function insertAtLineStart(prefix: string) {
+      const text = textarea.value;
+      const cursor = textarea.selectionStart;
+      const lineStart = text.lastIndexOf('\n', cursor - 1) + 1;
+      
+      const newText = text.substring(0, lineStart) + prefix + text.substring(lineStart);
+      textarea.value = newText;
+      formData.content = newText;
+      isFormDirty = true;
+      scheduleAutosave();
+      updateWordCount();
+      
+      // Posicionar cursor después del prefijo
+      const newCursor = cursor + prefix.length;
+      textarea.focus();
+      textarea.setSelectionRange(newCursor, newCursor);
+    }
+    
+    function extractYouTubeId(url: string): string | null {
+      const regex = /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/;
+      const match = url.match(regex);
+      return match ? match[1] : null;
+    }
+    
+    function updateWordCount() {
+      const text = textarea.value;
+      const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+      const chars = text.length;
+      wordCount.textContent = `${words} palabras, ${chars} caracteres`;
+    }
+    
+    function togglePreview() {
+      isPreviewMode = !isPreviewMode;
+      if (isPreviewMode) {
+        // Mostrar vista previa
+        editorContainer.className = 'grid grid-cols-2 gap-4';
+        previewContainer.classList.remove('hidden');
+        previewToggle.textContent = 'Editar';
+        updatePreview();
+      } else {
+        // Ocultar vista previa
+        editorContainer.className = 'grid grid-cols-1 gap-4';
+        previewContainer.classList.add('hidden');
+        previewToggle.textContent = 'Vista previa';
+      }
+    }
+    
+    function updatePreview() {
+      if (isPreviewMode && (window as any).marked && (window as any).DOMPurify) {
+        const html = (window as any).DOMPurify.sanitize((window as any).marked.parse(textarea.value || '*No hay contenido para mostrar*'));
+        previewContainer.innerHTML = html;
+      }
+    }
+    
+    function toggleFullscreen() {
+      isFullscreen = !isFullscreen;
+      if (isFullscreen) {
+        editorWrapper.className = 'fixed inset-0 z-50 bg-green-900 p-6 space-y-3';
+        fullscreenToggle.textContent = '⛶ Salir pantalla completa';
+        textarea.style.height = 'calc(100vh - 200px)';
+      } else {
+        editorWrapper.className = 'space-y-3';
+        fullscreenToggle.textContent = '⛶ Pantalla completa';
+        textarea.style.height = 'auto';
+        textarea.rows = 25;
+      }
+    }
+    
+    // Event listeners
+    textarea.addEventListener('input', () => {
+      formData.content = textarea.value;
+      isFormDirty = true;
+      scheduleAutosave();
+      updateWordCount();
+      if (isPreviewMode) {
+        updatePreview();
+      }
+    });
+    
+    textarea.addEventListener('blur', () => {
+      validateField(
+        { value: formData.content }, 
+        document.getElementById('content-error'), 
+        validators.content
+      );
+    });
+    
+    // Atajos de teclado mejorados
+    textarea.addEventListener('keydown', (e) => {
+      if (e.ctrlKey || e.metaKey) {
+        switch (e.key) {
+          case 'b':
+            e.preventDefault();
+            insertMarkdown('**', '**', 'texto en negrita');
+            break;
+          case 'i':
+            e.preventDefault();
+            insertMarkdown('*', '*', 'texto en cursiva');
+            break;
+          case 'u':
+            e.preventDefault();
+            insertMarkdown('<u>', '</u>', 'texto subrayado');
+            break;
+          case 'k':
+            e.preventDefault();
+            insertLink();
+            break;
+          case '`':
+            e.preventDefault();
+            insertMarkdown('`', '`', 'código');
+            break;
+          case 'Enter':
+            e.preventDefault();
+            insertCodeBlock();
+            break;
+          case '1':
+          case '2':
+          case '3':
+          case '4':
+          case '5':
+          case '6':
+            e.preventDefault();
+            insertHeading(parseInt(e.key));
+            break;
+        }
+      }
+      
+      // Atajos con Ctrl+Shift
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey) {
+        switch (e.key) {
+          case '8': // Ctrl+Shift+8 para lista con viñetas
+            e.preventDefault();
+            insertList(false);
+            break;
+          case '7': // Ctrl+Shift+7 para lista numerada
+            e.preventDefault();
+            insertList(true);
+            break;
+          case '.': // Ctrl+Shift+. para cita
+            e.preventDefault();
+            insertQuote();
+            break;
+          case 'C': // Ctrl+Shift+C para bloque de código
+            e.preventDefault();
+            insertCodeBlock();
+            break;
+          case 'T': // Ctrl+Shift+T para tabla
+            e.preventDefault();
+            insertTable();
+            break;
+          case 'L': // Ctrl+Shift+L para línea horizontal
+            e.preventDefault();
+            insertMarkdown('\n---\n');
+            break;
+          case 'H': // Ctrl+Shift+H para resaltado
+            e.preventDefault();
+            insertMarkdown('==', '==', 'texto resaltado');
+            break;
+        }
+      }
+      
+      // Tab para insertar espacios
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        insertMarkdown('  ');
+      }
+      
+      // Escape para salir de pantalla completa
+      if (e.key === 'Escape' && isFullscreen) {
+        e.preventDefault();
+        toggleFullscreen();
+      }
+    });
+    
+    previewToggle.onclick = togglePreview;
+    fullscreenToggle.onclick = toggleFullscreen;
+    
+    // Ensamblar el editor
+    editorWrapper.appendChild(header);
+    editorWrapper.appendChild(toolbar);
+    editorWrapper.appendChild(editorContainer);
+    richTextEditorContainer.appendChild(editorWrapper);
+    
+    // Inicializar contador
+    updateWordCount();
+    
+    // Agregar ayuda de atajos de teclado
+    const helpText = document.createElement('div');
+    helpText.className = 'mt-2 p-3 bg-green-800/20 border border-green-600/30 rounded-md text-xs text-gray-400';
+    helpText.innerHTML = `
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+        <div><strong>Formato básico:</strong></div>
+        <div>• Ctrl+B: Negrita</div>
+        <div>• Ctrl+I: Cursiva</div>
+        <div>• Ctrl+U: Subrayado</div>
+        <div>• Ctrl+\`: Código inline</div>
+        <div>• Ctrl+K: Enlace</div>
+        
+        <div><strong>Encabezados:</strong></div>
+        <div>• Ctrl+1-6: H1-H6</div>
+        <div></div>
+        
+        <div><strong>Listas y estructura:</strong></div>
+        <div>• Ctrl+Shift+8: Lista viñetas</div>
+        <div>• Ctrl+Shift+7: Lista números</div>
+        <div>• Ctrl+Shift+.: Cita</div>
+        <div>• Ctrl+Shift+T: Tabla</div>
+        
+        <div><strong>Código y formato:</strong></div>
+        <div>• Ctrl+Enter: Bloque código</div>
+        <div>• Ctrl+Shift+C: Bloque código</div>
+        <div>• Ctrl+Shift+H: Resaltado</div>
+        <div>• Ctrl+Shift+L: Línea horizontal</div>
+        
+        <div><strong>Navegación:</strong></div>
+        <div>• Tab: Indentación</div>
+        <div>• Escape: Salir pantalla completa</div>
+      </div>
+    `;
+    editorWrapper.appendChild(helpText);
+    
+    console.log('[Editor] ✨ Editor avanzado de Markdown inicializado con atajos mejorados');
+  };
+
+  const createFallbackImageUploader = (): void => {
+    const imageUploaderContainer = document.getElementById('image-uploader-container');
+    if (imageUploaderContainer) {
+      // Limpiar contenedor
+      imageUploaderContainer.innerHTML = '';
+      
+      const wrapper = document.createElement('div');
+      wrapper.className = 'space-y-2';
+      
+      const label = document.createElement('label');
+      label.className = 'block text-sm font-medium text-gray-300';
+      label.textContent = 'URL de la imagen';
+      
+      const notice = document.createElement('div');
+      notice.className = 'text-xs text-yellow-400 mb-2';
+      notice.textContent = '⚠️ Subida de archivos no disponible - usar URL directa';
+      
+      const fallbackInput = document.createElement('input');
+      fallbackInput.type = 'url';
+      fallbackInput.className = 'w-full px-4 py-2 bg-green-700/50 border border-green-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400 text-white';
+      fallbackInput.placeholder = 'https://ejemplo.com/imagen.jpg';
+      fallbackInput.value = formData.image;
+      
+      fallbackInput.addEventListener('input', (e) => {
+        formData.image = (e.target as HTMLInputElement).value;
+        isFormDirty = true;
+        scheduleAutosave();
+      });
+      
+      fallbackInput.addEventListener('blur', () => {
+        validateField(
+          { value: formData.image }, 
+          document.getElementById('image-error'), 
+          validators.image
+        );
+      });
+      
+      wrapper.appendChild(label);
+      wrapper.appendChild(notice);
+      wrapper.appendChild(fallbackInput);
+      imageUploaderContainer.appendChild(wrapper);
+      
+      console.log('[Fallback] Input básico de imagen inicializado');
+    }
+  };
+
+  const createFallbackTagsInput = (): void => {
+    const tagsInputContainer = document.getElementById('tags-input-container');
+    if (tagsInputContainer) {
+      // Limpiar contenedor
+      tagsInputContainer.innerHTML = '';
+      
+      const wrapper = document.createElement('div');
+      wrapper.className = 'space-y-2';
+      
+      const label = document.createElement('label');
+      label.className = 'block text-sm font-medium text-gray-300';
+      label.textContent = 'Etiquetas';
+      
+      const notice = document.createElement('div');
+      notice.className = 'text-xs text-yellow-400 mb-2';
+      notice.textContent = '⚠️ Selector avanzado no disponible - separar por comas';
+      
       const fallbackInput = document.createElement('input');
       fallbackInput.type = 'text';
-      fallbackInput.className = 'w-full px-4 py-2 bg-red-900/50 border border-red-700 text-white'; // Estilo de error
-      fallbackInput.placeholder = 'Error al cargar TagsInput. Ingrese etiquetas separadas por comas.';
+      fallbackInput.className = 'w-full px-4 py-2 bg-green-700/50 border border-green-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400 text-white';
+      fallbackInput.placeholder = 'umbanda, espiritualidad, orixás (separar por comas)';
       fallbackInput.value = formData.tags.join(', ');
-      fallbackInput.oninput = (e) => {
+      
+      fallbackInput.addEventListener('input', (e) => {
         formData.tags = (e.target as HTMLInputElement).value.split(',').map(t => t.trim()).filter(t => t);
         isFormDirty = true;
         scheduleAutosave();
-      };
-      if (tagsInputContainer) tagsInputContainer.appendChild(fallbackInput);
+      });
+      
+      wrapper.appendChild(label);
+      wrapper.appendChild(notice);
+      wrapper.appendChild(fallbackInput);
+      tagsInputContainer.appendChild(wrapper);
+      
+      console.log('[Fallback] Input básico de etiquetas inicializado');
     }
   };
   
@@ -1111,25 +1966,68 @@ import AdminProtection from "@/components/AdminProtection";
 
   // Inicializar el formulario cuando el usuario esté autenticado
   onAuthStateChanged(auth, async (user) => {
+    console.log('[Auth] Estado de autenticación cambiado. Usuario:', !!user);
     if (user) {
-      // Depurar autenticación
-      await debugAuth();
-      
-      // Ocultar cargando y mostrar formulario
-      if (loadingElement) loadingElement.classList.add("hidden");
-      if (articleFormContainer) articleFormContainer.classList.remove("hidden");
-      
-      // Configurar formulario
-      setupSlugGeneration();
-      setupBasicFields();
-      setupEventListeners();
-      initializeReactComponents();
-      updateCharCount();
-      
-      // Autocompletar autor con nombre del usuario si está disponible
-      if (user.displayName && authorInput && !authorInput.value) {
-        authorInput.value = user.displayName;
-        formData.author = user.displayName;
+      console.log('[Auth] ✅ Usuario autenticado, inicializando formulario...');
+      try {
+        // Esperar a que AdminProtection termine de renderizar
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Inicializar elementos del DOM
+        initializeDOMElements();
+        
+        // Si los elementos principales no están disponibles, esperar con MutationObserver
+        if (!loadingElement || !articleFormContainer) {
+          console.log('[DOM] Elementos no encontrados, esperando a AdminProtection...');
+          await waitForAdminProtection();
+          initializeDOMElements();
+        }
+        
+        // Depurar autenticación
+        await debugAuth();
+        
+        // Ocultar cargando y mostrar formulario
+        console.log('[Form] Preparando para mostrar formulario...');
+        
+        if (loadingElement) {
+          loadingElement.classList.add("hidden");
+          console.log('[Form] ✅ Loading oculto');
+        } else {
+          console.error('[Form] ❌ Loading element no encontrado');
+        }
+        
+        if (articleFormContainer) {
+          articleFormContainer.classList.remove("hidden");
+          console.log('[Form] ✅ Formulario mostrado');
+        } else {
+          console.error('[Form] ❌ Article form container no encontrado');
+        }
+        
+        // Configurar formulario
+        setupSlugGeneration();
+        setupBasicFields();
+        setupEventListeners();
+        
+        // Esperar un poco más a que AdminProtection termine de renderizar
+        setTimeout(async () => {
+          await loadReactComponents();
+        }, 500);
+        
+        updateCharCount();
+        
+        // Autocompletar autor con nombre del usuario si está disponible
+        if (user.displayName && authorInput && !authorInput.value) {
+          authorInput.value = user.displayName;
+          formData.author = user.displayName;
+        }
+      } catch (error) {
+        console.error('Error initializing form:', error);
+        // Show error message to user
+        if (loadingElement) loadingElement.classList.add("hidden");
+        if (articleFormContainer) {
+          articleFormContainer.innerHTML = '<div class="text-red-400 p-4">Error loading form components. Please refresh the page.</div>';
+          articleFormContainer.classList.remove("hidden");
+        }
       }
     }
   });

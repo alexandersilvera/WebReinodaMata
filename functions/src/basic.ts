@@ -13,7 +13,13 @@ import { v4 as uuidv4 } from "uuid";
 export const sendNewsletterToSubscribers = onCall(
   { 
     memory: "1GiB",
-    cors: true
+    cors: [
+      /localhost:\d+/,
+      /127\.0\.0\.1:\d+/,
+      "https://web-reinoda-mata.vercel.app",
+      "https://reinodamata.com",
+      "https://centroumbandistareinodamata.org"
+    ]
   },
   async (request) => {
     try {
@@ -313,7 +319,13 @@ Centro Umbandista Reino Da Mata
 export const sendTestNewsletter = onCall(
   { 
     memory: "512MiB",
-    cors: true
+    cors: [
+      /localhost:\d+/,
+      /127\.0\.0\.1:\d+/,
+      "https://web-reinoda-mata.vercel.app",
+      "https://reinodamata.com",
+      "https://centroumbandistareinodamata.org"
+    ]
   },
   async (request) => {
     try {
@@ -472,7 +484,13 @@ export const cleanupInactiveSubscribers = onSchedule(
 export const recordPageView = onCall(
   { 
     memory: "256MiB",
-    cors: true
+    cors: [
+      /localhost:\d+/,
+      /127\.0\.0\.1:\d+/,
+      "https://web-reinoda-mata.vercel.app",
+      "https://reinodamata.com",
+      "https://centroumbandistareinodamata.org"
+    ]
   },
   async (request) => {
     try {
@@ -569,7 +587,13 @@ export const cleanupOldPageViews = onSchedule(
 export const subscribeEmail = onCall(
   { 
     memory: "256MiB",
-    cors: true
+    cors: [
+      /localhost:\d+/,
+      /127\.0\.0\.1:\d+/,
+      "https://web-reinoda-mata.vercel.app",
+      "https://reinodamata.com",
+      "https://centroumbandistareinodamata.org"
+    ]
   },
   async (request) => {
     try {
@@ -637,7 +661,13 @@ export const subscribeEmail = onCall(
 export const syncAuthUsersToSubscribers = onCall(
   { 
     memory: "512MiB",
-    cors: true
+    cors: [
+      /localhost:\d+/,
+      /127\.0\.0\.1:\d+/,
+      "https://web-reinoda-mata.vercel.app",
+      "https://reinodamata.com",
+      "https://centroumbandistareinodamata.org"
+    ]
   },
   async (request) => {
     try {
@@ -740,13 +770,87 @@ export const syncAuthUsersToSubscribers = onCall(
   }
 );
 
-// NOTA: La función onUserCreate requiere configuración adicional en Firebase Functions v2
-// Por ahora está comentada. Se puede agregar después de configurar los triggers correctamente.
-/*
-export const onUserCreate = functions.auth.user().onCreate(async (user) => {
-  // Funcionalidad de auto-sync comentada temporalmente
-});
-*/
+/**
+ * Función que se ejecuta automáticamente cuando se crea un nuevo usuario en Firebase Auth
+ * Sincroniza el usuario inmediatamente con la colección de suscriptores
+ */
+export const onUserAuthCreate = onCall(
+  { 
+    memory: "256MiB",
+    cors: [
+      /localhost:\d+/,
+      /127\.0\.0\.1:\d+/,
+      "https://web-reinoda-mata.vercel.app",
+      "https://reinodamata.com",
+      "https://centroumbandistareinodamata.org"
+    ]
+  },
+  async (request) => {
+    try {
+      console.log('🔄 Iniciando sincronización automática de nuevo usuario Auth...');
+
+      // Obtener datos del usuario desde la solicitud
+      const { uid, email, displayName } = request.data;
+
+      if (!uid || !email) {
+        throw new Error('UID y email son requeridos para la sincronización');
+      }
+
+      console.log(`👤 Sincronizando usuario: ${email} (${uid})`);
+
+      // Verificar si ya existe en suscriptores
+      const existingQuery = await admin.firestore()
+        .collection('subscribers')
+        .where('email', '==', email.toLowerCase())
+        .get();
+
+      if (!existingQuery.empty) {
+        console.log(`⏭️ Usuario ${email} ya existe en suscriptores`);
+        return {
+          success: true,
+          message: 'Usuario ya sincronizado previamente',
+          skipped: true
+        };
+      }
+
+      // Crear nuevo suscriptor
+      const unsubscribeToken = uuidv4();
+      
+      const subscriberData = {
+        email: email.toLowerCase(),
+        name: displayName || '',
+        firstName: displayName?.split(' ')[0] || '',
+        lastName: displayName?.split(' ').slice(1).join(' ') || '',
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        active: true,
+        unsubscribeToken,
+        source: 'auth_auto',
+        authUid: uid,
+        syncedAt: admin.firestore.FieldValue.serverTimestamp()
+      };
+
+      const docRef = await admin.firestore().collection('subscribers').add(subscriberData);
+
+      console.log(`✅ Usuario sincronizado automáticamente: ${email} → ID: ${docRef.id}`);
+
+      return {
+        success: true,
+        message: `Usuario ${email} sincronizado automáticamente`,
+        subscriberId: docRef.id,
+        skipped: false
+      };
+
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      console.error('❌ Error en sincronización automática:', error);
+      
+      return {
+        success: false,
+        message: `Error al sincronizar usuario: ${errorMessage}`
+      };
+    }
+  }
+);
 
 /**
  * Función simple para enviar email de prueba - NUEVA VERSION
@@ -754,7 +858,13 @@ export const onUserCreate = functions.auth.user().onCreate(async (user) => {
 export const sendSimpleTestEmail = onCall(
   { 
     memory: "256MiB",
-    cors: true
+    cors: [
+      /localhost:\d+/,
+      /127\.0\.0\.1:\d+/,
+      "https://web-reinoda-mata.vercel.app",
+      "https://reinodamata.com",
+      "https://centroumbandistareinodamata.org"
+    ]
   },
   async (request) => {
     try {
@@ -815,7 +925,13 @@ export const sendSimpleTestEmail = onCall(
 export const sendTestEmail = onCall(
   { 
     memory: "256MiB",
-    cors: true
+    cors: [
+      /localhost:\d+/,
+      /127\.0\.0\.1:\d+/,
+      "https://web-reinoda-mata.vercel.app",
+      "https://reinodamata.com",
+      "https://centroumbandistareinodamata.org"
+    ]
   },
   async (request) => {
     try {

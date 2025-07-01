@@ -1,8 +1,11 @@
 ---
 import MainLayout from "@/layouts/MainLayout.astro";
+import AuthSync from "@/components/AuthSync";
 ---
 
 <MainLayout title="Iniciar Sesión - Reino da Mata" description="Inicia sesión en tu cuenta.">
+  <!-- Componente para sincronización automática -->
+  <AuthSync client:load />
   <div class="container mx-auto px-4 py-12 max-w-md">
     <h1 class="text-3xl font-bold text-center text-[#F08F4A] mb-8">Iniciar Sesión</h1>
     <form id="login-form" class="space-y-6 bg-[#1f1e23] p-8 rounded-lg shadow-lg">

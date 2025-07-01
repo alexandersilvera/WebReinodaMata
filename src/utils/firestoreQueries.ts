@@ -5,12 +5,10 @@ import {
   where, 
   orderBy, 
   limit, 
-  getDocs, 
-  doc, 
-  getDoc,
-  QuerySnapshot
+  getDocs
+  // doc, getDoc, QuerySnapshot - available but not used
 } from 'firebase/firestore';
-import type { DocumentData } from 'firebase/firestore';
+// import type { DocumentData } from 'firebase/firestore'; - available but not used
 
 /**
  * Utilidades para consultas de Firestore optimizadas

@@ -68,7 +68,7 @@ function getEnvVar(name: string, defaultValue: string = ''): string {
  * Determina el entorno de la aplicación (development, production, test)
  * Utiliza VERCEL_ENV en Vercel o NODE_ENV en otros entornos.
  */
-function getEnvironment(): 'development' | 'production' | 'test' {
+function _getEnvironment(): 'development' | 'production' | 'test' {
   const vercelEnv = getEnvVar('VERCEL_ENV');
   if (vercelEnv) {
     return vercelEnv as 'production' | 'development' | 'test';
