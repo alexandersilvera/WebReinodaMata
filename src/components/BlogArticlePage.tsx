@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { collection, getDocs, query, where, limit } from 'firebase/firestore';
 import { db } from '@/core/firebase/config';
 import { marked } from 'marked';
+import CommentSection from './CommentSection';
 
 interface Article {
   id: string;
@@ -228,6 +229,11 @@ export default function BlogArticlePage({ slug }: BlogArticlePageProps) {
             />
           </div>
         </article>
+
+        {/* Comments Section */}
+        <div className="max-w-4xl mx-auto mt-12">
+          <CommentSection postId={article.id} postTitle={article.title} />
+        </div>
 
         {/* Related Articles */}
         {relatedArticles.length > 0 && (
