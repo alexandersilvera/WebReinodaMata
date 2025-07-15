@@ -14,7 +14,8 @@ const CORS_CONFIG = [
   "https://web-reinoda-mata.vercel.app",
   "https://reinodamata.com",
   "https://centroumbandistareinodamata.org",
-  "https://www.centroumbandistareinodamata.org"
+  "https://www.centroumbandistareinodamata.org",
+  /https:\/\/(www\.)?centroumbandistareinodamata\.org/
 ];
 
 /**
