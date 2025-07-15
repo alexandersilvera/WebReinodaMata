@@ -7,19 +7,23 @@ import { getMailgunConfig, isValidEmail, validateEmailList, isAdminUser, getSite
 import { loadEmailTemplate, formatContentForHtml, createCallToAction, EmailTemplateData } from "./utils/emailTemplates";
 import { v4 as uuidv4 } from "uuid";
 
+// Configuración CORS unificada
+const CORS_CONFIG = [
+  /localhost:\d+/,
+  /127\.0\.0\.1:\d+/,
+  "https://web-reinoda-mata.vercel.app",
+  "https://reinodamata.com",
+  "https://centroumbandistareinodamata.org",
+  "https://www.centroumbandistareinodamata.org"
+];
+
 /**
  * Envía un newsletter a todos los suscriptores activos
  */
 export const sendNewsletterToSubscribers = onCall(
   { 
     memory: "1GiB",
-    cors: [
-      /localhost:\d+/,
-      /127\.0\.0\.1:\d+/,
-      "https://web-reinoda-mata.vercel.app",
-      "https://reinodamata.com",
-      "https://centroumbandistareinodamata.org"
-    ]
+    cors: CORS_CONFIG
   },
   async (request) => {
     try {
@@ -496,13 +500,7 @@ Centro Umbandista Reino Da Mata
 export const sendTestNewsletter = onCall(
   { 
     memory: "512MiB",
-    cors: [
-      /localhost:\d+/,
-      /127\.0\.0\.1:\d+/,
-      "https://web-reinoda-mata.vercel.app",
-      "https://reinodamata.com",
-      "https://centroumbandistareinodamata.org"
-    ]
+    cors: CORS_CONFIG
   },
   async (request) => {
     try {
@@ -661,13 +659,7 @@ export const cleanupInactiveSubscribers = onSchedule(
 export const recordPageView = onCall(
   { 
     memory: "256MiB",
-    cors: [
-      /localhost:\d+/,
-      /127\.0\.0\.1:\d+/,
-      "https://web-reinoda-mata.vercel.app",
-      "https://reinodamata.com",
-      "https://centroumbandistareinodamata.org"
-    ]
+    cors: CORS_CONFIG
   },
   async (request) => {
     try {
@@ -764,13 +756,7 @@ export const cleanupOldPageViews = onSchedule(
 export const subscribeEmail = onCall(
   { 
     memory: "256MiB",
-    cors: [
-      /localhost:\d+/,
-      /127\.0\.0\.1:\d+/,
-      "https://web-reinoda-mata.vercel.app",
-      "https://reinodamata.com",
-      "https://centroumbandistareinodamata.org"
-    ]
+    cors: CORS_CONFIG
   },
   async (request) => {
     try {
@@ -838,13 +824,7 @@ export const subscribeEmail = onCall(
 export const syncAuthUsersToSubscribers = onCall(
   { 
     memory: "512MiB",
-    cors: [
-      /localhost:\d+/,
-      /127\.0\.0\.1:\d+/,
-      "https://web-reinoda-mata.vercel.app",
-      "https://reinodamata.com",
-      "https://centroumbandistareinodamata.org"
-    ]
+    cors: CORS_CONFIG
   },
   async (request) => {
     try {
@@ -954,13 +934,7 @@ export const syncAuthUsersToSubscribers = onCall(
 export const onUserAuthCreate = onCall(
   { 
     memory: "256MiB",
-    cors: [
-      /localhost:\d+/,
-      /127\.0\.0\.1:\d+/,
-      "https://web-reinoda-mata.vercel.app",
-      "https://reinodamata.com",
-      "https://centroumbandistareinodamata.org"
-    ]
+    cors: CORS_CONFIG
   },
   async (request) => {
     try {
@@ -1035,13 +1009,7 @@ export const onUserAuthCreate = onCall(
 export const sendSimpleTestEmail = onCall(
   { 
     memory: "256MiB",
-    cors: [
-      /localhost:\d+/,
-      /127\.0\.0\.1:\d+/,
-      "https://web-reinoda-mata.vercel.app",
-      "https://reinodamata.com",
-      "https://centroumbandistareinodamata.org"
-    ]
+    cors: CORS_CONFIG
   },
   async (request) => {
     try {
@@ -1102,13 +1070,7 @@ export const sendSimpleTestEmail = onCall(
 export const sendTestEmail = onCall(
   { 
     memory: "256MiB",
-    cors: [
-      /localhost:\d+/,
-      /127\.0\.0\.1:\d+/,
-      "https://web-reinoda-mata.vercel.app",
-      "https://reinodamata.com",
-      "https://centroumbandistareinodamata.org"
-    ]
+    cors: CORS_CONFIG
   },
   async (request) => {
     try {
