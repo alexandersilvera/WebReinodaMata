@@ -112,7 +112,7 @@ export const sendNewsletterToSubscribers = onCall(
         htmlContent = loadEmailTemplate('newsletter-base', templateData);
       }
 
-      const BATCH_SIZE = 500;
+      const BATCH_SIZE = 5; // Reducido para evitar restricciones de Mailgun
       let successfulBatches = 0;
       let failedBatches = 0;
       let successfulSends = 0;
@@ -171,9 +171,10 @@ export const sendNewsletterToSubscribers = onCall(
           totalProcessedEmailsInFailedBatches += currentBatch.length;
         }
 
-        // Opcional: Pausa entre lotes
+        // Pausa entre lotes para evitar rate limiting
         if ( (i / BATCH_SIZE) + 1 < totalBatches ) { // No esperar después del último lote
-           await new Promise(resolve => setTimeout(resolve, 500)); // 0.5 segundos
+           console.log(`Esperando 3 segundos antes del siguiente lote...`);
+           await new Promise(resolve => setTimeout(resolve, 3000)); // 3 segundos
         }
       }
 
@@ -202,6 +203,182 @@ export const sendNewsletterToSubscribers = onCall(
         success: false,
         message: `Error al enviar newsletter: ${errorMessage}`,
       };
+    }
+  }
+);
+
+/**
+ * Función que se ejecuta cuando se publica un nuevo artículo
+ * Envía automáticamente un email a todos los suscriptores activos
+ */
+export const sendArticleNewsletter = onDocumentCreated(
+  "articles/{articleId}",
+  async (event) => {
+    try {
+      const articleData = event.data?.data();
+      if (!articleData) {
+        console.error("No se encontraron datos del artículo");
+        return;
+      }
+
+      // Solo enviar si el artículo está publicado y no se ha enviado email antes
+      if (!articleData.published || articleData.emailSent) {
+        console.log(`Artículo ${event.params.articleId} no cumple condiciones para envío automático`);
+        return;
+      }
+
+      console.log(`Enviando newsletter automático para artículo: ${articleData.title}`);
+
+      // Obtener configuración segura de Mailgun
+      const mailgunConfig = getMailgunConfig();
+      const siteUrlConfig = getSiteUrlConfig();
+
+      // Obtener todos los suscriptores activos
+      const subscribersSnapshot = await admin
+        .firestore()
+        .collection("subscribers")
+        .where("active", "==", true)
+        .get();
+
+      if (subscribersSnapshot.empty) {
+        console.log("No hay suscriptores activos para el artículo");
+        return;
+      }
+
+      const subscriberEmails = subscribersSnapshot.docs
+        .map((doc) => doc.data().email)
+        .filter(email => email && isValidEmail(email));
+
+      if (subscriberEmails.length === 0) {
+        console.log("No hay emails válidos para enviar");
+        return;
+      }
+
+      const recipients = validateEmailList(subscriberEmails);
+      console.log(`Enviando artículo a ${recipients.length} suscriptores`);
+
+      // Preparar contenido del email
+      const subject = `📖 Nuevo artículo: ${articleData.title}`;
+      const articleUrl = `${siteUrlConfig.url}/blog/${articleData.slug}`;
+      
+      const textContent = `
+¡Hola!
+
+Hemos publicado un nuevo artículo en nuestro blog:
+
+"${articleData.title}"
+
+${articleData.excerpt || 'Te invitamos a leer este interesante artículo sobre nuestra práctica espiritual.'}
+
+Lee el artículo completo aquí: ${articleUrl}
+
+¡Que disfrutes la lectura!
+
+Centro Umbandista Reino Da Mata
+${siteUrlConfig.url}
+`;
+
+      // Generar HTML usando plantilla profesional
+      const templateData = {
+        subject: subject,
+        content: `
+<h2 style="color: #2d5016; margin-bottom: 20px;">📖 Nuevo artículo publicado</h2>
+<h3 style="color: #4a7c2a; margin-bottom: 15px;">${articleData.title}</h3>
+<p style="color: #666; margin-bottom: 20px; font-size: 16px; line-height: 1.6;">
+  ${articleData.excerpt || 'Te invitamos a leer este interesante artículo sobre nuestra práctica espiritual.'}
+</p>
+<div style="margin: 30px 0; text-align: center;">
+  <a href="${articleUrl}" style="
+    display: inline-block;
+    background: linear-gradient(135deg, #4a7c2a 0%, #2d5016 100%);
+    color: white;
+    text-decoration: none;
+    padding: 15px 30px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 16px;
+    box-shadow: 0 3px 12px rgba(45, 80, 22, 0.3);
+  ">📖 Leer artículo completo</a>
+</div>
+        `,
+        callToAction: '',
+        siteUrl: siteUrlConfig.url
+      };
+
+      const htmlContent = loadEmailTemplate('newsletter-base', templateData);
+
+      // Enviar en lotes pequeños
+      const BATCH_SIZE = 5;
+      let successfulSends = 0;
+      let failedSends = 0;
+      const totalBatches = Math.ceil(recipients.length / BATCH_SIZE);
+      const auth = Buffer.from(`api:${mailgunConfig.apiKey}`).toString("base64");
+
+      for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
+        const currentBatch = recipients.slice(i, i + BATCH_SIZE);
+        console.log(`Procesando lote artículo ${ (i / BATCH_SIZE) + 1 }/${totalBatches} con ${currentBatch.length} correos.`);
+
+        const formData = new URLSearchParams();
+        formData.append("from", `${mailgunConfig.fromName} <${mailgunConfig.fromEmail}>`);
+        formData.append("to", currentBatch.join(","));
+        formData.append("subject", subject);
+        formData.append("text", textContent);
+        formData.append("html", htmlContent);
+        
+        // Headers adicionales
+        formData.append("h:Reply-To", mailgunConfig.fromEmail);
+        formData.append("h:List-Unsubscribe", `<${siteUrlConfig.url}/unsubscribe>`);
+        formData.append("h:List-Id", "Centro Umbandista Reino Da Mata - Nuevos Artículos");
+
+        try {
+          const response = await fetch(
+            `${mailgunConfig.baseUrl}/${mailgunConfig.domain}/messages`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Basic ${auth}`,
+                "Content-Type": "application/x-www-form-urlencoded",
+              },
+              body: formData,
+            }
+          );
+
+          if (!response.ok) {
+            const errorData = await response.text();
+            console.error(`Error en Mailgun para artículo lote ${ (i / BATCH_SIZE) + 1 }: ${response.statusText}`, errorData);
+            failedSends += currentBatch.length;
+          } else {
+            const responseData = await response.json();
+            console.log(`Artículo enviado exitosamente lote ${ (i / BATCH_SIZE) + 1 }:`, responseData);
+            successfulSends += currentBatch.length;
+          }
+        } catch (batchError: any) {
+          console.error(`Error crítico enviando artículo lote ${ (i / BATCH_SIZE) + 1 }:`, batchError);
+          failedSends += currentBatch.length;
+        }
+
+        // Pausa entre lotes
+        if ( (i / BATCH_SIZE) + 1 < totalBatches ) {
+          console.log(`Esperando 3 segundos antes del siguiente lote de artículo...`);
+          await new Promise(resolve => setTimeout(resolve, 3000));
+        }
+      }
+
+      // Marcar como enviado en Firestore
+      await admin.firestore().collection("articles").doc(event.params.articleId).update({
+        emailSent: true,
+        emailSentAt: admin.firestore.FieldValue.serverTimestamp(),
+        emailStats: {
+          totalSent: successfulSends,
+          totalFailed: failedSends,
+          totalRecipients: recipients.length
+        }
+      });
+
+      console.log(`Newsletter de artículo completado. Enviados: ${successfulSends}, Fallidos: ${failedSends}`);
+
+    } catch (error) {
+      console.error("Error al enviar newsletter de artículo:", error);
     }
   }
 );
@@ -991,6 +1168,222 @@ export const sendTestEmail = onCall(
         success: false,
         message: `Error al enviar email de prueba: ${errorMessage}`
       };
+    }
+  }
+);
+
+/**
+ * Función que se ejecuta cuando se crea un nuevo taller
+ * Envía automáticamente invitaciones a todos los suscriptores activos
+ */
+export const sendWorkshopInvitation = onDocumentCreated(
+  "workshops/{workshopId}",
+  async (event) => {
+    try {
+      const workshopData = event.data?.data();
+      if (!workshopData) {
+        console.error("No se encontraron datos del taller");
+        return;
+      }
+
+      // Solo enviar si el taller está activo y no se ha enviado invitación antes
+      if (!workshopData.active || workshopData.invitationSent) {
+        console.log(`Taller ${event.params.workshopId} no cumple condiciones para envío automático`);
+        return;
+      }
+
+      console.log(`Enviando invitaciones automáticas para taller: ${workshopData.title}`);
+
+      // Obtener configuración segura de Mailgun
+      const mailgunConfig = getMailgunConfig();
+      const siteUrlConfig = getSiteUrlConfig();
+
+      // Obtener todos los suscriptores activos
+      const subscribersSnapshot = await admin
+        .firestore()
+        .collection("subscribers")
+        .where("active", "==", true)
+        .get();
+
+      if (subscribersSnapshot.empty) {
+        console.log("No hay suscriptores activos para el taller");
+        return;
+      }
+
+      const subscriberEmails = subscribersSnapshot.docs
+        .map((doc) => doc.data().email)
+        .filter(email => email && isValidEmail(email));
+
+      if (subscriberEmails.length === 0) {
+        console.log("No hay emails válidos para enviar invitaciones");
+        return;
+      }
+
+      const recipients = validateEmailList(subscriberEmails);
+      console.log(`Enviando invitaciones de taller a ${recipients.length} suscriptores`);
+
+      // Preparar contenido del email
+      const subject = `🎓 Nuevo taller disponible: ${workshopData.title}`;
+      const workshopUrl = `${siteUrlConfig.url}/talleres/${workshopData.slug || event.params.workshopId}`;
+      
+      // Formatear fecha del taller
+      const workshopDate = workshopData.date ? new Date(workshopData.date.seconds * 1000) : new Date();
+      const formattedDate = workshopDate.toLocaleDateString('es-ES', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      
+      const formattedTime = workshopData.time || 'Horario por confirmar';
+      
+      const textContent = `
+¡Hola!
+
+Te invitamos a participar en nuestro nuevo taller:
+
+"${workshopData.title}"
+
+📅 Fecha: ${formattedDate}
+⏰ Hora: ${formattedTime}
+📍 Lugar: ${workshopData.location || 'Centro Umbandista Reino Da Mata'}
+
+${workshopData.description || 'Un taller especial para fortalecer tu camino espiritual.'}
+
+${workshopData.requirements ? `Requisitos: ${workshopData.requirements}` : ''}
+
+${workshopData.price ? `Inversión: ${workshopData.price}` : 'Taller gratuito'}
+
+¡Inscríbete ya! Los cupos son limitados.
+
+Más información e inscripciones: ${workshopUrl}
+
+¡Te esperamos!
+
+Centro Umbandista Reino Da Mata
+${siteUrlConfig.url}
+`;
+
+      // Generar HTML usando plantilla profesional
+      const templateData = {
+        subject: subject,
+        content: `
+<h2 style="color: #2d5016; margin-bottom: 20px;">🎓 Nuevo taller disponible</h2>
+<h3 style="color: #4a7c2a; margin-bottom: 15px;">${workshopData.title}</h3>
+
+<div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+  <p style="margin: 5px 0; color: #333;"><strong>📅 Fecha:</strong> ${formattedDate}</p>
+  <p style="margin: 5px 0; color: #333;"><strong>⏰ Hora:</strong> ${formattedTime}</p>
+  <p style="margin: 5px 0; color: #333;"><strong>📍 Lugar:</strong> ${workshopData.location || 'Centro Umbandista Reino Da Mata'}</p>
+  ${workshopData.price ? `<p style="margin: 5px 0; color: #333;"><strong>💰 Inversión:</strong> ${workshopData.price}</p>` : '<p style="margin: 5px 0; color: #4a7c2a;"><strong>🎁 Taller gratuito</strong></p>'}
+</div>
+
+<p style="color: #666; margin-bottom: 20px; font-size: 16px; line-height: 1.6;">
+  ${workshopData.description || 'Un taller especial para fortalecer tu camino espiritual.'}
+</p>
+
+${workshopData.requirements ? `
+<div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ffc107;">
+  <p style="margin: 0; color: #856404;"><strong>📋 Requisitos:</strong> ${workshopData.requirements}</p>
+</div>
+` : ''}
+
+<div style="background: #d4edda; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #28a745;">
+  <p style="margin: 0; color: #155724;"><strong>⚠️ Cupos limitados</strong> - ¡Inscríbete lo antes posible!</p>
+</div>
+
+<div style="margin: 30px 0; text-align: center;">
+  <a href="${workshopUrl}" style="
+    display: inline-block;
+    background: linear-gradient(135deg, #4a7c2a 0%, #2d5016 100%);
+    color: white;
+    text-decoration: none;
+    padding: 15px 30px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 16px;
+    box-shadow: 0 3px 12px rgba(45, 80, 22, 0.3);
+  ">🎓 Inscribirme al taller</a>
+</div>
+        `,
+        callToAction: '',
+        siteUrl: siteUrlConfig.url
+      };
+
+      const htmlContent = loadEmailTemplate('workshop-invitation', templateData);
+
+      // Enviar en lotes pequeños
+      const BATCH_SIZE = 5;
+      let successfulSends = 0;
+      let failedSends = 0;
+      const totalBatches = Math.ceil(recipients.length / BATCH_SIZE);
+      const auth = Buffer.from(`api:${mailgunConfig.apiKey}`).toString("base64");
+
+      for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
+        const currentBatch = recipients.slice(i, i + BATCH_SIZE);
+        console.log(`Procesando lote taller ${ (i / BATCH_SIZE) + 1 }/${totalBatches} con ${currentBatch.length} correos.`);
+
+        const formData = new URLSearchParams();
+        formData.append("from", `${mailgunConfig.fromName} <${mailgunConfig.fromEmail}>`);
+        formData.append("to", currentBatch.join(","));
+        formData.append("subject", subject);
+        formData.append("text", textContent);
+        formData.append("html", htmlContent);
+        
+        // Headers adicionales
+        formData.append("h:Reply-To", mailgunConfig.fromEmail);
+        formData.append("h:List-Unsubscribe", `<${siteUrlConfig.url}/unsubscribe>`);
+        formData.append("h:List-Id", "Centro Umbandista Reino Da Mata - Talleres");
+
+        try {
+          const response = await fetch(
+            `${mailgunConfig.baseUrl}/${mailgunConfig.domain}/messages`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Basic ${auth}`,
+                "Content-Type": "application/x-www-form-urlencoded",
+              },
+              body: formData,
+            }
+          );
+
+          if (!response.ok) {
+            const errorData = await response.text();
+            console.error(`Error en Mailgun para taller lote ${ (i / BATCH_SIZE) + 1 }: ${response.statusText}`, errorData);
+            failedSends += currentBatch.length;
+          } else {
+            const responseData = await response.json();
+            console.log(`Invitación de taller enviada exitosamente lote ${ (i / BATCH_SIZE) + 1 }:`, responseData);
+            successfulSends += currentBatch.length;
+          }
+        } catch (batchError: any) {
+          console.error(`Error crítico enviando invitación de taller lote ${ (i / BATCH_SIZE) + 1 }:`, batchError);
+          failedSends += currentBatch.length;
+        }
+
+        // Pausa entre lotes
+        if ( (i / BATCH_SIZE) + 1 < totalBatches ) {
+          console.log(`Esperando 3 segundos antes del siguiente lote de taller...`);
+          await new Promise(resolve => setTimeout(resolve, 3000));
+        }
+      }
+
+      // Marcar como enviado en Firestore
+      await admin.firestore().collection("workshops").doc(event.params.workshopId).update({
+        invitationSent: true,
+        invitationSentAt: admin.firestore.FieldValue.serverTimestamp(),
+        invitationStats: {
+          totalSent: successfulSends,
+          totalFailed: failedSends,
+          totalRecipients: recipients.length
+        }
+      });
+
+      console.log(`Invitaciones de taller completadas. Enviadas: ${successfulSends}, Fallidas: ${failedSends}`);
+
+    } catch (error) {
+      console.error("Error al enviar invitaciones de taller:", error);
     }
   }
 ); 
