@@ -1037,6 +1037,35 @@ export const onUserAuthCreate = onCall(
 );
 
 /**
+ * Función de prueba para verificar CORS
+ */
+export const testCorsFunction = onCall(
+  { 
+    memory: "256MiB",
+    cors: true
+  },
+  async (request) => {
+    try {
+      console.log('🧪 Función de prueba CORS llamada desde:', request.rawRequest?.headers?.origin);
+      console.log('🧪 Auth:', request.auth?.uid || 'No autenticado');
+      
+      return {
+        success: true,
+        message: 'CORS funcionando correctamente',
+        origin: request.rawRequest?.headers?.origin,
+        timestamp: new Date().toISOString()
+      };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      return {
+        success: false,
+        message: `Error en función de prueba: ${errorMessage}`
+      };
+    }
+  }
+);
+
+/**
  * Función simple para enviar email de prueba - NUEVA VERSION
  */
 export const sendSimpleTestEmail = onCall(
