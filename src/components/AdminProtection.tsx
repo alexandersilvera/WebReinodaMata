@@ -3,8 +3,7 @@ import { configUtils } from '@/core/config';
 import { auth, onAuthStateChanged, httpsCallable } from '@/core/firebase/config';
 import { isAdminEmail } from '@/features/admin/configService';
 import { getAllArticles, getAllDrafts, deleteArticle, deleteDraft, publishDraftAsArticle, getArticleById, updateArticle, checkSlugExists } from '@/services/articleService';
-import { getAllSubscribers, deleteSubscriber as deleteSubscriberService } from '@/features/newsletter/subscriberService';
-import { updateSubscriberStatus } from '@/firebase/subscribers';
+import { getAllSubscribers, deleteSubscriber as deleteSubscriberService, updateSubscriberStatus, subscribeToSubscribers } from '@/features/newsletter/subscriberService';
 import { functions } from '@/core/firebase/config';
 
 interface AdminProtectionProps {
@@ -35,6 +34,7 @@ declare global {
       getSubscribers: typeof getAllSubscribers;
       updateSubscriberStatus: typeof updateSubscriberStatus;
       deleteSubscriber: typeof deleteSubscriberService;
+      subscribeToSubscribers: typeof subscribeToSubscribers;
     };
   }
 }
@@ -60,7 +60,8 @@ export default function AdminProtection({ children, fallback }: AdminProtectionP
       window.subscriberServices = {
         getSubscribers: () => getAllSubscribers(false), // false = include all subscribers, not just active ones
         updateSubscriberStatus,
-        deleteSubscriber: deleteSubscriberService
+        deleteSubscriber: deleteSubscriberService,
+        subscribeToSubscribers
       };
     }
 

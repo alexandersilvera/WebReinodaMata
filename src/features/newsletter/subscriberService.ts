@@ -11,7 +11,9 @@ import {
   serverTimestamp,
   orderBy,
   Timestamp,
-  Query
+  Query,
+  onSnapshot,
+  Unsubscribe
 } from 'firebase/firestore';
 import type { DocumentData } from 'firebase/firestore';
 import { db } from '@/core/firebase/config';
@@ -180,6 +182,60 @@ export async function deleteSubscriber(id: string) {
     await deleteDoc(docRef);
   } catch (error) {
     console.error(`Error al eliminar suscriptor ${id}:`, error);
+    throw error;
+  }
+}
+
+// Actualizar estado de suscriptor
+export async function updateSubscriberStatus(id: string, active: boolean) {
+  try {
+    const docRef = doc(db, COLLECTION_NAME, id);
+    await updateDoc(docRef, { 
+      active,
+      updatedAt: serverTimestamp()
+    });
+  } catch (error) {
+    console.error(`Error al actualizar estado del suscriptor ${id}:`, error);
+    throw error;
+  }
+}
+
+// Escuchar cambios en suscriptores en tiempo real
+export function subscribeToSubscribers(
+  callback: (subscribers: Subscriber[]) => void,
+  activeOnly = false
+): Unsubscribe {
+  try {
+    let subscribersQuery: Query<DocumentData>;
+    
+    if (activeOnly) {
+      subscribersQuery = query(
+        collection(db, COLLECTION_NAME),
+        where('active', '==', true),
+        orderBy('createdAt', 'desc')
+      );
+    } else {
+      subscribersQuery = query(
+        collection(db, COLLECTION_NAME),
+        orderBy('createdAt', 'desc')
+      );
+    }
+    
+    return onSnapshot(subscribersQuery, (snapshot) => {
+      const subscribers = snapshot.docs.map(doc => {
+        const data = doc.data() as Omit<Subscriber, 'id'>;
+        return {
+          id: doc.id,
+          ...data
+        } as Subscriber;
+      });
+      
+      callback(subscribers);
+    }, (error) => {
+      console.error('Error en el listener de suscriptores:', error);
+    });
+  } catch (error) {
+    console.error('Error al configurar listener de suscriptores:', error);
     throw error;
   }
 } 

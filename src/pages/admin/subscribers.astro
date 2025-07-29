@@ -67,7 +67,7 @@ export const prerender = false;
 <script>
   // Variables de servicios (se cargarán desde window globals)
   let auth, onAuthStateChanged;
-  let getSubscribers, updateSubscriberStatus, deleteSubscriber;
+  let getSubscribers, updateSubscriberStatus, deleteSubscriber, subscribeToSubscribers;
   let functions, httpsCallable;
 
   // Variables DOM
@@ -75,6 +75,7 @@ export const prerender = false;
 
   // Variables de datos
   let subscribers = [];
+  let unsubscribeFromSubscribers = null;
 
   // Función para cargar servicios desde window globals
   async function loadServices() {
@@ -88,6 +89,7 @@ export const prerender = false;
         getSubscribers = window.subscriberServices.getSubscribers;
         updateSubscriberStatus = window.subscriberServices.updateSubscriberStatus;
         deleteSubscriber = window.subscriberServices.deleteSubscriber;
+        subscribeToSubscribers = window.subscriberServices.subscribeToSubscribers;
         
         initializeAdmin();
       } else {
@@ -145,7 +147,46 @@ export const prerender = false;
     }
   };
 
-  // Función para cargar y mostrar suscriptores
+  // Función para configurar listener en tiempo real
+  const setupRealtimeListener = () => {
+    try {
+      if (typeof subscribeToSubscribers !== 'function') {
+        showError('Servicios no cargados. Recarga la página.');
+        return;
+      }
+
+      console.log('🔄 Configurando listener en tiempo real para suscriptores...');
+
+      // Configurar listener en tiempo real
+      unsubscribeFromSubscribers = subscribeToSubscribers((updatedSubscribers) => {
+        console.log(`📊 Recibidos ${updatedSubscribers.length} suscriptores del listener`);
+        subscribers = updatedSubscribers;
+
+        // Ocultar carga y mostrar contenido
+        getDOMElements();
+        if (loadingElement) loadingElement.classList.add("hidden");
+        if (contentContainer) contentContainer.classList.remove("hidden");
+        if (subscribersTableContainer) subscribersTableContainer.classList.remove("hidden");
+        
+        renderSubscribers();
+      }, false); // false = incluir todos los suscriptores, no solo activos
+
+    } catch (error) {
+      console.error('Error al configurar listener de suscriptores:', error);
+      
+      let errorMessage = 'Error al cargar los suscriptores';
+      
+      if (error.code === 'permission-denied') {
+        errorMessage = 'Sin permisos para ver suscriptores. Verifica que seas administrador.';
+      } else if (error.code === 'unavailable') {
+        errorMessage = 'Problema de conexión. Intenta de nuevo.';
+      }
+      
+      showError(errorMessage);
+    }
+  };
+
+  // Función para cargar y mostrar suscriptores (fallback)
   const loadData = async () => {
     try {
       if (typeof getSubscribers !== 'function') {
@@ -277,8 +318,8 @@ export const prerender = false;
   (window as any).toggleSubscriberStatus = async function(subscriberId: string, currentStatus: boolean) {
     try {
       await updateSubscriberStatus(subscriberId, !currentStatus);
-      // Recargar datos
-      await loadData();
+      // No necesitamos recargar datos manualmente, el listener se encargará
+      console.log('Estado actualizado, el listener actualizará la UI automáticamente');
     } catch (error) {
       console.error('Error al cambiar estado:', error);
       alert('Error al cambiar el estado del suscriptor');
@@ -289,8 +330,8 @@ export const prerender = false;
     if (confirm(`¿Estás seguro de que deseas eliminar al suscriptor ${email}? Esta acción no se puede deshacer.`)) {
       try {
         await deleteSubscriber(subscriberId);
-        // Recargar datos
-        await loadData();
+        // No necesitamos recargar datos manualmente, el listener se encargará
+        console.log('Suscriptor eliminado, el listener actualizará la UI automáticamente');
       } catch (error) {
         console.error('Error al eliminar:', error);
         alert('Error al eliminar el suscriptor');
@@ -341,8 +382,8 @@ export const prerender = false;
       if (result.data?.success) {
         console.log('✅ Sincronización exitosa:', result.data.message);
         alert(`✅ ${result.data.message}`);
-        // Recargar la lista de suscriptores
-        await loadData();
+        // No necesitamos recargar manualmente, el listener se encargará
+        console.log('Sincronización completada, el listener actualizará la UI automáticamente');
       } else {
         console.error('❌ Error en la función:', result.data?.message);
         alert(`❌ Error: ${result.data?.message || 'Error desconocido'}`);
@@ -376,16 +417,21 @@ export const prerender = false;
     // Inicializar cuando el usuario esté autenticado
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        console.log('👤 Usuario autenticado, cargando datos...', user.email);
+        console.log('👤 Usuario autenticado, configurando listener en tiempo real...', user.email);
         setTimeout(() => {
           getDOMElements();
-          loadData();
+          setupRealtimeListener(); // Usar listener en tiempo real en lugar de loadData()
           
-          // Reconfigurar el botón después de cargar los datos (por si el DOM cambió)
+          // Reconfigurar el botón después de configurar el listener (por si el DOM cambió)
           setupSyncButton();
         }, 100);
       } else {
         console.log('🚫 Usuario no autenticado');
+        // Limpiar listener si el usuario se desautentica
+        if (unsubscribeFromSubscribers) {
+          unsubscribeFromSubscribers();
+          unsubscribeFromSubscribers = null;
+        }
       }
     });
   }
@@ -507,10 +553,20 @@ export const prerender = false;
     checkButton();
   }
 
+  // Limpiar listener cuando la página se descargue
+  window.addEventListener('beforeunload', () => {
+    if (unsubscribeFromSubscribers) {
+      console.log('🧹 Limpiando listener de suscriptores...');
+      unsubscribeFromSubscribers();
+      unsubscribeFromSubscribers = null;
+    }
+  });
+
   // Cargar servicios cuando la página se cargue
   document.addEventListener('DOMContentLoaded', () => {
     console.log('📄 DOM cargado, inicializando...');
     console.log('ℹ️ IMPORTANTE: AdminProtection usa client:load, el botón aparecerá después de la verificación de permisos');
+    console.log('🔥 Configurando actualizaciones en tiempo real para suscriptores');
     loadServices();
     
     // Configurar botón inmediatamente si está disponible (probablemente no estará)
