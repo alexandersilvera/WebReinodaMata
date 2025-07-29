@@ -7,15 +7,20 @@ import { getMailgunConfig, isValidEmail, validateEmailList, isAdminUser, getSite
 import { loadEmailTemplate, formatContentForHtml, createCallToAction, EmailTemplateData } from "./utils/emailTemplates";
 import { v4 as uuidv4 } from "uuid";
 
-// Configuración CORS unificada
+// Configuración CORS unificada - ACTUALIZADA
 const CORS_CONFIG = [
-  /localhost:\d+/,
-  /127\.0\.0\.1:\d+/,
+  /^https?:\/\/localhost:\d+$/,
+  /^https?:\/\/127\.0\.0\.1:\d+$/,
   "https://web-reinoda-mata.vercel.app",
   "https://reinodamata.com",
   "https://centroumbandistareinodamata.org",
   "https://www.centroumbandistareinodamata.org",
-  /https:\/\/(www\.)?centroumbandistareinodamata\.org/
+  /^https:\/\/(www\.)?centroumbandistareinodamata\.org$/,
+  // Agregar más variantes para asegurar compatibilidad
+  "http://localhost:4321",
+  "http://localhost:3000",
+  "http://127.0.0.1:4321",
+  "http://127.0.0.1:3000"
 ];
 
 /**
@@ -825,7 +830,7 @@ export const subscribeEmail = onCall(
 export const syncAuthUsersToSubscribers = onCall(
   { 
     memory: "512MiB",
-    cors: CORS_CONFIG
+    cors: true // Permitir todos los orígenes temporalmente para debug
   },
   async (request) => {
     try {
@@ -839,7 +844,7 @@ export const syncAuthUsersToSubscribers = onCall(
         throw new Error('Sin permisos de administrador');
       }
 
-      console.log('Iniciando sincronización de usuarios Auth a suscriptores...');
+      console.log('🔄 Iniciando sincronización detallada de usuarios Auth a suscriptores...');
 
       // Obtener todos los usuarios de Auth
       const authUsers: admin.auth.UserRecord[] = [];
@@ -851,24 +856,42 @@ export const syncAuthUsersToSubscribers = onCall(
         nextPageToken = listUsersResult.pageToken;
       } while (nextPageToken);
 
-      console.log(`Encontrados ${authUsers.length} usuarios en Firebase Auth`);
+      console.log(`📊 Encontrados ${authUsers.length} usuarios en Firebase Auth`);
+
+      // DEBUG: Mostrar usuarios sin email
+      const usersWithoutEmail = authUsers.filter(user => !user.email);
+      console.log(`⚠️ Usuarios sin email: ${usersWithoutEmail.length}`);
+      if (usersWithoutEmail.length > 0) {
+        console.log('Usuarios sin email:', usersWithoutEmail.map(u => ({ uid: u.uid, provider: u.providerData })));
+      }
 
       // Obtener suscriptores existentes
       const subscribersSnapshot = await admin.firestore()
         .collection('subscribers')
         .get();
 
+      console.log(`📊 Suscriptores existentes en Firestore: ${subscribersSnapshot.docs.length}`);
+
       const existingEmails = new Set(
-        subscribersSnapshot.docs.map(doc => doc.data().email?.toLowerCase())
+        subscribersSnapshot.docs.map(doc => doc.data().email?.toLowerCase()).filter(Boolean)
       );
 
+      console.log(`📊 Emails únicos en suscriptores: ${existingEmails.size}`);
+
       let syncedCount = 0;
-      let skippedCount = 0;
+      let skippedNoEmail = 0;
+      let skippedAlreadyExists = 0;
+      let errorCount = 0;
+
+      // DEBUG: Lista de usuarios que se van a procesar
+      const usersWithEmail = authUsers.filter(user => user.email);
+      console.log(`👥 Usuarios con email para procesar: ${usersWithEmail.length}`);
 
       // Sincronizar cada usuario
       for (const user of authUsers) {
         if (!user.email) {
-          skippedCount++;
+          skippedNoEmail++;
+          console.log(`⏭️ Usuario sin email omitido: ${user.uid}`);
           continue;
         }
 
@@ -876,7 +899,8 @@ export const syncAuthUsersToSubscribers = onCall(
         
         // Si ya existe en suscriptores, saltarlo
         if (existingEmails.has(email)) {
-          skippedCount++;
+          skippedAlreadyExists++;
+          console.log(`⏭️ Usuario ya existe en suscriptores: ${email}`);
           continue;
         }
 
@@ -898,22 +922,30 @@ export const syncAuthUsersToSubscribers = onCall(
           });
 
           syncedCount++;
-          console.log(`Sincronizado: ${email}`);
+          console.log(`✅ Sincronizado: ${email} (${user.displayName || 'Sin nombre'})`);
         } catch (error) {
-          console.error(`Error sincronizando ${email}:`, error);
-          skippedCount++;
+          console.error(`❌ Error sincronizando ${email}:`, error);
+          errorCount++;
         }
       }
 
-      const message = `Sincronización completada. ${syncedCount} usuarios agregados, ${skippedCount} omitidos (ya existían o sin email).`;
-      console.log(message);
+      const totalSkipped = skippedNoEmail + skippedAlreadyExists + errorCount;
+      const message = `Sincronización completada. ${syncedCount} usuarios agregados, ${totalSkipped} omitidos (${skippedNoEmail} sin email, ${skippedAlreadyExists} ya existían, ${errorCount} errores).`;
+      console.log(`📈 ${message}`);
 
       return {
         success: true,
         message,
         totalAuthUsers: authUsers.length,
         syncedCount,
-        skippedCount
+        skippedCount: totalSkipped,
+        details: {
+          skippedNoEmail,
+          skippedAlreadyExists, 
+          errorCount,
+          usersWithEmail: usersWithEmail.length,
+          existingSubscribers: subscribersSnapshot.docs.length
+        }
       };
 
     } catch (error: unknown) {
