@@ -1,6 +1,9 @@
 import { onCall } from "firebase-functions/v2/https";
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import { onSchedule } from "firebase-functions/v2/scheduler";
+// import { beforeUserCreated } from "firebase-functions/v2/identity"; // Para futura compatibilidad con GCIP
+import * as functions from "firebase-functions";
+import { logger } from "firebase-functions";
 import * as admin from "firebase-admin";
 import fetch from "node-fetch";
 import { getMailgunConfig, isValidEmail, validateEmailList, isAdminUser, getSiteUrlConfig } from "./config/mailgun";
@@ -505,7 +508,7 @@ Centro Umbandista Reino Da Mata
  */
 export const sendTestNewsletter = onCall(
   { 
-    memory: "512MiB",
+    memory: "256MiB",
     cors: CORS_CONFIG
   },
   async (request) => {
@@ -618,7 +621,7 @@ export const cleanupInactiveSubscribers = onSchedule(
     schedule: "0 0 1 * *", // Ejecutar a las 00:00 del primer día de cada mes
     timeZone: "America/Sao_Paulo",
     region: "us-central1",
-    memory: "256MiB"
+    memory: "128MiB"
   },
   async (_event) => {
     try {
@@ -664,7 +667,7 @@ export const cleanupInactiveSubscribers = onSchedule(
  */
 export const recordPageView = onCall(
   { 
-    memory: "256MiB",
+    memory: "128MiB",
     cors: CORS_CONFIG
   },
   async (request) => {
@@ -718,7 +721,7 @@ export const cleanupOldPageViews = onSchedule(
     schedule: "0 0 1 * *", // Ejecutar a las 00:00 del primer día de cada mes
     timeZone: "America/Sao_Paulo",
     region: "us-central1",
-    memory: "256MiB"
+    memory: "128MiB"
   },
   async (_event) => {
     try {
@@ -761,7 +764,7 @@ export const cleanupOldPageViews = onSchedule(
  */
 export const subscribeEmail = onCall(
   { 
-    memory: "256MiB",
+    memory: "128MiB",
     cors: CORS_CONFIG
   },
   async (request) => {
@@ -824,141 +827,7 @@ export const subscribeEmail = onCall(
   }
 );
 
-/**
- * Sincroniza todos los usuarios autenticados con la colección de suscriptores
- */
-export const syncAuthUsersToSubscribers = onCall(
-  { 
-    memory: "512MiB",
-    cors: true // Permitir todos los orígenes temporalmente para debug
-  },
-  async (request) => {
-    try {
-      // Verificar autenticación de admin
-      if (!request.auth) {
-        throw new Error('Usuario no autenticado');
-      }
 
-      const userEmail = request.auth.token.email;
-      if (!userEmail || !isAdminUser(userEmail)) {
-        throw new Error('Sin permisos de administrador');
-      }
-
-      console.log('🔄 Iniciando sincronización detallada de usuarios Auth a suscriptores...');
-
-      // Obtener todos los usuarios de Auth
-      const authUsers: admin.auth.UserRecord[] = [];
-      let nextPageToken: string | undefined;
-      
-      do {
-        const listUsersResult = await admin.auth().listUsers(1000, nextPageToken);
-        authUsers.push(...listUsersResult.users);
-        nextPageToken = listUsersResult.pageToken;
-      } while (nextPageToken);
-
-      console.log(`📊 Encontrados ${authUsers.length} usuarios en Firebase Auth`);
-
-      // DEBUG: Mostrar usuarios sin email
-      const usersWithoutEmail = authUsers.filter(user => !user.email);
-      console.log(`⚠️ Usuarios sin email: ${usersWithoutEmail.length}`);
-      if (usersWithoutEmail.length > 0) {
-        console.log('Usuarios sin email:', usersWithoutEmail.map(u => ({ uid: u.uid, provider: u.providerData })));
-      }
-
-      // Obtener suscriptores existentes
-      const subscribersSnapshot = await admin.firestore()
-        .collection('subscribers')
-        .get();
-
-      console.log(`📊 Suscriptores existentes en Firestore: ${subscribersSnapshot.docs.length}`);
-
-      const existingEmails = new Set(
-        subscribersSnapshot.docs.map(doc => doc.data().email?.toLowerCase()).filter(Boolean)
-      );
-
-      console.log(`📊 Emails únicos en suscriptores: ${existingEmails.size}`);
-
-      let syncedCount = 0;
-      let skippedNoEmail = 0;
-      let skippedAlreadyExists = 0;
-      let errorCount = 0;
-
-      // DEBUG: Lista de usuarios que se van a procesar
-      const usersWithEmail = authUsers.filter(user => user.email);
-      console.log(`👥 Usuarios con email para procesar: ${usersWithEmail.length}`);
-
-      // Sincronizar cada usuario
-      for (const user of authUsers) {
-        if (!user.email) {
-          skippedNoEmail++;
-          console.log(`⏭️ Usuario sin email omitido: ${user.uid}`);
-          continue;
-        }
-
-        const email = user.email.toLowerCase();
-        
-        // Si ya existe en suscriptores, saltarlo
-        if (existingEmails.has(email)) {
-          skippedAlreadyExists++;
-          console.log(`⏭️ Usuario ya existe en suscriptores: ${email}`);
-          continue;
-        }
-
-        // Agregar a suscriptores
-        try {
-          const unsubscribeToken = uuidv4();
-          
-          await admin.firestore().collection('subscribers').add({
-            email: email,
-            name: user.displayName || '',
-            firstName: user.displayName?.split(' ')[0] || '',
-            lastName: user.displayName?.split(' ').slice(1).join(' ') || '',
-            createdAt: admin.firestore.FieldValue.serverTimestamp(),
-            active: true,
-            unsubscribeToken,
-            source: 'auth_sync',
-            authUid: user.uid,
-            syncedAt: admin.firestore.FieldValue.serverTimestamp()
-          });
-
-          syncedCount++;
-          console.log(`✅ Sincronizado: ${email} (${user.displayName || 'Sin nombre'})`);
-        } catch (error) {
-          console.error(`❌ Error sincronizando ${email}:`, error);
-          errorCount++;
-        }
-      }
-
-      const totalSkipped = skippedNoEmail + skippedAlreadyExists + errorCount;
-      const message = `Sincronización completada. ${syncedCount} usuarios agregados, ${totalSkipped} omitidos (${skippedNoEmail} sin email, ${skippedAlreadyExists} ya existían, ${errorCount} errores).`;
-      console.log(`📈 ${message}`);
-
-      return {
-        success: true,
-        message,
-        totalAuthUsers: authUsers.length,
-        syncedCount,
-        skippedCount: totalSkipped,
-        details: {
-          skippedNoEmail,
-          skippedAlreadyExists, 
-          errorCount,
-          usersWithEmail: usersWithEmail.length,
-          existingSubscribers: subscribersSnapshot.docs.length
-        }
-      };
-
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-      console.error('Error en sincronización:', error);
-      
-      return {
-        success: false,
-        message: `Error al sincronizar: ${errorMessage}`
-      };
-    }
-  }
-);
 
 /**
  * Función que se ejecuta automáticamente cuando se crea un nuevo usuario en Firebase Auth
@@ -966,7 +835,7 @@ export const syncAuthUsersToSubscribers = onCall(
  */
 export const onUserAuthCreate = onCall(
   { 
-    memory: "256MiB",
+    memory: "128MiB",
     cors: CORS_CONFIG
   },
   async (request) => {
@@ -1036,162 +905,321 @@ export const onUserAuthCreate = onCall(
   }
 );
 
-/**
- * Función de prueba para verificar CORS
- */
-export const testCorsFunction = onCall(
-  { 
-    memory: "256MiB",
-    cors: true
-  },
-  async (request) => {
-    try {
-      console.log('🧪 Función de prueba CORS llamada desde:', request.rawRequest?.headers?.origin);
-      console.log('🧪 Auth:', request.auth?.uid || 'No autenticado');
-      
-      return {
-        success: true,
-        message: 'CORS funcionando correctamente',
-        origin: request.rawRequest?.headers?.origin,
-        timestamp: new Date().toISOString()
-      };
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-      return {
-        success: false,
-        message: `Error en función de prueba: ${errorMessage}`
-      };
-    }
+// Funciones de test eliminadas para optimizar recursos y resolver problemas de quota de CPU
+
+// Utility functions para el manejo de sincronización
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+const validateEmailAdvanced = (email: string): boolean => {
+  if (!email || typeof email !== 'string') return false;
+  
+  // Regex más estricto para validación de email
+  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+  
+  // Verificar dominios bloqueados conocidos
+  const blockedDomains = ['tempmail.com', '10minutemail.com', 'guerrillamail.com', 'mailinator.com'];
+  const domain = email.split('@')[1]?.toLowerCase();
+  
+  return emailRegex.test(email) && !!domain && !blockedDomains.includes(domain);
+};
+
+const logSyncOperation = (operation: string, data: any, success: boolean, error?: any) => {
+  const logData: any = {
+    operation,
+    success,
+    userId: data.uid || 'unknown',
+    email: data.email || 'unknown',
+    timestamp: new Date().toISOString(),
+    source: 'auth_trigger_v2'
+  };
+
+  if (error) {
+    logData.error = {
+      message: error.message,
+      code: error.code,
+      stack: error.stack?.split('\n').slice(0, 3).join('\n') // Primeras 3 líneas del stack
+    };
   }
-);
 
-/**
- * Función simple para enviar email de prueba - NUEVA VERSION
- */
-export const sendSimpleTestEmail = onCall(
-  { 
-    memory: "256MiB",
-    cors: CORS_CONFIG
-  },
-  async (request) => {
+  if (success) {
+    logger.info('sync_success', logData);
+  } else {
+    logger.error('sync_failure', logData);
+  }
+};
+
+const saveFailedSync = async (user: any, error: any, attempt: number) => {
+  try {
+    await admin.firestore().collection('failed_syncs').add({
+      userId: user.uid,
+      email: user.email,
+      displayName: user.displayName,
+      error: {
+        message: error.message,
+        code: error.code,
+        name: error.name
+      },
+      attempt,
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      processed: false,
+      retryCount: 0
+    });
+    logger.warn('failed_sync_saved', { userId: user.uid, email: user.email, attempt });
+  } catch (saveError: any) {
+    logger.error('failed_to_save_sync_error', { 
+      originalError: error.message, 
+      saveError: saveError?.message || 'Unknown save error',
+      userId: user.uid 
+    });
+  }
+};
+
+const syncUserToSubscribersWithRetry = async (user: any, maxRetries: number = 3): Promise<boolean> => {
+  let attempt = 0;
+  
+  while (attempt < maxRetries) {
     try {
-      const { testEmail, subject, content } = request.data;
-
-      if (!testEmail || !subject || !content) {
-        throw new Error('Faltan parámetros requeridos: testEmail, subject, content');
-      }
-
-      // Usar configuración desde variables de entorno
-      const mailgunConfig = getMailgunConfig();
-
-      // Construir form data string manually
-      const formBody = [
-        `from=Centro Umbandista Reino Da Mata <${mailgunConfig.fromEmail}>`,
-        `to=${testEmail}`,
-        `subject=[SIMPLE TEST] ${subject}`,
-        `html=<h1>Simple Test Email</h1><p>${content}</p><p>Enviado desde sendSimpleTestEmail function.</p>`
-      ].map(part => encodeURIComponent(part.split('=')[0]) + '=' + encodeURIComponent(part.split('=')[1])).join('&');
-
-      const response = await fetch(`https://api.mailgun.net/v3/${mailgunConfig.domain}/messages`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Basic ${Buffer.from(`api:${mailgunConfig.apiKey}`).toString('base64')}`,
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: formBody
+      attempt++;
+      
+      logger.info('sync_attempt_start', { 
+        userId: user.uid, 
+        email: user.email, 
+        attempt, 
+        maxRetries 
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        return {
-          success: false,
-          message: `Error ${response.status}: ${errorText}`
-        };
+      // Validación avanzada de email
+      if (!validateEmailAdvanced(user.email)) {
+        throw new Error(`Email inválido o de dominio bloqueado: ${user.email}`);
       }
 
-      const result = await response.json();
-      return { 
-        success: true, 
-        message: `Email enviado exitosamente a ${testEmail}`,
-        mailgunResponse: result
-      };
+      // Verificar si ya existe en suscriptores con timeout
+      const existingQuery = await Promise.race([
+        admin.firestore()
+          .collection('subscribers')
+          .where('email', '==', user.email.toLowerCase())
+          .limit(1)
+          .get(),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout en consulta de suscriptor existente')), 10000)
+        )
+      ]) as admin.firestore.QuerySnapshot;
 
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-      return {
-        success: false,
-        message: `Error: ${errorMessage}`
-      };
-    }
-  }
-);
+      if (!existingQuery.empty) {
+        logger.info('user_already_subscribed', { 
+          userId: user.uid, 
+          email: user.email,
+          existingSubscriberId: existingQuery.docs[0].id
+        });
+        return true; // Consideramos esto como éxito
+      }
 
-/**
- * Función para enviar email de prueba (solo para testing)
- */
-export const sendTestEmail = onCall(
-  { 
-    memory: "256MiB",
-    cors: CORS_CONFIG
-  },
-  async (request) => {
-    try {
-      // En desarrollo local, permitir sin autenticación para testing
-      const isDevelopment = process.env.FUNCTIONS_EMULATOR === 'true';
+      // Crear nuevo suscriptor con validación
+      const unsubscribeToken = uuidv4();
       
-      if (!isDevelopment) {
-        // Verificar autenticación de admin solo en producción
-        if (!request.auth) {
-          throw new Error('Usuario no autenticado');
-        }
+      const subscriberData = {
+        email: user.email.toLowerCase(),
+        name: user.displayName || '',
+        firstName: user.displayName?.split(' ')[0] || '',
+        lastName: user.displayName?.split(' ').slice(1).join(' ') || '',
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        active: true,
+        unsubscribeToken,
+        source: 'auth_trigger_v2',
+        authUid: user.uid,
+        syncedAt: admin.firestore.FieldValue.serverTimestamp(),
+        emailVerified: user.emailVerified || false,
+        lastSyncAttempt: attempt,
+        syncMethod: 'automatic'
+      };
 
-        const userEmail = request.auth.token.email;
-        if (!userEmail || !isAdminUser(userEmail)) {
-          throw new Error('Sin permisos de administrador');
-        }
+      // Guardar con timeout
+      const docRef = await Promise.race([
+        admin.firestore().collection('subscribers').add(subscriberData),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout al guardar suscriptor')), 15000)
+        )
+      ]) as admin.firestore.DocumentReference;
+      
+      logSyncOperation('user_sync_success', user, true);
+      logger.info('sync_success_detail', {
+        userId: user.uid,
+        email: user.email,
+        subscriberId: docRef.id,
+        attempt,
+        finalAttempt: true
+      });
+      
+      return true;
+
+    } catch (error: any) {
+      const isLastAttempt = attempt >= maxRetries;
+      
+      logSyncOperation('user_sync_attempt_failed', user, false, error);
+      
+      if (isLastAttempt) {
+        // Último intento fallido - guardar para procesamiento manual
+        await saveFailedSync(user, error, attempt);
+        logSyncOperation('user_sync_final_failure', user, false, error);
+        return false;
       } else {
-        console.log('Modo desarrollo: saltando verificación de autenticación');
+        // Esperar antes del siguiente intento (exponential backoff)
+        const backoffTime = Math.min(Math.pow(2, attempt) * 1000, 10000); // Max 10 segundos
+        logger.warn('sync_retry_scheduled', {
+          userId: user.uid,
+          email: user.email,
+          attempt,
+          nextAttemptIn: backoffTime,
+          error: error.message
+        });
+        
+        await delay(backoffTime);
+      }
+    }
+  }
+  
+  return false;
+};
+
+/**
+ * Trigger automático para nuevos usuarios - Versión simple y confiable
+ * Se ejecuta automáticamente cuando se crea un usuario en Firebase Auth
+ */
+export const onUserCreate = functions
+  .region('us-central1')
+  .runWith({
+    memory: '256MB',
+    timeoutSeconds: 30
+  })
+  .auth.user().onCreate(async (user: any) => {
+    try {
+      console.log('🔄 Trigger automático: nuevo usuario detectado', user.email);
+
+      if (!user.email) {
+        console.log('⚠️ Usuario sin email, saltando sincronización');
+        return;
       }
 
-      const { to, subject, content } = request.data;
-      const config = getMailgunConfig();
-
-      if (!to || !subject || !content) {
-        throw new Error('Faltan parámetros requeridos');
-      }
-
-      const formData = new URLSearchParams();
-      formData.append('from', `Centro Umbandista Reino Da Mata <${config.fromEmail}>`);
-      formData.append('to', to);
-      formData.append('subject', subject);
-      formData.append('html', content);
-
-      const response = await fetch(`${config.baseUrl}/${config.domain}/messages`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Basic ${Buffer.from(`api:${config.apiKey}`).toString('base64')}`,
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: formData
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Error enviando email de prueba:', errorText);
-        throw new Error('Error enviando email');
-      }
-
-      console.log('Email de prueba enviado exitosamente a:', to);
-      return { success: true, message: 'Email enviado' };
-
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-      console.error('Error en sendTestEmail:', error);
+      // Usar la función de sincronización mejorada que ya tenemos
+      const syncSuccess = await syncUserToSubscribersWithRetry(user, 3);
       
-      return {
-        success: false,
-        message: `Error al enviar email de prueba: ${errorMessage}`
-      };
+      if (syncSuccess) {
+        console.log('✅ Sincronización automática exitosa:', user.email);
+      } else {
+        console.error('❌ Sincronización automática falló tras todos los intentos:', user.email);
+      }
+
+    } catch (error: any) {
+      console.error('❌ Error crítico en trigger automático:', error);
+    }
+  });
+
+/**
+ * Función programada para procesar sincronizaciones fallidas
+ * Se ejecuta cada hora para reintentar sincronizaciones que fallaron
+ */
+export const processFailedSyncs = onSchedule(
+  {
+    schedule: "0 * * * *", // Cada hora
+    timeZone: "America/Sao_Paulo",
+    region: "us-central1",
+    memory: "128MiB"
+  },
+  async (_event) => {
+    try {
+      logger.info('processing_failed_syncs_started');
+      
+      // Buscar sincronizaciones fallidas sin procesar
+      const failedSyncsSnapshot = await admin
+        .firestore()
+        .collection("failed_syncs")
+        .where("processed", "==", false)
+        .where("retryCount", "<", 5) // Máximo 5 reintentos
+        .limit(10) // Procesar máximo 10 por ejecución
+        .get();
+      
+      if (failedSyncsSnapshot.empty) {
+        logger.info('no_failed_syncs_to_process');
+        return;
+      }
+      
+      let processedCount = 0;
+      let successCount = 0;
+      
+      for (const doc of failedSyncsSnapshot.docs) {
+        const failedSync = doc.data();
+        
+        try {
+          // Intentar crear el usuario mock para retry
+          const mockUser = {
+            uid: failedSync.userId,
+            email: failedSync.email,
+            displayName: failedSync.displayName,
+            emailVerified: true // Asumir verificado en retry
+          };
+          
+          const success = await syncUserToSubscribersWithRetry(mockUser, 2); // Solo 2 intentos en retry
+          
+          if (success) {
+            successCount++;
+            // Marcar como procesado exitosamente
+            await doc.ref.update({
+              processed: true,
+              processedAt: admin.firestore.FieldValue.serverTimestamp(),
+              retrySuccess: true
+            });
+            
+            logger.info('failed_sync_retry_success', {
+              docId: doc.id,
+              userId: failedSync.userId,
+              email: failedSync.email
+            });
+          } else {
+            // Incrementar contador de reintentos
+            await doc.ref.update({
+              retryCount: admin.firestore.FieldValue.increment(1),
+              lastRetryAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+            
+            logger.warn('failed_sync_retry_failed', {
+              docId: doc.id,
+              userId: failedSync.userId,
+              email: failedSync.email,
+              retryCount: failedSync.retryCount + 1
+            });
+          }
+          
+          processedCount++;
+          
+        } catch (retryError: any) {
+          logger.error('failed_sync_retry_error', {
+            docId: doc.id,
+            userId: failedSync.userId,
+            error: retryError.message
+          });
+          
+          // Incrementar contador aunque haya error
+          await doc.ref.update({
+            retryCount: admin.firestore.FieldValue.increment(1),
+            lastRetryAt: admin.firestore.FieldValue.serverTimestamp(),
+            lastError: retryError.message
+          });
+        }
+        
+        // Pequeña pausa entre procesamiento
+        await delay(1000);
+      }
+      
+      logger.info('processing_failed_syncs_completed', {
+        totalProcessed: processedCount,
+        successfulRetries: successCount,
+        failedRetries: processedCount - successCount
+      });
+      
+    } catch (error: any) {
+      logger.error('failed_syncs_processing_error', {
+        error: error.message
+      });
     }
   }
 );

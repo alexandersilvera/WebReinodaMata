@@ -2,7 +2,7 @@
 // Este archivo contiene la configuración de Firebase para la aplicación
 
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore, doc, setDoc, serverTimestamp, collection, query, where, getDocs, enableNetwork, disableNetwork, orderBy, deleteDoc } from "firebase/firestore";
+import { getFirestore, doc, setDoc, serverTimestamp, collection, query, where, getDocs, enableNetwork, disableNetwork, orderBy, deleteDoc, limit, updateDoc } from "firebase/firestore";
 import { getAuth, setPersistence, browserLocalPersistence, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { getStorage } from "firebase/storage";
 import { getFunctions, httpsCallable, connectFunctionsEmulator } from "firebase/functions";
@@ -35,7 +35,7 @@ export const functions = getFunctions(app);
 export { onAuthStateChanged, signInWithEmailAndPassword, signOut };
 
 // Exportar funciones de Firestore para uso en scripts del cliente
-export { doc, setDoc, serverTimestamp, collection, query, where, getDocs, enableNetwork, disableNetwork, orderBy, deleteDoc };
+export { doc, setDoc, serverTimestamp, collection, query, where, getDocs, enableNetwork, disableNetwork, orderBy, deleteDoc, limit, updateDoc };
 
 // Exportar funciones de Firebase Functions para uso en scripts del cliente
 export { httpsCallable };

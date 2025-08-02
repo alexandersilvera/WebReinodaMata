@@ -13,7 +13,7 @@ import {
   Timestamp,
   Query,
   onSnapshot,
-  Unsubscribe
+  type Unsubscribe
 } from 'firebase/firestore';
 import type { DocumentData } from 'firebase/firestore';
 import { db } from '@/core/firebase/config';

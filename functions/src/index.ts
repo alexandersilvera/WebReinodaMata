@@ -15,6 +15,7 @@ admin.initializeApp();
 // Exportar funciones básicas (newsletter, suscripciones, métricas)
 export * from "./basic";
 
+
 // DESHABILITADO: Funciones de sincronización de contenido (obsoletas)
 // export * from "./content-sync";
 

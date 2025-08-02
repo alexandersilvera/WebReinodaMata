@@ -6,6 +6,9 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import AdminProtection from '@/components/AdminProtection';
 
+// Declare callback variable
+let mockAuthCallback: any;
+
 // Mock Firebase auth with async behavior
 vi.mock('@/core/firebase/config', () => ({
   auth: {},

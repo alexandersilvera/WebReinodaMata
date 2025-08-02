@@ -1,0 +1,15 @@
+---
+import MainLayout from "@/layouts/MainLayout.astro";
+import AdminProtection from "@/components/AdminProtection";
+import SyncMonitorDashboard from "@/components/SyncMonitorDashboard";
+
+export const prerender = false; 
+---
+
+<MainLayout title="Monitor de Sincronizaciones | Reino Da Mata">
+  <AdminProtection client:load>
+    <div class="max-w-7xl mx-auto w-full px-4 py-8">
+      <SyncMonitorDashboard client:load isAdmin={true} />
+    </div>
+  </AdminProtection>
+</MainLayout>
