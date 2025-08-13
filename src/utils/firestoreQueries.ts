@@ -68,26 +68,24 @@ export async function getSubscriberStats(): Promise<SubscriberStats> {
 }
 
 /**
- * Obtener suscriptores activos (no eliminados y activos)
+ * Obtener suscriptores activos (no eliminados y activos) de forma eficiente.
  */
 export async function getActiveSubscribers() {
   try {
-    const subscribersRef = collection(db, 'subscribers');
-    
-    // Usar consulta simple y filtrar en el cliente
-    const snapshot = await getDocs(subscribersRef);
-    
-    const activeSubscribers = snapshot.docs
-      .filter(doc => {
-        const data = doc.data();
-        return data.deleted !== true && data.active === true;
-      })
-      .map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-    
-    return activeSubscribers;
+    // Esta consulta es más eficiente ya que filtra en el servidor de Firestore.
+    // Requiere un índice compuesto en (active, deleted).
+    const q = query(
+      collection(db, 'subscribers'),
+      where('active', '==', true),
+      where('deleted', '!=', true)
+    );
+
+    const snapshot = await getDocs(q);
+
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
   } catch (error) {
     console.error('Error al obtener suscriptores activos:', error);
     return [];

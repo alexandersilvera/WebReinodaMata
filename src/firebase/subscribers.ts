@@ -1,5 +1,5 @@
 import { db } from '../core/firebase/config';
-import { collection, addDoc, query, where, getDocs, Timestamp, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs, Timestamp, doc, updateDoc, deleteDoc, orderBy } from 'firebase/firestore';
 
 // Interfaz para los datos del suscriptor
 export interface Subscriber { // Added export
@@ -63,34 +63,31 @@ export const checkEmailExists = async (email: string): Promise<boolean> => {
 };
 
 /**
- * Obtiene todos los suscriptores activos de la base de datos (no eliminados)
+ * Obtiene todos los suscriptores de la base de datos, con opciones de filtrado y ordenación.
+ * Esta versión utiliza consultas de Firestore para un rendimiento óptimo.
  * @param includeDeleted Si es true, incluye también los suscriptores marcados como eliminados
  * @returns Promise con el array de suscriptores
  */
 export const getSubscribers = async (includeDeleted: boolean = false): Promise<(Subscriber & { id: string })[]> => {
   try {
     const subscribersRef = collection(db, SUBSCRIBERS_COLLECTION);
-    const querySnapshot = await getDocs(subscribersRef);
     
-    // Mapear los documentos y filtrar los eliminados si es necesario
-    return querySnapshot.docs
-      .map(doc => ({
-        id: doc.id,
-        ...doc.data() as Subscriber
-      }))
-      .filter(subscriber => {
-        // Si includeDeleted es true, devolver todos
-        if (includeDeleted) return true;
-        
-        // Si no, filtrar los que tienen deleted=true
-        return !subscriber.deleted;
-      })
-      // Ordenar por fecha de creación (más recientes primero)
-      .sort((a, b) => {
-        const dateA = a.createdAt?.toDate?.() || new Date(0);
-        const dateB = b.createdAt?.toDate?.() || new Date(0);
-        return dateB.getTime() - dateA.getTime();
-      });
+    // Se construye la consulta dinámicamente para delegar el trabajo a Firestore.
+    // NOTA: Esto requiere los índices compuestos definidos en FIRESTORE_SETUP.md.
+    const queryConstraints = [orderBy('createdAt', 'desc')];
+    if (!includeDeleted) {
+      // El índice para esta consulta es: `deleted` (Asc) y `createdAt` (Desc).
+      queryConstraints.unshift(where('deleted', '!=', true));
+    }
+
+    const q = query(subscribersRef, ...queryConstraints);
+    const querySnapshot = await getDocs(q);
+    
+    // Mapear los documentos directamente. El filtrado y la ordenación ya se hicieron en el servidor.
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data() as Subscriber
+    }));
   } catch (error) {
     console.error('Error al obtener suscriptores:', error);
     throw error;
@@ -117,45 +114,40 @@ export const updateSubscriberStatus = async (subscriberId: string, active: boole
 };
 
 /**
- * Elimina un suscriptor de la base de datos utilizando un enfoque alternativo
+ * Realiza un borrado lógico (soft delete) de un suscriptor.
+ * Esta operación debe ser realizada por un administrador.
  * @param subscriberId ID del suscriptor
  */
 export const deleteSubscriber = async (subscriberId: string): Promise<void> => {
   try {
-    // Importar auth y functions para verificar autenticación y llamar a la función
-    const { auth, functions } = await import('../core/firebase/config');
-    const { httpsCallable } = await import('firebase/functions');
+    const { auth } = await import('../core/firebase/config');
     
-    // Verificar si el usuario está autenticado
     const currentUser = auth.currentUser;
     if (!currentUser) {
       throw new Error('Usuario no autenticado. Debes iniciar sesión para realizar esta acción.');
     }
     
-    console.log('Intentando eliminar suscriptor con ID:', subscriberId);
-    console.log('Usuario autenticado:', currentUser.email);
-    
-    // Verificar si es el administrador
-    if (currentUser.email !== 'alexandersilvera@hotmail.com') {
+    // FIXME: La comprobación de permisos está hardcodeada.
+    // Esto es inseguro y difícil de mantener. Se debe reemplazar por un sistema de roles,
+    // por ejemplo, usando Custom Claims de Firebase Auth.
+    const adminEmails = ['alexandersilvera@hotmail.com', 'admin@centroumbandistareinodamata.org'];
+    if (!adminEmails.includes(currentUser.email ?? '')) {
       throw new Error('No tienes permisos para eliminar suscriptores. Esta acción está reservada para administradores.');
     }
+
+    console.log(`Admin ${currentUser.email} está intentando eliminar al suscriptor ${subscriberId}`);
     
-    // Enfoque alternativo: usar método de borrado temporal
-    // En lugar de eliminar directamente, marcar como inactivo y eliminado
     const docRef = doc(db, SUBSCRIBERS_COLLECTION, subscriberId);
     await updateDoc(docRef, { 
       active: false,
       deleted: true,
       deletedAt: Timestamp.now()
     });
-    
     console.log('Suscriptor marcado como eliminado correctamente');
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error al eliminar suscriptor:', error);
-    // Añadir más detalles al error para facilitar la depuración
     if (error.code) {
-      console.error('Código de error:', error.code);
-      console.error('Mensaje de error:', error.message);
+      console.error(`Código de error: ${error.code}, Mensaje: ${error.message}`);
     }
     throw error;
   }

@@ -1,5 +1,19 @@
-import { db, collection, query, where, orderBy, limit, getDocs, doc, updateDoc, serverTimestamp } from '@/core/firebase/config';
+import { 
+  db, 
+  collection, 
+  query, 
+  where, 
+  orderBy, 
+  limit, 
+  getDocs, 
+  doc, 
+  updateDoc, 
+  serverTimestamp,
+  startAfter
+} from '@/core/firebase/config';
+import type { QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
 import type { Timestamp } from 'firebase/firestore';
+import { syncLogger } from './services/logger';
 
 // Tipos para el monitoreo de sincronizaciones
 export interface FailedSync {
@@ -52,6 +66,19 @@ export interface TriggerError {
   triggerVersion: string;
 }
 
+// Tipos para paginación cursor-based
+export interface PaginatedResult<T> {
+  items: T[];
+  hasNextPage: boolean;
+  nextCursor?: QueryDocumentSnapshot<DocumentData>;
+  totalCount?: number;
+}
+
+export interface PaginationOptions {
+  limit?: number;
+  cursor?: QueryDocumentSnapshot<DocumentData>;
+}
+
 /**
  * Servicio para monitorear sincronizaciones y obtener métricas
  */
@@ -62,38 +89,66 @@ export class SyncMonitorService {
    */
   static async getMetrics(): Promise<SyncMetrics> {
     try {
-      // Obtener total de suscriptores
-      const subscribersSnapshot = await getDocs(collection(db, 'subscribers'));
-      const totalSubscribers = subscribersSnapshot.size;
-      
-      // Contar usuarios con authUid (sincronizados desde Auth)
-      const authSyncedUsers = subscribersSnapshot.docs.filter(doc => 
-        doc.data().authUid
-      ).length;
+      // Usar Promise.allSettled para obtener datos en paralelo y manejar errores parciales
+      const [subscribersResult, failedSyncsResult] = await Promise.allSettled([
+        getDocs(collection(db, 'subscribers')),
+        getDocs(collection(db, 'failed_syncs'))
+      ]);
 
-      // Obtener sincronizaciones fallidas
-      const failedSyncsSnapshot = await getDocs(collection(db, 'failed_syncs'));
-      const totalFailed = failedSyncsSnapshot.size;
+      let totalSubscribers = 0;
+      let authSyncedUsers = 0;
       
-      // Contar pendientes de retry
-      const pendingRetry = failedSyncsSnapshot.docs.filter(doc => {
-        const data = doc.data();
-        return !data.processed && (data.retryCount || 0) < 5;
-      }).length;
+      if (subscribersResult.status === 'fulfilled') {
+        const subscribersSnapshot = subscribersResult.value;
+        totalSubscribers = subscribersSnapshot.size;
+        
+        // Contar usuarios con authUid (sincronizados desde Auth)
+        authSyncedUsers = subscribersSnapshot.docs.filter(doc => 
+          doc.data().authUid
+        ).length;
+      } else {
+        syncLogger.error('Error loading subscribers for metrics', { error: subscribersResult.reason });
+      }
+
+      let totalFailed = 0;
+      let pendingRetry = 0;
+
+      if (failedSyncsResult.status === 'fulfilled') {
+        const failedSyncsSnapshot = failedSyncsResult.value;
+        totalFailed = failedSyncsSnapshot.size;
+        
+        // Contar pendientes de retry
+        pendingRetry = failedSyncsSnapshot.docs.filter(doc => {
+          const data = doc.data();
+          return !data.processed && (data.retryCount || 0) < 5;
+        }).length;
+      } else {
+        syncLogger.error('Error loading failed syncs for metrics', { error: failedSyncsResult.reason });
+      }
 
       // Calcular sincronizaciones exitosas (aproximado)
       const successfulSyncs = Math.max(0, authSyncedUsers - totalFailed);
 
-      return {
+      const metrics = {
         totalSubscribers,
         totalFailed,
         pendingRetry,
         successfulSyncs,
         authSyncedUsers
       };
+
+      syncLogger.info('Sync metrics calculated', metrics);
+      return metrics;
     } catch (error) {
-      console.error('Error getting sync metrics:', error);
-      throw error;
+      syncLogger.error('Error getting sync metrics', { error });
+      // Retornar métricas vacías en lugar de fallar completamente
+      return {
+        totalSubscribers: 0,
+        totalFailed: 0,
+        pendingRetry: 0,
+        successfulSyncs: 0,
+        authSyncedUsers: 0
+      };
     }
   }
 
@@ -115,7 +170,54 @@ export class SyncMonitorService {
         ...doc.data()
       })) as FailedSync[];
     } catch (error) {
-      console.error('Error getting failed syncs:', error);
+      syncLogger.error('Error getting failed syncs', { error });
+      throw error;
+    }
+  }
+
+  /**
+   * Obtiene sincronizaciones fallidas con paginación cursor-based
+   */
+  static async getFailedSyncsPaginated(
+    options: PaginationOptions = {}
+  ): Promise<PaginatedResult<FailedSync>> {
+    try {
+      const { limit: maxResults = 20, cursor } = options;
+      
+      let failedSyncsQuery = query(
+        collection(db, 'failed_syncs'),
+        orderBy('timestamp', 'desc'),
+        limit(maxResults + 1) // +1 para determinar si hay más páginas
+      );
+
+      // Si hay cursor, empezar después de él
+      if (cursor) {
+        failedSyncsQuery = query(
+          collection(db, 'failed_syncs'),
+          orderBy('timestamp', 'desc'),
+          startAfter(cursor),
+          limit(maxResults + 1)
+        );
+      }
+      
+      const snapshot = await getDocs(failedSyncsQuery);
+      const docs = snapshot.docs;
+      
+      // Verificar si hay más páginas
+      const hasNextPage = docs.length > maxResults;
+      const items = docs.slice(0, maxResults); // Remover el elemento extra
+      const nextCursor = hasNextPage ? docs[maxResults - 1] : undefined;
+      
+      return {
+        items: items.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as FailedSync[],
+        hasNextPage,
+        nextCursor
+      };
+    } catch (error) {
+      syncLogger.error('Error getting paginated failed syncs', { error });
       throw error;
     }
   }
@@ -138,7 +240,52 @@ export class SyncMonitorService {
         ...doc.data()
       })) as RecentActivity[];
     } catch (error) {
-      console.error('Error getting recent activity:', error);
+      syncLogger.error('Error getting recent activity', { error });
+      throw error;
+    }
+  }
+
+  /**
+   * Obtiene actividad reciente con paginación cursor-based
+   */
+  static async getRecentActivityPaginated(
+    options: PaginationOptions = {}
+  ): Promise<PaginatedResult<RecentActivity>> {
+    try {
+      const { limit: maxResults = 25, cursor } = options;
+      
+      let recentQuery = query(
+        collection(db, 'subscribers'),
+        orderBy('createdAt', 'desc'),
+        limit(maxResults + 1)
+      );
+
+      if (cursor) {
+        recentQuery = query(
+          collection(db, 'subscribers'),
+          orderBy('createdAt', 'desc'),
+          startAfter(cursor),
+          limit(maxResults + 1)
+        );
+      }
+      
+      const snapshot = await getDocs(recentQuery);
+      const docs = snapshot.docs;
+      
+      const hasNextPage = docs.length > maxResults;
+      const items = docs.slice(0, maxResults);
+      const nextCursor = hasNextPage ? docs[maxResults - 1] : undefined;
+      
+      return {
+        items: items.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as RecentActivity[],
+        hasNextPage,
+        nextCursor
+      };
+    } catch (error) {
+      syncLogger.error('Error getting paginated recent activity', { error });
       throw error;
     }
   }
@@ -161,7 +308,7 @@ export class SyncMonitorService {
         ...doc.data()
       })) as TriggerError[];
     } catch (error) {
-      console.error('Error getting trigger errors:', error);
+      syncLogger.error('Error getting trigger errors', { error });
       // No fallar si la colección no existe aún
       return [];
     }
@@ -179,7 +326,7 @@ export class SyncMonitorService {
         manuallyProcessed: true
       });
     } catch (error) {
-      console.error('Error marking failed sync as processed:', error);
+      syncLogger.error('Error marking failed sync as processed', { error });
       throw error;
     }
   }
@@ -200,7 +347,7 @@ export class SyncMonitorService {
       
       return sourceStats;
     } catch (error) {
-      console.error('Error getting source statistics:', error);
+      syncLogger.error('Error getting source statistics', { error });
       throw error;
     }
   }
@@ -226,7 +373,7 @@ export class SyncMonitorService {
         ...doc.data()
       })) as FailedSync[];
     } catch (error) {
-      console.error('Error getting failed syncs by time range:', error);
+      syncLogger.error('Error getting failed syncs by time range', { error });
       throw error;
     }
   }
@@ -284,7 +431,7 @@ export class SyncMonitorService {
         lastProcessingTime: lastProcessing
       };
     } catch (error) {
-      console.error('Error getting performance metrics:', error);
+      syncLogger.error('Error getting performance metrics', { error });
       return {
         averageSyncDuration: 0,
         successRate: 0,

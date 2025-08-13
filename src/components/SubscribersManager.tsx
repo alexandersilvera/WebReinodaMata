@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { auth, onAuthStateChanged } from '@/core/firebase/config';
 import { 
-  getAllSubscribers, 
   subscribeToSubscribers, 
   updateSubscriberStatus, 
   deleteSubscriber,
@@ -12,23 +10,29 @@ interface SubscribersManagerProps {
   isAdmin: boolean;
 }
 
+type Timestamp = {
+  toDate: () => Date;
+} | {
+  seconds: number;
+} | string;
+
 const SubscribersManager: React.FC<SubscribersManagerProps> = ({ isAdmin }) => {
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
 
   // Función para formatear fecha
-  const formatDate = (timestamp: any) => {
+  const formatDate = (timestamp: Timestamp) => {
     try {
       if (!timestamp) return "Fecha no disponible";
       
       let date: Date;
-      if (timestamp.toDate && typeof timestamp.toDate === 'function') {
+      if (typeof timestamp === 'object' && 'toDate' in timestamp && typeof timestamp.toDate === 'function') {
         date = timestamp.toDate();
-      } else if (timestamp.seconds) {
+      } else if (typeof timestamp === 'object' && 'seconds' in timestamp) {
         date = new Date(timestamp.seconds * 1000);
       } else {
-        date = new Date(timestamp);
+        date = new Date(timestamp as string | number);
       }
       
       return new Intl.DateTimeFormat('es-ES', {
@@ -45,8 +49,8 @@ const SubscribersManager: React.FC<SubscribersManagerProps> = ({ isAdmin }) => {
   };
 
   // Función para obtener color de fuente
-  const getSourceColor = (source: string) => {
-    const colors = {
+  const getSourceColor = (source: string): string => {
+    const colors: { [key: string]: string } = {
       'web': 'bg-blue-600',
       'auth_sync': 'bg-purple-600',
       'auth_auto': 'bg-green-600',
@@ -58,8 +62,8 @@ const SubscribersManager: React.FC<SubscribersManagerProps> = ({ isAdmin }) => {
   };
 
   // Función para obtener etiqueta de fuente
-  const getSourceLabel = (source: string) => {
-    const labels = {
+  const getSourceLabel = (source: string): string => {
+    const labels: { [key: string]: string } = {
       'web': 'Web',
       'auth_sync': 'Auth (Sync)',
       'auth_auto': 'Auth (Auto)',

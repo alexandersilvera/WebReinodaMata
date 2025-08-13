@@ -73,7 +73,7 @@ const SyncMonitorDashboard: React.FC<SyncMonitorDashboardProps> = ({ isAdmin }) 
   const syncAllAuthUsers = async () => {
     setSyncingAll(true);
     try {
-      const syncFunction = httpsCallable(functions, 'onUserAuthCreate');
+      httpsCallable(functions, 'onUserAuthCreate');
       // En un futuro podrías implementar una función específica para sincronización masiva
       
       showNotification('Proceso de sincronización iniciado. Los resultados aparecerán en unos momentos.', 'info');

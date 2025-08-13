@@ -124,6 +124,24 @@ service cloud.firestore {
                    request.resource.data.updatedBy is string;
     }
     
+    // Reglas para sincronizaciones fallidas (solo lectura/escritura para admin)
+    match /failed_syncs/{syncId} {
+      // Solo administradores pueden leer y gestionar sincronizaciones fallidas
+      allow read, write: if isAdmin();
+    }
+    
+    // Reglas para errores de triggers (solo lectura/escritura para admin)
+    match /trigger_errors/{errorId} {
+      // Solo administradores pueden leer errores de triggers
+      allow read, write: if isAdmin();
+    }
+    
+    // Reglas para métricas de sincronización (solo lectura para admin)
+    match /sync_metrics/{metricId} {
+      // Solo administradores pueden leer métricas de sincronización
+      allow read, write: if isAdmin();
+    }
+    
     // Regla por defecto - denegar acceso a cualquier otra colección
     match /{document=**} {
       allow read, write: if false;

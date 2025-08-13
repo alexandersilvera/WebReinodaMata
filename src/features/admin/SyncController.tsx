@@ -1,51 +1,92 @@
-import { useState } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '../../core/firebase/config';
+import { useMutation } from '@tanstack/react-query';
+import { adminCacheUtils } from './services/queryClient';
 
-export default function SyncController() {
+// Tipos para mejor type safety
+interface SyncState {
+  sync: boolean;
+  migrate: boolean;
+}
+
+interface MigrationResult {
+  message: string;
+  migratedArticles?: Array<{ id: string; title: string; slug: string }>;
+}
+
+// Componente optimizado con React.memo
+const SyncController: React.FC = React.memo(() => {
   const [syncStatus, setSyncStatus] = useState<string | null>(null);
   const [migrateStatus, setMigrateStatus] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState<{sync: boolean, migrate: boolean}>({
+  const [isLoading, setIsLoading] = useState<SyncState>({
     sync: false,
     migrate: false
   });
-  const [results, setResults] = useState<any>(null);
+  const [results, setResults] = useState<MigrationResult | null>(null);
 
-  // Funciones Cloud
-  const syncContentToFiles = httpsCallable(functions, 'syncContentToFiles');
-  const migrateMarkdownToFirestore = httpsCallable(functions, 'migrateMarkdownToFirestore');
+  // Memoizar las funciones de Firebase
+  const cloudFunctions = useMemo(() => ({
+    syncContentToFiles: httpsCallable(functions, 'syncContentToFiles'),
+    migrateMarkdownToFirestore: httpsCallable(functions, 'migrateMarkdownToFirestore')
+  }), []);
 
-  // Manejar sincronización
-  const handleSync = async () => {
-    setSyncStatus('Iniciando sincronización...');
-    setIsLoading(prev => ({ ...prev, sync: true }));
-    
-    try {
-      await syncContentToFiles();
+  // Mutation para sincronización con invalidación de cache
+  const syncMutation = useMutation({
+    mutationFn: async () => {
+      await cloudFunctions.syncContentToFiles();
+    },
+    onMutate: () => {
+      setSyncStatus('Iniciando sincronización...');
+      setIsLoading(prev => ({ ...prev, sync: true }));
+    },
+    onSuccess: () => {
       setSyncStatus('Sincronización completada con éxito');
-    } catch (error: any) {
+      // Invalidar cache relacionado con métricas y sincronizaciones
+      adminCacheUtils.invalidateMetrics();
+      adminCacheUtils.invalidateSyncs();
+    },
+    onError: (error: Error) => {
       setSyncStatus(`Error: ${error.message || 'No se pudo completar la sincronización'}`);
-    } finally {
+    },
+    onSettled: () => {
       setIsLoading(prev => ({ ...prev, sync: false }));
-    }
-  };
+    },
+  });
 
-  // Manejar migración
-  const handleMigrate = async () => {
-    setMigrateStatus('Iniciando migración de archivos a Firestore...');
-    setIsLoading(prev => ({ ...prev, migrate: true }));
-    setResults(null);
-    
-    try {
-      const result = await migrateMarkdownToFirestore();
+  // Mutation para migración
+  const migrateMutation = useMutation({
+    mutationFn: async () => {
+      const result = await cloudFunctions.migrateMarkdownToFirestore();
+      return result.data as MigrationResult;
+    },
+    onMutate: () => {
+      setMigrateStatus('Iniciando migración de archivos a Firestore...');
+      setIsLoading(prev => ({ ...prev, migrate: true }));
+      setResults(null);
+    },
+    onSuccess: (data) => {
       setMigrateStatus('Migración completada');
-      setResults(result.data);
-    } catch (error: any) {
+      setResults(data);
+      // Invalidar toda la cache admin tras migración
+      adminCacheUtils.clearAdminCache();
+    },
+    onError: (error: Error) => {
       setMigrateStatus(`Error: ${error.message || 'No se pudo completar la migración'}`);
-    } finally {
+    },
+    onSettled: () => {
       setIsLoading(prev => ({ ...prev, migrate: false }));
-    }
-  };
+    },
+  });
+
+  // Handlers optimizados con useCallback
+  const handleSync = useCallback(() => {
+    syncMutation.mutate();
+  }, [syncMutation]);
+
+  const handleMigrate = useCallback(() => {
+    migrateMutation.mutate();
+  }, [migrateMutation]);
 
   return (
     <div className="bg-green-900/30 p-6 rounded-lg backdrop-blur-sm">
@@ -144,4 +185,9 @@ export default function SyncController() {
       </div>
     </div>
   );
-} 
+});
+
+// Asignar displayName para debugging
+SyncController.displayName = 'SyncController';
+
+export default SyncController; 

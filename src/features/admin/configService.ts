@@ -13,6 +13,7 @@ import {
   FieldValue 
 } from 'firebase/firestore';
 import { db } from '@/core/firebase/config';
+import { configLogger } from './services/logger';
 
 export interface AdminConfig {
   emails: string[];
@@ -35,7 +36,7 @@ export async function getAdminConfig(): Promise<AdminConfig | null> {
     
     return null;
   } catch (error) {
-    console.warn('No se pudo obtener configuración de admin desde Firestore:', error);
+    configLogger.warn('No se pudo obtener configuración de admin desde Firestore', { error });
     // No lanzar error para permitir fallback
     return null;
   }
@@ -64,9 +65,9 @@ export async function updateAdminConfig(
 
     await setDoc(doc(db, ADMIN_CONFIG_DOC), configData);
     
-    console.log('[AdminConfig] Configuración actualizada:', configData);
+    configLogger.info('Configuración actualizada', configData);
   } catch (error) {
-    console.error('Error al actualizar configuración de admin:', error);
+    configLogger.error('Error al actualizar configuración de admin', { error });
     throw error;
   }
 }
@@ -87,12 +88,12 @@ export async function getAdminEmails(): Promise<string[]> {
   const config = await getAdminConfig();
   
   if (config && config.emails.length > 0) {
-    console.log('[AdminConfig] Usando configuración dinámica de Firestore');
+    configLogger.info('Usando configuración dinámica de Firestore');
     return config.emails;
   }
   
   // Fallback a variables de entorno si no hay configuración en Firestore
-  console.log('[AdminConfig] Usando configuración estática de variables de entorno');
+  configLogger.info('Usando configuración estática de variables de entorno');
   return await getAdminEmailsFromEnv();
 }
 
@@ -108,19 +109,39 @@ async function getAdminEmailsFromEnv(): Promise<string[]> {
       return configModule.config.admin.emails;
     }
     
-    // En servidor, fallback de emergencia
-    return [
-      'admin@example.com',
-      'admin@centroumbandistareinodamata.org',
-      'administrador@centroumbandistareinodamata.org'
-    ];
+    // En servidor, fallback de emergencia desde variables de entorno si existen
+    const envEmails = process.env.ADMIN_EMAILS;
+    if (envEmails) {
+      return envEmails.split(',').map(email => email.trim());
+    }
+    
+    // Fallback final solo para desarrollo
+    if (process.env.NODE_ENV === 'development') {
+      return [
+        'admin@example.com',
+        'admin@centroumbandistareinodamata.org',
+        'administrador@centroumbandistareinodamata.org'
+      ];
+    }
+    
+    // En producción, retornar array vacío para forzar configuración explícita
+    configLogger.error('No hay emails de admin configurados en producción');
+    return [];
   } catch (error) {
-    console.warn('[AdminConfig] Error al importar configuración, usando fallback de emergencia:', error);
-    return [
-      'admin@example.com',
-      'admin@centroumbandistareinodamata.org',
-      'administrador@centroumbandistareinodamata.org'
-    ];
+    configLogger.warn('Error al importar configuración, usando fallback de emergencia', { error });
+    
+    // Solo permitir fallback en desarrollo
+    if (process.env.NODE_ENV === 'development') {
+      return [
+        'admin@example.com',
+        'admin@centroumbandistareinodamata.org',
+        'administrador@centroumbandistareinodamata.org'
+      ];
+    }
+    
+    // En producción, fallar silenciosamente
+    configLogger.error('Sistema de admin sin configuración en producción');
+    return [];
   }
 }
 
@@ -150,7 +171,7 @@ export function subscribeToAdminConfig(
       }
     },
     (error) => {
-      console.error('Error en suscripción a admin config:', error);
+      configLogger.error('Error en suscripción a admin config', { error });
       callback(null);
     }
   );
@@ -171,9 +192,9 @@ export async function initializeAdminConfig(): Promise<void> {
         'system-initialization'
       );
       
-      console.log('[AdminConfig] Configuración inicial creada');
+      configLogger.info('Configuración inicial creada');
     }
   } catch (error) {
-    console.error('[AdminConfig] Error al inicializar configuración:', error);
+    configLogger.error('Error al inicializar configuración', { error });
   }
 }
