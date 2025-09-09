@@ -89,7 +89,7 @@ import MainLayout from "@/layouts/MainLayout.astro";
   const token = urlParams.get('token'); // Changed to get 'token'
   
   // Función para mostrar un elemento y ocultar los demás
-  const showElement = (element) => {
+  const showElement = (element: HTMLElement | null) => {
     [loadingElement, confirmFormElement, successElement, errorElement, invalidLinkElement].forEach(el => {
       if (el) el.classList.add('hidden');
     });

@@ -168,7 +168,7 @@
   });
 
   // --- Escucha de actualizaciones de perfil desde otros componentes ---
-  window.addEventListener('profileUpdated', (event: Event) => {
+  window.addEventListener('profileUpdated', (_event: Event) => {
     requestAnimationFrame(() => {
       if (auth.currentUser) { // Asegurarse de que tenemos un usuario antes de actualizar
         updateNavUI(auth.currentUser);

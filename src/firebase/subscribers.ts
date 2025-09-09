@@ -1,5 +1,5 @@
 import { db } from '../core/firebase/config';
-import { collection, addDoc, query, where, getDocs, Timestamp, doc, updateDoc, deleteDoc, orderBy } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs, Timestamp, doc, updateDoc, orderBy } from 'firebase/firestore';
 
 // Interfaz para los datos del suscriptor
 export interface Subscriber { // Added export

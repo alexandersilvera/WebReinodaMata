@@ -103,6 +103,17 @@ Centro Umbandista Reino Da Mata</textarea>
 </MainLayout>
 
 <script>
+  // Declaraciones de tipos locales para Window
+  declare global {
+    interface Window {
+      firebaseConfig?: {
+        auth?: any;
+        functions?: any;
+        onAuthStateChanged?: any;
+      };
+    }
+  }
+
   // Esperar a que tanto el DOM como AdminProtection estén listos
   function initializeTestPage() {
     console.log('Initializing test page...');
@@ -114,7 +125,7 @@ Centro Umbandista Reino Da Mata</textarea>
       return;
     }
     
-    function showMessage(type, text) {
+    function showMessage(type: string, text: string) {
       const color = type === 'success' ? 'bg-green-600' : type === 'error' ? 'bg-red-600' : 'bg-blue-600';
       resultDiv.innerHTML = `<div class="${color} text-white p-4 rounded">${text}</div>`;
       resultDiv.classList.remove('hidden');

@@ -380,13 +380,13 @@ export class RBACService {
     }
   }
 
-  private static async canAccessArticle(email: string, articleId: string): Promise<boolean> {
+  private static async canAccessArticle(_email: string, _articleId: string): Promise<boolean> {
     // Verificar si el usuario creó el artículo o tiene permisos globales
     // Esta lógica se puede expandir según las necesidades
     return true;
   }
 
-  private static async canAccessSubscriber(email: string, subscriberId: string): Promise<boolean> {
+  private static async canAccessSubscriber(_email: string, _subscriberId: string): Promise<boolean> {
     // Lógica para verificar acceso a suscriptores específicos
     return true;
   }

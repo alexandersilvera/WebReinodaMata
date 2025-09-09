@@ -211,6 +211,27 @@ export const prerender = false;
 </MainLayout>
 
 <script>
+  // Declaraciones de tipos locales para Window
+  declare global {
+    interface Window {
+      firebaseConfig?: {
+        auth?: any;
+        onAuthStateChanged?: any;
+        functions?: any;
+      };
+      articleServices?: {
+        getAllArticles?: any;
+        getAllDrafts?: any;
+        deleteArticle?: any;
+        deleteDraft?: any;
+        publishDraftAsArticle?: any;
+        getArticleById?: any;
+        updateArticle?: any;
+        checkSlugExists?: any;
+      };
+    }
+  }
+
   // Importación dinámica de servicios
   let auth, onAuthStateChanged, getAllArticles, getAllDrafts, deleteArticle, deleteDraft, publishDraftAsArticle;
   
@@ -677,7 +698,7 @@ export const prerender = false;
   };
 
   // Manejar publicación de borrador
-  const handlePublishDraft = async (id) => {
+  const handlePublishDraft = async (id: string) => {
     try {
       const articleId = await publishDraftAsArticle(id);
       
@@ -717,16 +738,16 @@ export const prerender = false;
 
     // Búsqueda
     if (searchInput) {
-      searchInput.addEventListener('input', (e) => {
-        searchTerm = e.target.value;
+      searchInput.addEventListener('input', (e: Event) => {
+        searchTerm = (e.target as HTMLInputElement).value;
         filterAndRender();
       });
     }
 
     // Filtro de estado
     if (statusFilter) {
-      statusFilter.addEventListener('change', (e) => {
-        currentFilter = e.target.value;
+      statusFilter.addEventListener('change', (e: Event) => {
+        currentFilter = (e.target as HTMLSelectElement).value;
         filterAndRender();
       });
     }
@@ -753,7 +774,7 @@ export const prerender = false;
     }
 
     // Cerrar modal con Escape
-    document.addEventListener('keydown', (e) => {
+    document.addEventListener('keydown', (e: KeyboardEvent) => {
       if (e.key === 'Escape' && confirmModal && !confirmModal.classList.contains('hidden')) {
         hideConfirmModal();
       }
@@ -761,7 +782,7 @@ export const prerender = false;
 
     // Cerrar modal clickeando fuera
     if (confirmModal) {
-      confirmModal.addEventListener('click', (e) => {
+      confirmModal.addEventListener('click', (e: MouseEvent) => {
         if (e.target === confirmModal) {
           hideConfirmModal();
         }
@@ -775,7 +796,7 @@ export const prerender = false;
     getDOMElements();
 
     // Inicializar cuando el usuario esté autenticado
-    onAuthStateChanged(auth, (user) => {
+    onAuthStateChanged(auth, (user: any) => {
       if (user) {
         // Verificar que los elementos de loading existan antes de ocultarlos
         setTimeout(() => {

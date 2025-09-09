@@ -422,10 +422,26 @@ if (!id) {
 <!-- Los servicios se exponen desde AdminProtection.tsx -->
 
 <script>
+  // Declaraciones de tipos locales para Window
+  declare global {
+    interface Window {
+      articleServices?: {
+        getAllArticles?: any;
+        getAllDrafts?: any;
+        deleteArticle?: any;
+        deleteDraft?: any;
+        publishDraftAsArticle?: any;
+        getArticleById?: any;
+        updateArticle?: any;
+        checkSlugExists?: any;
+      };
+    }
+  }
+
   // Los servicios se acceden desde window.articleServices
-  const RichTextEditor = (window as any).RichTextEditor || null;
-  const ImageUploader = (window as any).ImageUploader || null;
-  const TagsInput = (window as any).TagsInput || null;
+  // const RichTextEditor = (window as any).RichTextEditor || null;
+  // const ImageUploader = (window as any).ImageUploader || null;
+  // const TagsInput = (window as any).TagsInput || null;
 
   // Variables globales
   let articleId: string;
@@ -436,13 +452,13 @@ if (!id) {
   let autosaveTimeout: number | null = null;
 
   // Elementos del DOM - se obtendrán dinámicamente
-  let loadingElement, articleFormContainer, articleForm, autosaveIndicator, autosaveText, lastSaved, saveTime;
-  let successMessage, errorMessage, errorDetails, viewArticleLink, previewModal, previewContent, closePreviewBtn;
-  let submitBtn, charCount, wordCounter;
+  let loadingElement: HTMLElement | null, articleFormContainer: HTMLElement | null, articleForm: HTMLElement | null, autosaveIndicator: HTMLElement | null, autosaveText: HTMLElement | null, lastSaved: HTMLElement | null, saveTime: HTMLElement | null;
+  let successMessage: HTMLElement | null, errorMessage: HTMLElement | null, errorDetails: HTMLElement | null, viewArticleLink: HTMLElement | null, previewModal: HTMLElement | null, previewContent: HTMLElement | null, closePreviewBtn: HTMLElement | null;
+  let submitBtn: HTMLElement | null, charCount: HTMLElement | null, wordCounter: HTMLElement | null;
   
   // Nuevos elementos para indicadores de estado
-  let connectionIndicator, connectionStatus, firebaseIndicator, firebaseText;
-  let autosaveStatus, autosaveIcon, lastSavedElement;
+  let connectionIndicator: HTMLElement | null, connectionStatus: HTMLElement | null, firebaseIndicator: HTMLElement | null, firebaseText: HTMLElement | null;
+  let autosaveStatus: HTMLElement | null, autosaveIcon: HTMLElement | null, lastSavedElement: HTMLElement | null;
   
   // Función para obtener elementos DOM
   function getDOMElements() {
@@ -475,7 +491,7 @@ if (!id) {
   }
 
   // Elementos de formulario - se obtendrán dinámicamente
-  let titleInput, slugInput, authorInput, excerptInput, categoryInput, publishedInput, featuredInput, commentsEnabledInput;
+  let titleInput: HTMLInputElement | null, slugInput: HTMLInputElement | null, authorInput: HTMLInputElement | null, excerptInput: HTMLTextAreaElement | null, categoryInput: HTMLSelectElement | null, publishedInput: HTMLInputElement | null, featuredInput: HTMLInputElement | null, commentsEnabledInput: HTMLInputElement | null;
   
   // Función para obtener elementos de formulario
   function getFormElements() {

@@ -8,10 +8,7 @@ import {
   getDocs, 
   query, 
   where, 
-  orderBy, 
-  limit, 
-  startAfter,
-  DocumentSnapshot
+  orderBy
 } from 'firebase/firestore';
 import { db } from '@/core/firebase/config';
 import type { 

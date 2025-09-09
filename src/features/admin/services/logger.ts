@@ -103,7 +103,7 @@ class AdminLogger {
     }
   }
 
-  private async sendToRemote(entry: LogEntry): Promise<void> {
+  private async sendToRemote(_entry: LogEntry): Promise<void> {
     // Implementación de envío a servicio de logging remoto
     // Por ahora solo un placeholder para evitar errores en producción
     try {

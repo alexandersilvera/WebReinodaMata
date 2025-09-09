@@ -5,6 +5,7 @@ declare global {
     firebaseConfig?: {
       auth?: any;
       functions?: any;
+      onAuthStateChanged?: any;
     };
     articleServices?: {
       getAllArticles?: any;
@@ -16,5 +17,8 @@ declare global {
       updateArticle?: any;
       checkSlugExists?: any;
     };
+    // Funciones globales para artículos
+    deleteItem?: (id: any, type: any, title: any) => void;
+    publishDraft?: (id: any) => void;
   }
 }

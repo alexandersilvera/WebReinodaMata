@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { useSyncMetrics, usePerformanceMetrics } from '../hooks/useAdminCache';
-import { AdminCard, LoadingSpinner } from './ui';
+import { AdminCard } from './ui';
 import { formatters } from '../syncMonitorService';
 
 interface MetricItemProps {

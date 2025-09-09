@@ -238,7 +238,7 @@ export const prerender = false;
   };
 
   // Mostrar mensajes
-  const showMessage = (type, message) => {
+  const showMessage = (type: 'success' | 'error', message: string) => {
     if (type === 'success') {
       successText.textContent = message;
       successMessage.classList.remove('hidden');
@@ -256,7 +256,7 @@ export const prerender = false;
   };
 
   // Mostrar modal de confirmación
-  const showConfirmModal = (emails) => {
+  const showConfirmModal = (emails: string[]) => {
     const emailList = emails.join(', ');
     confirmMessage.innerHTML = `
       ¿Estás seguro de que quieres actualizar la configuración con estos emails?<br><br>
@@ -274,18 +274,18 @@ export const prerender = false;
   };
 
   // Parsear emails desde textarea
-  const parseEmails = (text) => {
+  const parseEmails = (text: string): string[] => {
     return text
       .split(/[\n,]/)
-      .map(email => email.trim().toLowerCase())
-      .filter(email => email.length > 0)
-      .filter((email, index, arr) => arr.indexOf(email) === index); // remover duplicados
+      .map((email: string) => email.trim().toLowerCase())
+      .filter((email: string) => email.length > 0)
+      .filter((email: string, index: number, arr: string[]) => arr.indexOf(email) === index); // remover duplicados
   };
 
   // Validar emails
-  const validateEmails = (emails) => {
+  const validateEmails = (emails: string[]) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const invalidEmails = emails.filter(email => !emailRegex.test(email));
+    const invalidEmails = emails.filter((email: string) => !emailRegex.test(email));
     
     if (invalidEmails.length > 0) {
       throw new Error(`Emails inválidos: ${invalidEmails.join(', ')}`);

@@ -64,17 +64,6 @@ function getEnvVar(name: string, defaultValue: string = ''): string {
   return value?.trim() || defaultValue;
 }
 
-/**
- * Determina el entorno de la aplicación (development, production, test)
- * Utiliza VERCEL_ENV en Vercel o NODE_ENV en otros entornos.
- */
-function _getEnvironment(): 'development' | 'production' | 'test' {
-  const vercelEnv = getEnvVar('VERCEL_ENV');
-  if (vercelEnv) {
-    return vercelEnv as 'production' | 'development' | 'test';
-  }
-  return (getEnvVar('NODE_ENV', 'development') as 'development' | 'production' | 'test');
-}
 
 /**
  * Parsea una lista de URLs separadas por coma

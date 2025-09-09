@@ -8,8 +8,6 @@ import { adminQueryKeys, adminCacheUtils } from '../services/queryClient';
 import { SyncMonitorService } from '../syncMonitorService';
 import { getAdminConfig, updateAdminConfig } from '../configService';
 import { loadSettings, saveSettings } from '../settingsService';
-import type { SyncMetrics, FailedSync, RecentActivity, TriggerError } from '../syncMonitorService';
-import type { AdminConfig } from '../configService';
 import type { SiteSettings } from '../settingsService';
 
 // ===== HOOKS PARA MÉTRICAS =====
