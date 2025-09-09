@@ -2,7 +2,19 @@
 
 declare global {
   interface Window {
-    firebaseConfig?: any;
-    articleServices?: any;
+    firebaseConfig?: {
+      auth?: any;
+      functions?: any;
+    };
+    articleServices?: {
+      getAllArticles?: any;
+      getAllDrafts?: any;
+      deleteArticle?: any;
+      deleteDraft?: any;
+      publishDraftAsArticle?: any;
+      getArticleById?: any;
+      updateArticle?: any;
+      checkSlugExists?: any;
+    };
   }
 }

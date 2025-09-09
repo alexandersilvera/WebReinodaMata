@@ -6,16 +6,17 @@
 
 import MainLayout from '@/layouts/MainLayout.astro';
 import AdminProtection from '@/components/AdminProtection';
+import { Permission } from '@/features/admin/roles/types';
 ---
 
-<Layout 
+<MainLayout 
   title="Gestión de Roles - Reino Da Mata"
   description="Panel de gestión de roles y permisos administrativos"
   canonicalURL={new URL(Astro.url.pathname, Astro.site)}
 >
   <AdminProtection 
     client:load 
-    requiredPermissions={['roles:manage']}
+    requiredPermissions={[Permission.ROLES_MANAGE]}
     showRoleInfo={true}
   >
     <div id="roles-management-container" class="min-h-screen bg-green-950 text-white">
