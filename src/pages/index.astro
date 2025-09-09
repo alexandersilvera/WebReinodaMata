@@ -2,6 +2,7 @@
 import MainLayout from "@/layouts/MainLayout.astro";
 import { Image } from "astro:assets";
 import Hero from "@/components/Hero.astro";
+import CountdownBanner from '@/components/CountdownBanner.tsx';
 import bibliotecaLocalImg from "@/assets/biblioteca.jpg";
 ---
 
@@ -10,6 +11,8 @@ import bibliotecaLocalImg from "@/assets/biblioteca.jpg";
 	description="Bienvenido al Centro Umbandista Reino Da Mata, institución dedicada al estudio, investigación y difusión de la cultura y religiosidad Afro-amerindia en Montevideo."
 >
 	<Hero />
+
+	<CountdownBanner targetDate="2025-10-11T20:30:00" client:visible />
 
 	<section class="max-w-6xl mx-auto px-4 py-16">
 		<div class="text-center mb-12">
@@ -126,3 +129,9 @@ import bibliotecaLocalImg from "@/assets/biblioteca.jpg";
 		</div>
 	</section>
 </MainLayout>
+
+<style>
+	h2 {
+		font-family: var(--serif-font);
+	}
+</style>
