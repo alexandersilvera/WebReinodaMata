@@ -1,0 +1,126 @@
+---
+/**
+ * Página de gestión de roles administrativos
+ * Permite asignar, modificar y revocar roles de usuario
+ */
+
+import Layout from '@/layouts/Layout.astro';
+import AdminProtection from '@/components/AdminProtection';
+---
+
+<Layout 
+  title="Gestión de Roles - Reino Da Mata"
+  description="Panel de gestión de roles y permisos administrativos"
+  canonicalURL={new URL(Astro.url.pathname, Astro.site)}
+>
+  <AdminProtection 
+    client:load 
+    requiredPermissions={['roles:manage']}
+    showRoleInfo={true}
+  >
+    <div id="roles-management-container" class="min-h-screen bg-green-950 text-white">
+      <!-- Loading placeholder -->
+      <div id="loading-placeholder" class="flex justify-center items-center min-h-[400px]">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+        <span class="ml-2 text-gray-300">Cargando gestión de roles...</span>
+      </div>
+
+      <!-- Content container (será reemplazado por React) -->
+      <div id="roles-content" style="display: none;">
+        <!-- El componente React se renderizará aquí -->
+      </div>
+    </div>
+
+    <!-- Migration tools notice -->
+    <div class="bg-blue-900/20 border border-blue-600/30 rounded-lg p-4 mt-6">
+      <h3 class="text-blue-300 font-medium mb-2">🛠️ Herramientas de Migración</h3>
+      <p class="text-blue-200 text-sm mb-3">
+        Si es la primera vez que usas el sistema de roles, puedes migrar automáticamente 
+        los administradores existentes desde la configuración.
+      </p>
+      <div class="flex gap-2">
+        <button 
+          onclick="checkMigrationStatus()"
+          class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm transition-colors"
+        >
+          Verificar Estado
+        </button>
+        <button 
+          onclick="migrateAdminRoles()"
+          class="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-sm transition-colors"
+        >
+          Migrar Admins
+        </button>
+      </div>
+    </div>
+  </AdminProtection>
+</Layout>
+
+<script>
+  import { migrateAdminRoles, checkMigrationStatus } from '@/features/admin/scripts/migrateAdminRoles';
+  
+  // Hacer funciones disponibles globalmente
+  (window as any).migrateAdminRoles = migrateAdminRoles;
+  (window as any).checkMigrationStatus = checkMigrationStatus;
+
+  async function initializeRolesPage() {
+    try {
+      // Esperar a que AdminProtection renderice
+      const container = document.getElementById('roles-management-container');
+      const loadingPlaceholder = document.getElementById('loading-placeholder');
+      const contentDiv = document.getElementById('roles-content');
+
+      if (!container || !loadingPlaceholder || !contentDiv) {
+        console.warn('Roles page elements not found, retrying...');
+        setTimeout(initializeRolesPage, 100);
+        return;
+      }
+
+      // Importar dinámicamente React y el componente
+      const React = await import('react');
+      const ReactDOM = await import('react-dom/client');
+      const { RoleManagement } = await import('@/features/admin/components/RoleManagement');
+
+      // Crear elemento React
+      const roleManagementElement = React.createElement(RoleManagement, {
+        className: 'max-w-7xl mx-auto px-4 py-8'
+      });
+
+      // Ocultar loading y mostrar contenido
+      loadingPlaceholder.style.display = 'none';
+      contentDiv.style.display = 'block';
+
+      // Renderizar componente React
+      const root = ReactDOM.createRoot(contentDiv);
+      root.render(roleManagementElement);
+
+      console.log('✅ Roles management page initialized');
+
+    } catch (error) {
+      console.error('❌ Error initializing roles page:', error);
+      
+      // Mostrar error en la página
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'bg-red-900/30 border border-red-600/30 rounded-lg p-6 max-w-4xl mx-auto mt-8';
+      errorDiv.innerHTML = `
+        <h3 class="text-red-300 font-medium mb-2">Error al cargar la gestión de roles</h3>
+        <p class="text-red-200 text-sm">${error.message || 'Error desconocido'}</p>
+        <button onclick="location.reload()" class="mt-3 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-sm">
+          Recargar página
+        </button>
+      `;
+      
+      const container = document.getElementById('roles-management-container');
+      if (container) {
+        container.appendChild(errorDiv);
+      }
+    }
+  }
+
+  // Inicializar cuando el DOM esté listo
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeRolesPage);
+  } else {
+    initializeRolesPage();
+  }
+</script>
