@@ -74,11 +74,12 @@ export const getSubscribers = async (includeDeleted: boolean = false): Promise<(
     
     // Se construye la consulta dinámicamente para delegar el trabajo a Firestore.
     // NOTA: Esto requiere los índices compuestos definidos en FIRESTORE_SETUP.md.
-    const queryConstraints = [orderBy('createdAt', 'desc')];
+    const queryConstraints = [];
     if (!includeDeleted) {
       // El índice para esta consulta es: `deleted` (Asc) y `createdAt` (Desc).
-      queryConstraints.unshift(where('deleted', '!=', true));
+      queryConstraints.push(where('deleted', '!=', true));
     }
+    queryConstraints.push(orderBy('createdAt', 'desc'));
 
     const q = query(subscribersRef, ...queryConstraints);
     const querySnapshot = await getDocs(q);

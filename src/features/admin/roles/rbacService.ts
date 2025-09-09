@@ -19,12 +19,11 @@ import {
 import { configUtils } from '@/core/config';
 import { syncLogger } from '../services/logger';
 import type { 
-  AdminRole, 
   UserRole, 
   RoleDefinition, 
   PermissionCheck
 } from './types';
-import { Permission, ROLE_DEFINITIONS as DEFAULT_ROLES, ROLE_HIERARCHY } from './types';
+import { AdminRole, Permission, ROLE_DEFINITIONS as DEFAULT_ROLES, ROLE_HIERARCHY } from './types';
 
 export class RBACService {
   private static roleCache = new Map<string, UserRole>();

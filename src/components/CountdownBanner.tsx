@@ -25,7 +25,7 @@ const CountdownBanner = ({ targetDate }: CountdownBannerProps) => {
 
   const calculateTimeLeft = () => {
     const difference = +new Date(targetDate) - +new Date();
-    let timeLeft = {};
+    let timeLeft: Record<string, number> = {};
 
     if (difference > 0) {
       timeLeft = {
@@ -50,7 +50,7 @@ const CountdownBanner = ({ targetDate }: CountdownBannerProps) => {
     return () => clearTimeout(countdownTimer);
   });
 
-  const timerComponents: JSX.Element[] = [];
+  const timerComponents: React.ReactNode[] = [];
 
   Object.keys(timeLeft).forEach((interval) => {
     const value = timeLeft[interval as keyof typeof timeLeft];

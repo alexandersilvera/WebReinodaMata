@@ -16,7 +16,7 @@ const currentTag = currentPath.includes('/tag/')
 		Todos
 	</a>
 	
-	{tags.map((tag) => (
+	{tags.map((tag: string) => (
 		<a 
 			href={`/blog/tag/${tag.toLowerCase()}`}
 			class={`px-4 py-2 rounded-full font-medium transition-colors duration-200

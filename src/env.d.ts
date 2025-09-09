@@ -1,3 +1,8 @@
-/// <reference path="../.astro/types.d.ts" />
-/// <reference types="../.astro/types.d.ts" />
 /// <reference types="astro/client" />
+
+declare global {
+  interface Window {
+    firebaseConfig?: any;
+    articleServices?: any;
+  }
+}

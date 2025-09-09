@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '@/core/hooks/useAuth';
 import { useRBAC, usePermissions, useRoleCheck } from '@/features/admin/hooks/useRBAC';
-import type { Permission, AdminRole } from '@/features/admin/roles/types';
+import { type AdminRole, Permission } from '@/features/admin/roles/types';
 
 interface AdminProtectionProps {
   children: React.ReactNode;
@@ -209,12 +209,7 @@ export default function AdminProtection({
           <div className="flex gap-4 justify-center">
             <button
               onClick={() => {
-                // Exponer funciones de migración en window
-                import('../features/admin/scripts/migrateAdminRoles').then(module => {
-                  (window as any).checkMigrationStatus = module.checkMigrationStatus;
-                  (window as any).migrateAdminRoles = module.migrateAdminRoles;
-                  alert('✅ Funciones de migración cargadas. Abre la consola (F12) y ejecuta los comandos.');
-                });
+                alert('🔧 Para completar la migración, recarga la página. El sistema detectará automáticamente tu rol de administrador.');
               }}
               className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
             >

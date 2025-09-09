@@ -40,7 +40,7 @@ const isExternalImage = (src: string) => {
 				
 				<!-- Tags sobre la imagen -->
 				<div class="absolute top-4 right-4 flex flex-wrap gap-2 justify-end">
-					{tags.map((tag) => (
+					{tags.map((tag: string) => (
 						<span class="bg-green-800/80 backdrop-blur-sm text-white text-xs px-2.5 py-1 rounded-full">
 							{tag}
 						</span>

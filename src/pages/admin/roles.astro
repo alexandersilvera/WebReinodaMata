@@ -4,7 +4,7 @@
  * Permite asignar, modificar y revocar roles de usuario
  */
 
-import Layout from '@/layouts/Layout.astro';
+import MainLayout from '@/layouts/MainLayout.astro';
 import AdminProtection from '@/components/AdminProtection';
 ---
 
@@ -54,7 +54,7 @@ import AdminProtection from '@/components/AdminProtection';
       </div>
     </div>
   </AdminProtection>
-</Layout>
+</MainLayout>
 
 <script>
   import { migrateAdminRoles, checkMigrationStatus } from '@/features/admin/scripts/migrateAdminRoles';
