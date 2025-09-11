@@ -1,0 +1,214 @@
+---
+import MainLayout from "@/layouts/MainLayout.astro";
+
+export const prerender = false;
+---
+
+<MainLayout title="Debug Admin - Reino Da Mata">
+  <div class="max-w-4xl mx-auto w-full px-4 py-8">
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-green-700 mb-2">Debug: Configuración de Administradores</h1>
+      <p class="text-gray-200">Herramientas de diagnóstico para verificar la configuración de administradores</p>
+    </div>
+
+    <div class="space-y-6">
+      <!-- Información de configuración -->
+      <div class="bg-green-900/30 p-6 rounded-lg backdrop-blur-sm">
+        <h2 class="text-xl font-bold text-white mb-4">📧 Configuración Actual</h2>
+        <div id="config-info">
+          <p class="text-gray-200">Cargando configuración...</p>
+        </div>
+      </div>
+
+      <!-- Test de autenticación -->
+      <div class="bg-blue-900/30 p-6 rounded-lg backdrop-blur-sm">
+        <h2 class="text-xl font-bold text-white mb-4">🔐 Test de Autenticación</h2>
+        <div class="space-y-4">
+          <div>
+            <label for="email" class="block text-white text-sm font-medium mb-2">Email</label>
+            <input
+              id="email"
+              type="email"
+              value="alexandersilvera@hotmail.com"
+              class="w-full px-4 py-2 bg-blue-700/50 border border-blue-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 text-white"
+            />
+          </div>
+          <div>
+            <label for="password" class="block text-white text-sm font-medium mb-2">Contraseña</label>
+            <input
+              id="password"
+              type="password"
+              class="w-full px-4 py-2 bg-blue-700/50 border border-blue-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 text-white"
+            />
+          </div>
+          <div class="flex gap-4">
+            <button
+              id="test-login"
+              class="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-md transition-colors"
+            >
+              Test Login
+            </button>
+            <button
+              id="check-admin"
+              class="px-6 py-2 bg-green-600 hover:bg-green-500 text-white rounded-md transition-colors"
+            >
+              Verificar Admin
+            </button>
+            <button
+              id="logout-btn"
+              class="px-6 py-2 bg-red-600 hover:bg-red-500 text-white rounded-md transition-colors"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+        <div id="auth-results" class="mt-4 hidden">
+          <!-- Los resultados aparecerán aquí -->
+        </div>
+      </div>
+
+      <!-- Estado actual del usuario -->
+      <div class="bg-purple-900/30 p-6 rounded-lg backdrop-blur-sm">
+        <h2 class="text-xl font-bold text-white mb-4">👤 Estado del Usuario Actual</h2>
+        <div id="user-status">
+          <p class="text-gray-200">Cargando estado...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</MainLayout>
+
+<script>
+  import { auth } from '@/core/firebase/config';
+  import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+  import { config, configUtils } from '@/core/config';
+
+  // Elementos del DOM
+  const configInfo = document.getElementById('config-info');
+  const emailInput = document.getElementById('email') as HTMLInputElement;
+  const passwordInput = document.getElementById('password') as HTMLInputElement;
+  const testLoginBtn = document.getElementById('test-login');
+  const checkAdminBtn = document.getElementById('check-admin');
+  const logoutBtn = document.getElementById('logout-btn');
+  const authResults = document.getElementById('auth-results');
+  const userStatus = document.getElementById('user-status');
+
+  // Función para mostrar resultados
+  function showResults(title: string, data: any, isError = false) {
+    const color = isError ? 'bg-red-600/80' : 'bg-green-600/80';
+    if (authResults) {
+      authResults.innerHTML = `
+        <div class="${color} text-white p-4 rounded-md">
+          <h3 class="font-bold mb-2">${title}</h3>
+          <pre class="text-sm overflow-x-auto">${JSON.stringify(data, null, 2)}</pre>
+        </div>
+      `;
+      authResults.classList.remove('hidden');
+    }
+  }
+
+  // Cargar configuración actual
+  function loadConfigInfo() {
+    if (configInfo) {
+      configInfo.innerHTML = `
+        <div class="space-y-2">
+          <p><strong>Admin Emails:</strong></p>
+          <ul class="list-disc ml-6 text-sm">
+            ${config.admin.emails.map(email => `<li>${email}</li>`).join('')}
+          </ul>
+          <p class="mt-4"><strong>Ambiente:</strong> ${config.app.environment}</p>
+          <p><strong>Firebase Project:</strong> ${config.firebase.projectId}</p>
+          <p><strong>Site URL:</strong> ${config.app.siteUrl}</p>
+        </div>
+      `;
+    }
+  }
+
+  // Actualizar estado del usuario
+  function updateUserStatus(user: any) {
+    if (userStatus) {
+      if (user) {
+        const isAdmin = configUtils.isAdminEmail(user.email);
+        userStatus.innerHTML = `
+          <div class="space-y-2">
+            <p><strong>Estado:</strong> <span class="text-green-400">Autenticado</span></p>
+            <p><strong>UID:</strong> ${user.uid}</p>
+            <p><strong>Email:</strong> ${user.email}</p>
+            <p><strong>Email Verificado:</strong> ${user.emailVerified ? 'Sí' : 'No'}</p>
+            <p><strong>Es Admin:</strong> <span class="${isAdmin ? 'text-green-400' : 'text-red-400'}">${isAdmin ? 'Sí' : 'No'}</span></p>
+          </div>
+        `;
+      } else {
+        userStatus.innerHTML = '<p><strong>Estado:</strong> <span class="text-red-400">No autenticado</span></p>';
+      }
+    }
+  }
+
+  // Test de login
+  if (testLoginBtn) {
+    testLoginBtn.addEventListener('click', async () => {
+      const email = emailInput?.value || '';
+      const password = passwordInput?.value || '';
+
+      if (!email || !password) {
+        showResults('Error', { message: 'Email y contraseña son requeridos' }, true);
+        return;
+      }
+
+      try {
+        showResults('Intentando login...', { email: email, status: 'logging in' });
+        
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        
+        showResults('Login exitoso', {
+          uid: user.uid,
+          email: user.email,
+          emailVerified: user.emailVerified,
+          isAdmin: configUtils.isAdminEmail(user.email)
+        });
+      } catch (error: any) {
+        showResults('Error de login', {
+          code: error.code,
+          message: error.message
+        }, true);
+      }
+    });
+  }
+
+  // Verificar admin
+  if (checkAdminBtn) {
+    checkAdminBtn.addEventListener('click', () => {
+      const email = emailInput?.value || '';
+      if (email) {
+        const isAdmin = configUtils.isAdminEmail(email);
+        showResults('Verificación de Admin', {
+          email: email,
+          isAdmin: isAdmin,
+          adminEmails: config.admin.emails
+        });
+      }
+    });
+  }
+
+  // Logout
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', async () => {
+      try {
+        await signOut(auth);
+        showResults('Logout exitoso', { message: 'Sesión cerrada correctamente' });
+      } catch (error: any) {
+        showResults('Error de logout', error, true);
+      }
+    });
+  }
+
+  // Escuchar cambios de autenticación
+  onAuthStateChanged(auth, (user) => {
+    console.log('Auth state changed:', user);
+    updateUserStatus(user);
+  });
+
+  // Cargar información inicial
+  loadConfigInfo();
+</script>
