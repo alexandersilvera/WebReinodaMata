@@ -1,4 +1,5 @@
 ---
+import { Image } from "astro:assets";
 import type { CollectionEntry } from "astro:content";
 import FormattedDate from "@/components/FormattedDate.astro";
 type Props = CollectionEntry<"blog">["data"] & { slug: string };
@@ -17,25 +18,16 @@ const isExternalImage = (src: string) => {
 	<article>
 		<a href={`/blog/${slug}`} class="block h-full">
 			<div class="relative overflow-hidden">
-				{isExternalImage(heroImage) ? (
-					<img
-						src={heroImage}
-						alt={title}
-						width={1020}
-						height={520}
-						class="aspect-[16/9] w-full object-cover transition-transform duration-700 group-hover:scale-105"
-						loading="lazy"
-					/>
-				) : (
-					<img
-						src={heroImage}
-						alt={title}
-						width={1020}
-						height={520}
-						class="aspect-[16/9] w-full object-cover transition-transform duration-700 group-hover:scale-105"
-						loading="lazy"
-					/>
-				)}
+				<Image
+					src={heroImage}
+					alt={title}
+					width={1020}
+					height={520}
+					sizes="(max-width: 768px) 100vw, 80vw"
+					format="webp"
+					quality={75}
+					class="aspect-[16/9] w-full object-cover transition-transform duration-700 group-hover:scale-105"
+				/>
 				<div class="absolute inset-0 bg-gradient-to-b from-transparent to-green-900/80"></div>
 				
 				<!-- Tags sobre la imagen -->

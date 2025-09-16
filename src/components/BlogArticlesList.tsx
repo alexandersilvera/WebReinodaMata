@@ -126,6 +126,10 @@ export default function BlogArticlesList() {
                   src={article.image} 
                   alt={article.title}
                   className="w-full h-52 object-cover transition-transform duration-700 group-hover:scale-110"
+                  loading="lazy"
+                  decoding="async"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  fetchPriority={index === 0 ? "high" : "low"}
                 />
               ) : (
                 <div className="w-full h-52 bg-gradient-to-br from-green-600/20 to-green-400/10 flex items-center justify-center">

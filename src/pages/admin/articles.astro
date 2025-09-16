@@ -233,47 +233,22 @@ export const prerender = false;
   }
 
   // Importación dinámica de servicios
-  let auth, onAuthStateChanged, getAllArticles, getAllDrafts, deleteArticle, deleteDraft, publishDraftAsArticle;
+  let auth: any, onAuthStateChanged: any, getAllArticles: any, getAllDrafts: any, deleteArticle: any, deleteDraft: any, publishDraftAsArticle: any;
   
-  // Función para inicializar con servicios cargados desde el servidor
-  async function loadServices() {
-    try {
-      // Verificar si los servicios ya están disponibles globalmente
-      // (cargados por el AdminProtection component)
-      if (window.firebaseConfig && window.articleServices) {
-        auth = window.firebaseConfig.auth;
-        onAuthStateChanged = window.firebaseConfig.onAuthStateChanged;
-        getAllArticles = window.articleServices.getAllArticles;
-        getAllDrafts = window.articleServices.getAllDrafts;
-        deleteArticle = window.articleServices.deleteArticle;
-        deleteDraft = window.articleServices.deleteDraft;
-        publishDraftAsArticle = window.articleServices.publishDraftAsArticle;
-        
-        initializeAdmin();
-      } else {
-        // Fallback: intentar cargar después de un delay
-        setTimeout(loadServices, 100);
-      }
-    } catch (error) {
-      console.error('Error loading services:', error);
-      showMessage('error', 'Error al cargar los servicios necesarios');
-    }
-  }
-
   // Variables de control
-  let articles = [];
-  let drafts = [];
-  let currentFilter = 'all';
-  let searchTerm = '';
+  let articles: any[] = [];
+  let drafts: any[] = [];
+  let currentFilter: string = 'all';
+  let searchTerm: string = '';
 
   // Elementos del DOM - se obtendrán dinámicamente
-  let loadingElement, contentContainer, articlesListElement, draftsListElement;
-  let searchInput, statusFilter, refreshBtn;
-  let successMessage, successText, errorMessage, errorDetails;
-  let confirmModal, confirmMessage, cancelBtn, confirmBtn;
+  let loadingElement: HTMLElement | null, contentContainer: HTMLElement | null, articlesListElement: HTMLElement | null, draftsListElement: HTMLElement | null;
+  let searchInput: HTMLInputElement | null, statusFilter: HTMLSelectElement | null, refreshBtn: HTMLElement | null;
+  let successMessage: HTMLElement | null, successText: HTMLElement | null, errorMessage: HTMLElement | null, errorDetails: HTMLElement | null;
+  let confirmModal: HTMLElement | null, confirmMessage: HTMLElement | null, cancelBtn: HTMLElement | null, confirmBtn: HTMLElement | null;
 
   // Variables para confirmación
-  let pendingAction = null;
+  let pendingAction: any = null;
 
   // Función para obtener elementos del DOM
   const getDOMElements = () => {
@@ -281,8 +256,8 @@ export const prerender = false;
     contentContainer = document.getElementById("content-container");
     articlesListElement = document.getElementById("articles-list");
     draftsListElement = document.getElementById("drafts-list");
-    searchInput = document.getElementById("search-input");
-    statusFilter = document.getElementById("status-filter");
+    searchInput = document.getElementById("search-input") as HTMLInputElement | null;
+    statusFilter = document.getElementById("status-filter") as HTMLSelectElement | null;
     refreshBtn = document.getElementById("refresh-btn");
     successMessage = document.getElementById("success-message");
     successText = document.getElementById("success-text");
@@ -314,15 +289,36 @@ export const prerender = false;
   const loadData = async () => {
     console.log('🔄 Iniciando carga de datos...');
     try {
+      // Verificar que los servicios estén disponibles
+      if (!getAllArticles || !getAllDrafts) {
+        console.error('❌ Servicios no disponibles para cargar datos');
+        showMessage('error', 'Servicios no disponibles. Recarga la página.');
+        return;
+      }
+      
+      // Mostrar estado de carga
+      getDOMElements();
+      if (loadingElement) {
+        loadingElement.classList.remove('hidden');
+        console.log('🔄 Mostrando spinner de carga');
+      }
+      
+      console.log('🔄 Solicitando datos a Firestore...');
       const [articlesData, draftsData] = await Promise.all([
-        getAllArticles(),
-        getAllDrafts()
+        getAllArticles().catch(error => {
+          console.error('❌ Error al obtener artículos:', error);
+          return [];
+        }),
+        getAllDrafts().catch(error => {
+          console.error('❌ Error al obtener borradores:', error);
+          return [];
+        })
       ]);
       
       console.log('📝 Datos obtenidos:', { articlesCount: articlesData.length, draftsCount: draftsData.length });
       
-      articles = articlesData;
-      drafts = draftsData;
+      articles = articlesData || [];
+      drafts = draftsData || [];
       
       // Asegurar que el contenedor principal esté visible
       getDOMElements();
@@ -357,6 +353,7 @@ export const prerender = false;
         updateStats();
       } else {
         console.warn('⚠️ Elementos DOM no encontrados, reintentando...');
+        // Forzar re-renderizado del DOM
         setTimeout(() => {
           getDOMElements();
           console.log('🔍 Segundo intento - Elementos DOM:', {
@@ -379,12 +376,20 @@ export const prerender = false;
             updateStats();
           } else {
             console.error('❌ No se pudieron encontrar los elementos DOM después del segundo intento');
+            showMessage('error', 'Error al renderizar la interfaz. Recarga la página.');
           }
-        }, 500); // Aumenté el tiempo de espera
+        }, 500);
       }
     } catch (error) {
       console.error('❌ Error al cargar datos:', error);
-      showMessage('error', 'Error al cargar los artículos');
+      showMessage('error', `Error al cargar los artículos: ${error.message || 'Error desconocido'}`);
+      
+      // Ocultar spinner de carga en caso de error
+      getDOMElements();
+      if (loadingElement && !loadingElement.classList.contains('hidden')) {
+        loadingElement.classList.add('hidden');
+        console.log('✅ Spinner de carga ocultado (por error)');
+      }
     }
   };
 
@@ -653,7 +658,7 @@ export const prerender = false;
   };
 
   // Manejar eliminación
-  const handleDelete = async (id, type) => {
+  const handleDelete = async (id: string, type: string) => {
     try {
       if (typeof deleteArticle !== 'function' || typeof deleteDraft !== 'function') {
         showMessage('error', 'Servicios no cargados. Recarga la página.');
@@ -792,38 +797,61 @@ export const prerender = false;
 
   // Función de inicialización principal
   function initializeAdmin() {
+    console.log('[Articles] Inicializando administración...');
+    
     // Obtener elementos DOM al inicializar
     getDOMElements();
 
     // Inicializar cuando el usuario esté autenticado
-    onAuthStateChanged(auth, (user: any) => {
-      if (user) {
-        // Verificar que los elementos de loading existan antes de ocultarlos
-        setTimeout(() => {
-          getDOMElements(); // Volver a obtener elementos para asegurar que estén disponibles
-          
-          console.log('🎭 Estado de elementos de UI:', {
-            loadingElement: !!loadingElement,
-            contentContainer: !!contentContainer,
-            loadingHidden: loadingElement ? loadingElement.classList.contains('hidden') : 'N/A',
-            contentVisible: contentContainer ? !contentContainer.classList.contains('hidden') : 'N/A'
+    if (onAuthStateChanged && auth) {
+      const unsubscribe = onAuthStateChanged(auth, (user: any) => {
+        console.log('[Articles] Estado de autenticación cambiado:', !!user);
+        if (user) {
+          console.log('[Articles] Usuario autenticado:', {
+            uid: user.uid,
+            email: user.email,
+            emailVerified: user.emailVerified
           });
           
-          if (loadingElement) {
-            loadingElement.classList.add("hidden");
-            console.log('✅ Loading ocultado');
-          }
-          if (contentContainer) {
-            contentContainer.classList.remove("hidden");
-            console.log('✅ Content container mostrado');
-          }
+          // Verificar que los elementos de loading existan antes de ocultarlos
+          setTimeout(() => {
+            getDOMElements(); // Volver a obtener elementos para asegurar que estén disponibles
+            
+            console.log('🎭 Estado de elementos de UI:', {
+              loadingElement: !!loadingElement,
+              contentContainer: !!contentContainer,
+              loadingHidden: loadingElement ? loadingElement.classList.contains('hidden') : 'N/A',
+              contentVisible: contentContainer ? !contentContainer.classList.contains('hidden') : 'N/A'
+            });
+            
+            if (loadingElement) {
+              loadingElement.classList.add("hidden");
+              console.log('✅ Loading ocultado');
+            }
+            if (contentContainer) {
+              contentContainer.classList.remove("hidden");
+              console.log('✅ Content container mostrado');
+            }
 
-          loadData();
-        }, 100); // Pequeño delay para asegurar que el DOM esté listo
-      }
-    });
+            loadData();
+          }, 150); // Pequeño delay para asegurar que el DOM esté listo
+        } else {
+          console.log('[Articles] Usuario no autenticado, redirigiendo...');
+          // Redirigir al login si no hay usuario autenticado
+          window.location.href = '/login';
+        }
+      });
+      
+      // Limpiar el listener cuando el componente se desmonte (si fuera React)
+      // En Astro, esto se maneja automáticamente al cambiar de página
+    } else {
+      console.error('[Articles] onAuthStateChanged o auth no disponibles');
+      showMessage('error', 'Error de autenticación. Recarga la página.');
+    }
   }
 
-  // Cargar servicios cuando la página se cargue
-  document.addEventListener('DOMContentLoaded', loadServices);
+  // Cargar datos cuando la página se cargue
+  document.addEventListener('DOMContentLoaded', () => {
+    loadData();
+  });
 </script> 

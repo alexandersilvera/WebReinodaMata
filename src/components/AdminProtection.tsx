@@ -2,6 +2,7 @@ import React from 'react';
 import { useAuth } from '@/core/hooks/useAuth';
 import { useRBAC, usePermissions, useRoleCheck } from '@/features/admin/hooks/useRBAC';
 import { type AdminRole, Permission } from '@/features/admin/roles/types';
+import '@/utils/globalServices';
 
 interface AdminProtectionProps {
   children: React.ReactNode;
