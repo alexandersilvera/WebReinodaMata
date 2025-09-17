@@ -36,7 +36,7 @@ export const prerender = false;
         </div>
 
         <!-- Contenido principal -->
-        <div id="content-container" class="space-y-8">
+        <div id="content-container" class="space-y-8 hidden">
           <!-- Estadísticas -->
           <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div class="bg-green-900/30 p-6 rounded-lg backdrop-blur-sm">
@@ -232,9 +232,6 @@ export const prerender = false;
     }
   }
 
-  // Importación dinámica de servicios
-  let auth: any, onAuthStateChanged: any, getAllArticles: any, getAllDrafts: any, deleteArticle: any, deleteDraft: any, publishDraftAsArticle: any;
-  
   // Variables de control
   let articles: any[] = [];
   let drafts: any[] = [];
@@ -249,6 +246,9 @@ export const prerender = false;
 
   // Variables para confirmación
   let pendingAction: any = null;
+
+  // Variables de autenticación y servicios
+  let auth: any, onAuthStateChanged: any, getAllArticles: any, getAllDrafts: any, deleteArticle: any, deleteDraft: any, publishDraftAsArticle: any;
 
   // Función para obtener elementos del DOM
   const getDOMElements = () => {
@@ -269,170 +269,8 @@ export const prerender = false;
     confirmBtn = document.getElementById("confirm-btn");
   };
 
-  // Funciones globales para los botones
-  // Usar JavaScript puro para evitar conflictos de TypeScript
-  window['deleteItem'] = function(id, type, title) {
-    showConfirmModal(
-      `¿Estás seguro de que quieres eliminar "${title}"?`,
-      () => handleDelete(id, type)
-    );
-  };
-
-  window['publishDraft'] = function(id) {
-    showConfirmModal(
-      '¿Quieres publicar este borrador? Se convertirá en un artículo público.',
-      () => handlePublishDraft(id)
-    );
-  };
-
-  // Función para inicializar con servicios cargados desde el servidor
-  async function initializeServices() {
-    console.log('[Articles] Iniciando inicialización de servicios...');
-    
-    // Verificar si los servicios ya están disponibles globalmente
-    // (cargados por el AdminProtection component)
-    if (typeof window !== 'undefined' && window.firebaseConfig && window.articleServices) {
-      console.log('[Articles] Servicios encontrados en window object');
-      auth = window.firebaseConfig.auth;
-      onAuthStateChanged = window.firebaseConfig.onAuthStateChanged;
-      getAllArticles = window.articleServices.getAllArticles;
-      getAllDrafts = window.articleServices.getAllDrafts;
-      deleteArticle = window.articleServices.deleteArticle;
-      deleteDraft = window.articleServices.deleteDraft;
-      publishDraftAsArticle = window.articleServices.publishDraftAsArticle;
-      
-      // Verificar que todos los servicios necesarios estén disponibles
-      if (auth && onAuthStateChanged && getAllArticles && getAllDrafts) {
-        console.log('[Articles] Todos los servicios requeridos están disponibles');
-        return true;
-      } else {
-        console.warn('[Articles] Servicios incompletos');
-        return false;
-      }
-    } else {
-      console.log('[Articles] Servicios no disponibles aún en window object');
-      return false;
-    }
-  }
-
-  // Cargar datos
-  const loadData = async () => {
-    console.log('🔄 Iniciando carga de datos...');
-    try {
-      // Verificar e inicializar servicios
-      const servicesAvailable = await initializeServices();
-      if (!servicesAvailable) {
-        console.error('❌ Servicios no disponibles para cargar datos');
-        showMessage('error', 'Servicios no disponibles. Recarga la página.');
-        return;
-      }
-      
-      // Verificar que los servicios estén disponibles
-      if (!getAllArticles || !getAllDrafts) {
-        console.error('❌ Servicios no disponibles para cargar datos');
-        showMessage('error', 'Servicios no disponibles. Recarga la página.');
-        return;
-      }
-      
-      // Mostrar estado de carga
-      getDOMElements();
-      if (loadingElement) {
-        loadingElement.classList.remove('hidden');
-        console.log('🔄 Mostrando spinner de carga');
-      }
-      
-      console.log('🔄 Solicitando datos a Firestore...');
-      const [articlesData, draftsData] = await Promise.all([
-        getAllArticles().catch(error => {
-          console.error('❌ Error al obtener artículos:', error);
-          return [];
-        }),
-        getAllDrafts().catch(error => {
-          console.error('❌ Error al obtener borradores:', error);
-          return [];
-        })
-      ]);
-      
-      console.log('📝 Datos obtenidos:', { articlesCount: articlesData.length, draftsCount: draftsData.length });
-      
-      articles = articlesData || [];
-      drafts = draftsData || [];
-      
-      // Asegurar que el contenedor principal esté visible
-      getDOMElements();
-      if (contentContainer && contentContainer.classList.contains('hidden')) {
-        contentContainer.classList.remove('hidden');
-        console.log('🔓 Contenedor principal mostrado');
-      }
-      
-      console.log('🔍 Elementos DOM encontrados:', {
-        articlesListElement: !!articlesListElement,
-        draftsListElement: !!draftsListElement,
-        loadingElement: !!loadingElement,
-        contentContainer: !!contentContainer,
-        contentVisible: contentContainer ? !contentContainer.classList.contains('hidden') : 'N/A',
-        contentContainerDisplay: contentContainer ? window.getComputedStyle(contentContainer).display : 'N/A'
-      });
-      
-      // Solo proceder si los elementos principales existen
-      if (articlesListElement && draftsListElement) {
-        console.log('✅ Renderizando contenido...');
-        
-        // Ocultar spinner de carga
-        if (loadingElement && !loadingElement.classList.contains('hidden')) {
-          loadingElement.classList.add('hidden');
-          console.log('✅ Spinner de carga ocultado');
-        }
-        
-        // Configurar event listeners ahora que todos los elementos están disponibles
-        setupEventListeners();
-        
-        filterAndRender();
-        updateStats();
-      } else {
-        console.warn('⚠️ Elementos DOM no encontrados, reintentando...');
-        // Forzar re-renderizado del DOM
-        setTimeout(() => {
-          getDOMElements();
-          console.log('🔍 Segundo intento - Elementos DOM:', {
-            articlesListElement: !!articlesListElement,
-            draftsListElement: !!draftsListElement
-          });
-          if (articlesListElement && draftsListElement) {
-            console.log('✅ Renderizando contenido (segundo intento)...');
-            
-            // Ocultar spinner de carga
-            if (loadingElement && !loadingElement.classList.contains('hidden')) {
-              loadingElement.classList.add('hidden');
-              console.log('✅ Spinner de carga ocultado (segundo intento)');
-            }
-            
-            // Configurar event listeners ahora que todos los elementos están disponibles
-            setupEventListeners();
-            
-            filterAndRender();
-            updateStats();
-          } else {
-            console.error('❌ No se pudieron encontrar los elementos DOM después del segundo intento');
-            showMessage('error', 'Error al renderizar la interfaz. Recarga la página.');
-          }
-        }, 500);
-      }
-    } catch (error) {
-      console.error('❌ Error al cargar datos:', error);
-      showMessage('error', `Error al cargar los artículos: ${error.message || 'Error desconocido'}`);
-      
-      // Ocultar spinner de carga en caso de error
-      getDOMElements();
-      if (loadingElement && !loadingElement.classList.contains('hidden')) {
-        loadingElement.classList.add('hidden');
-        console.log('✅ Spinner de carga ocultado (por error)');
-      }
-    }
-  };
-
   // Funciones de utilidad
-  const formatDate = (timestamp) => {
+  const formatDate = (timestamp: any) => {
     if (!timestamp) return 'Sin fecha';
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
     return date.toLocaleDateString('es-ES', {
@@ -444,12 +282,12 @@ export const prerender = false;
     });
   };
 
-  const truncateText = (text, maxLength = 100) => {
+  const truncateText = (text: string, maxLength: number = 100) => {
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + '...';
   };
 
-  const showMessage = (type, message) => {
+  const showMessage = (type: string, message: string) => {
     // Asegurar que los elementos existen
     if (!successMessage || !successText || !errorMessage || !errorDetails) {
       getDOMElements();
@@ -471,7 +309,7 @@ export const prerender = false;
     }, 5000);
   };
 
-  const showConfirmModal = (message, action) => {
+  const showConfirmModal = (message: string, action: any) => {
     // Asegurar que los elementos existen
     if (!confirmMessage || !confirmModal) {
       getDOMElements();
@@ -491,7 +329,7 @@ export const prerender = false;
   };
 
   // Renderizar artículo
-  const renderArticle = (article, isDraft = false) => {
+  const renderArticle = (article: any, isDraft: boolean = false) => {
     console.log('🎨 Renderizando artículo:', { 
       id: article.id, 
       title: article.title, 
@@ -629,13 +467,13 @@ export const prerender = false;
         article.title.toLowerCase().includes(searchLower) ||
         article.description.toLowerCase().includes(searchLower) ||
         article.author.toLowerCase().includes(searchLower) ||
-        article.tags.some(tag => tag.toLowerCase().includes(searchLower))
+        article.tags.some((tag: string) => tag.toLowerCase().includes(searchLower))
       );
       filteredDrafts = drafts.filter(draft =>
         draft.title.toLowerCase().includes(searchLower) ||
         draft.description.toLowerCase().includes(searchLower) ||
         draft.author.toLowerCase().includes(searchLower) ||
-        draft.tags.some(tag => tag.toLowerCase().includes(searchLower))
+        draft.tags.some((tag: string) => tag.toLowerCase().includes(searchLower))
       );
     }
 
@@ -692,72 +530,6 @@ export const prerender = false;
       }
     } else {
       console.error('❌ No se puede renderizar borradores: draftsListElement es null');
-    }
-  };
-
-  // Manejar eliminación
-  const handleDelete = async (id: string, type: string) => {
-    try {
-      if (typeof deleteArticle !== 'function' || typeof deleteDraft !== 'function') {
-        showMessage('error', 'Servicios no cargados. Recarga la página.');
-        return;
-      }
-      
-      if (!auth?.currentUser) {
-        showMessage('error', 'Debes estar autenticado para eliminar elementos');
-        return;
-      }
-      
-      if (type === 'article') {
-        await deleteArticle(id);
-        articles = articles.filter(article => article.id !== id);
-      } else {
-        await deleteDraft(id);
-        drafts = drafts.filter(draft => draft.id !== id);
-      }
-      
-      filterAndRender();
-      updateStats();
-      showMessage('success', `${type === 'article' ? 'Artículo' : 'Borrador'} eliminado con éxito`);
-    } catch (error) {
-      console.error('❌ Error completo al eliminar:', error);
-      console.error('❌ Código de error:', error.code);
-      console.error('❌ Mensaje de error:', error.message);
-      console.error('❌ Stack trace:', error.stack);
-      
-      let errorMessage = 'Error al eliminar el elemento';
-      
-      if (error.code === 'permission-denied') {
-        errorMessage = 'Sin permisos para eliminar. Verifica que seas administrador.';
-        console.error('🔒 Error de permisos - usuario actual:', auth?.currentUser?.email);
-      } else if (error.code === 'not-found') {
-        errorMessage = 'El elemento no existe o ya fue eliminado.';
-      } else if (error.code === 'unavailable') {
-        errorMessage = 'Problema de conexión. Intenta de nuevo.';
-      }
-      
-      showMessage('error', errorMessage);
-    }
-  };
-
-  // Manejar publicación de borrador
-  const handlePublishDraft = async (id: string) => {
-    try {
-      const articleId = await publishDraftAsArticle(id);
-      
-      // Actualizar listas
-      const draft = drafts.find(d => d.id === id);
-      if (draft) {
-        drafts = drafts.filter(d => d.id !== id);
-        articles.unshift({ ...draft, id: articleId, draft: false });
-      }
-
-      filterAndRender();
-      updateStats();
-      showMessage('success', 'Borrador publicado con éxito');
-    } catch (error) {
-      console.error('Error al publicar borrador:', error);
-      showMessage('error', 'Error al publicar el borrador');
     }
   };
 
@@ -833,6 +605,236 @@ export const prerender = false;
     }
   };
 
+  // Función para inicializar con servicios cargados desde el servidor
+  async function initializeServices(maxRetries = 10, retryDelay = 200) {
+    console.log('[Articles] Iniciando inicialización de servicios...');
+    
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      // Verificar si los servicios ya están disponibles globalmente
+      // (cargados por el AdminProtection component)
+      if (typeof window !== 'undefined' && window.firebaseConfig && window.articleServices) {
+        console.log('[Articles] Servicios encontrados en window object');
+        auth = window.firebaseConfig.auth;
+        onAuthStateChanged = window.firebaseConfig.onAuthStateChanged;
+        getAllArticles = window.articleServices.getAllArticles;
+        getAllDrafts = window.articleServices.getAllDrafts;
+        deleteArticle = window.articleServices.deleteArticle;
+        deleteDraft = window.articleServices.deleteDraft;
+        publishDraftAsArticle = window.articleServices.publishDraftAsArticle;
+        
+        // Verificar que todos los servicios necesarios estén disponibles
+        if (auth && onAuthStateChanged && getAllArticles && getAllDrafts) {
+          console.log('[Articles] Todos los servicios requeridos están disponibles');
+          return true;
+        } else {
+          console.warn('[Articles] Servicios incompletos, reintentando...');
+        }
+      } else {
+        console.log(`[Articles] Servicios no disponibles aún en window object (intento ${attempt + 1}/${maxRetries})`);
+      }
+      
+      // Esperar antes de reintentar
+      if (attempt < maxRetries - 1) {
+        await new Promise(resolve => setTimeout(resolve, retryDelay));
+      }
+    }
+    
+    console.error('[Articles] No se pudieron inicializar los servicios después de', maxRetries, 'intentos');
+    return false;
+  }
+
+  // Cargar datos
+  const loadData = async () => {
+    console.log('🔄 Iniciando carga de datos...');
+    try {
+      // Verificar que los servicios estén disponibles
+      if (!getAllArticles || !getAllDrafts) {
+        console.error('❌ Servicios no disponibles para cargar datos');
+        showMessage('error', 'Servicios no disponibles. Los servicios requeridos no están inicializados correctamente.');
+        return;
+      }
+      
+      // Mostrar estado de carga
+      getDOMElements();
+      if (loadingElement) {
+        loadingElement.classList.remove('hidden');
+        console.log('🔄 Mostrando spinner de carga');
+      }
+      
+      console.log('🔄 Solicitando datos a Firestore...');
+      const [articlesData, draftsData] = await Promise.all([
+        getAllArticles().catch(error => {
+          console.error('❌ Error al obtener artículos:', error);
+          showMessage('error', 'Error al obtener artículos: ' + (error.message || 'Error desconocido'));
+          return [];
+        }),
+        getAllDrafts().catch(error => {
+          console.error('❌ Error al obtener borradores:', error);
+          showMessage('error', 'Error al obtener borradores: ' + (error.message || 'Error desconocido'));
+          return [];
+        })
+      ]);
+      
+      console.log('📝 Datos obtenidos:', { articlesCount: articlesData.length, draftsCount: draftsData.length });
+      
+      articles = articlesData || [];
+      drafts = draftsData || [];
+      
+      // Asegurar que el contenedor principal esté visible
+      getDOMElements();
+      if (contentContainer && contentContainer.classList.contains('hidden')) {
+        contentContainer.classList.remove('hidden');
+        console.log('🔓 Contenedor principal mostrado');
+      }
+      
+      console.log('🔍 Elementos DOM encontrados:', {
+        articlesListElement: !!articlesListElement,
+        draftsListElement: !!draftsListElement,
+        loadingElement: !!loadingElement,
+        contentContainer: !!contentContainer,
+        contentVisible: contentContainer ? !contentContainer.classList.contains('hidden') : 'N/A',
+        contentContainerDisplay: contentContainer ? window.getComputedStyle(contentContainer).display : 'N/A'
+      });
+      
+      // Solo proceder si los elementos principales existen
+      if (articlesListElement && draftsListElement) {
+        console.log('✅ Renderizando contenido...');
+        
+        // Ocultar spinner de carga
+        if (loadingElement && !loadingElement.classList.contains('hidden')) {
+          loadingElement.classList.add('hidden');
+          console.log('✅ Spinner de carga ocultado');
+        }
+        
+        // Configurar event listeners ahora que todos los elementos están disponibles
+        setupEventListeners();
+        
+        filterAndRender();
+        updateStats();
+      } else {
+        console.warn('⚠️ Elementos DOM no encontrados, reintentando...');
+        // Forzar re-renderizado del DOM
+        setTimeout(() => {
+          getDOMElements();
+          console.log('🔍 Segundo intento - Elementos DOM:', {
+            articlesListElement: !!articlesListElement,
+            draftsListElement: !!draftsListElement
+          });
+          if (articlesListElement && draftsListElement) {
+            console.log('✅ Renderizando contenido (segundo intento)...');
+            
+            // Ocultar spinner de carga
+            if (loadingElement && !loadingElement.classList.contains('hidden')) {
+              loadingElement.classList.add('hidden');
+              console.log('✅ Spinner de carga ocultado (segundo intento)');
+            }
+            
+            // Configurar event listeners ahora que todos los elementos están disponibles
+            setupEventListeners();
+            
+            filterAndRender();
+            updateStats();
+          } else {
+            console.error('❌ No se pudieron encontrar los elementos DOM después del segundo intento');
+            showMessage('error', 'Error al renderizar la interfaz. No se pudieron encontrar los elementos necesarios.');
+          }
+        }, 500);
+      }
+    } catch (error: any) {
+      console.error('❌ Error al cargar datos:', error);
+      showMessage('error', `Error al cargar los artículos: ${error.message || 'Error desconocido'}`);
+      
+      // Ocultar spinner de carga en caso de error
+      getDOMElements();
+      if (loadingElement && !loadingElement.classList.contains('hidden')) {
+        loadingElement.classList.add('hidden');
+        console.log('✅ Spinner de carga ocultado (por error)');
+      }
+    }
+  };
+
+  // Funciones globales para los botones
+  // Usar JavaScript puro para evitar conflictos de TypeScript
+  (window as any)['deleteItem'] = function(id: string, type: string, title: string) {
+    showConfirmModal(
+      `¿Estás seguro de que quieres eliminar "${title}"?`,
+      () => handleDelete(id, type)
+    );
+  };
+
+  (window as any)['publishDraft'] = function(id: string) {
+    showConfirmModal(
+      '¿Quieres publicar este borrador? Se convertirá en un artículo público.',
+      () => handlePublishDraft(id)
+    );
+  };
+
+  // Manejar eliminación
+  const handleDelete = async (id: string, type: string) => {
+    try {
+      if (typeof deleteArticle !== 'function' || typeof deleteDraft !== 'function') {
+        showMessage('error', 'Servicios no cargados. Recarga la página.');
+        return;
+      }
+      
+      if (!auth?.currentUser) {
+        showMessage('error', 'Debes estar autenticado para eliminar elementos');
+        return;
+      }
+      
+      if (type === 'article') {
+        await deleteArticle(id);
+        articles = articles.filter(article => article.id !== id);
+      } else {
+        await deleteDraft(id);
+        drafts = drafts.filter(draft => draft.id !== id);
+      }
+      
+      filterAndRender();
+      updateStats();
+      showMessage('success', `${type === 'article' ? 'Artículo' : 'Borrador'} eliminado con éxito`);
+    } catch (error: any) {
+      console.error('❌ Error completo al eliminar:', error);
+      console.error('❌ Código de error:', error.code);
+      console.error('❌ Mensaje de error:', error.message);
+      console.error('❌ Stack trace:', error.stack);
+      
+      let errorMessage = 'Error al eliminar el elemento';
+      
+      if (error.code === 'permission-denied') {
+        errorMessage = 'Sin permisos para eliminar. Verifica que seas administrador.';
+        console.error('🔒 Error de permisos - usuario actual:', auth?.currentUser?.email);
+      } else if (error.code === 'not-found') {
+        errorMessage = 'El elemento no existe o ya fue eliminado.';
+      } else if (error.code === 'unavailable') {
+        errorMessage = 'Problema de conexión. Intenta de nuevo.';
+      }
+      
+      showMessage('error', errorMessage);
+    }
+  };
+
+  // Manejar publicación de borrador
+  const handlePublishDraft = async (id: string) => {
+    try {
+      const articleId = await publishDraftAsArticle(id);
+      
+      // Actualizar listas
+      const draft = drafts.find(d => d.id === id);
+      if (draft) {
+        drafts = drafts.filter(d => d.id !== id);
+        articles.unshift({ ...draft, id: articleId, draft: false });
+      }
+
+      filterAndRender();
+      updateStats();
+      showMessage('success', 'Borrador publicado con éxito');
+    } catch (error: any) {
+      console.error('Error al publicar borrador:', error);
+      showMessage('error', 'Error al publicar el borrador');
+    }
+  };
+
   // Función de inicialización principal
   function initializeAdmin() {
     console.log('[Articles] Inicializando administración...');
@@ -904,4 +906,4 @@ export const prerender = false;
   document.addEventListener('DOMContentLoaded', () => {
     initializeAdmin();
   });
-</script> 
+</script>
