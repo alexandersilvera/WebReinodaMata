@@ -285,10 +285,48 @@ export const prerender = false;
     );
   };
 
+  // Función para inicializar con servicios cargados desde el servidor
+  async function initializeServices() {
+    console.log('[Articles] Iniciando inicialización de servicios...');
+    
+    // Verificar si los servicios ya están disponibles globalmente
+    // (cargados por el AdminProtection component)
+    if (typeof window !== 'undefined' && window.firebaseConfig && window.articleServices) {
+      console.log('[Articles] Servicios encontrados en window object');
+      auth = window.firebaseConfig.auth;
+      onAuthStateChanged = window.firebaseConfig.onAuthStateChanged;
+      getAllArticles = window.articleServices.getAllArticles;
+      getAllDrafts = window.articleServices.getAllDrafts;
+      deleteArticle = window.articleServices.deleteArticle;
+      deleteDraft = window.articleServices.deleteDraft;
+      publishDraftAsArticle = window.articleServices.publishDraftAsArticle;
+      
+      // Verificar que todos los servicios necesarios estén disponibles
+      if (auth && onAuthStateChanged && getAllArticles && getAllDrafts) {
+        console.log('[Articles] Todos los servicios requeridos están disponibles');
+        return true;
+      } else {
+        console.warn('[Articles] Servicios incompletos');
+        return false;
+      }
+    } else {
+      console.log('[Articles] Servicios no disponibles aún en window object');
+      return false;
+    }
+  }
+
   // Cargar datos
   const loadData = async () => {
     console.log('🔄 Iniciando carga de datos...');
     try {
+      // Verificar e inicializar servicios
+      const servicesAvailable = await initializeServices();
+      if (!servicesAvailable) {
+        console.error('❌ Servicios no disponibles para cargar datos');
+        showMessage('error', 'Servicios no disponibles. Recarga la página.');
+        return;
+      }
+      
       // Verificar que los servicios estén disponibles
       if (!getAllArticles || !getAllDrafts) {
         console.error('❌ Servicios no disponibles para cargar datos');
@@ -802,56 +840,68 @@ export const prerender = false;
     // Obtener elementos DOM al inicializar
     getDOMElements();
 
-    // Inicializar cuando el usuario esté autenticado
-    if (onAuthStateChanged && auth) {
-      const unsubscribe = onAuthStateChanged(auth, (user: any) => {
-        console.log('[Articles] Estado de autenticación cambiado:', !!user);
-        if (user) {
-          console.log('[Articles] Usuario autenticado:', {
-            uid: user.uid,
-            email: user.email,
-            emailVerified: user.emailVerified
-          });
-          
-          // Verificar que los elementos de loading existan antes de ocultarlos
-          setTimeout(() => {
-            getDOMElements(); // Volver a obtener elementos para asegurar que estén disponibles
-            
-            console.log('🎭 Estado de elementos de UI:', {
-              loadingElement: !!loadingElement,
-              contentContainer: !!contentContainer,
-              loadingHidden: loadingElement ? loadingElement.classList.contains('hidden') : 'N/A',
-              contentVisible: contentContainer ? !contentContainer.classList.contains('hidden') : 'N/A'
+    // Inicializar servicios primero
+    initializeServices().then((servicesAvailable) => {
+      if (!servicesAvailable) {
+        console.error('[Articles] No se pudieron inicializar los servicios');
+        showMessage('error', 'Error al inicializar servicios. Recarga la página.');
+        return;
+      }
+      
+      // Inicializar cuando el usuario esté autenticado
+      if (onAuthStateChanged && auth) {
+        const unsubscribe = onAuthStateChanged(auth, (user: any) => {
+          console.log('[Articles] Estado de autenticación cambiado:', !!user);
+          if (user) {
+            console.log('[Articles] Usuario autenticado:', {
+              uid: user.uid,
+              email: user.email,
+              emailVerified: user.emailVerified
             });
             
-            if (loadingElement) {
-              loadingElement.classList.add("hidden");
-              console.log('✅ Loading ocultado');
-            }
-            if (contentContainer) {
-              contentContainer.classList.remove("hidden");
-              console.log('✅ Content container mostrado');
-            }
+            // Verificar que los elementos de loading existan antes de ocultarlos
+            setTimeout(() => {
+              getDOMElements(); // Volver a obtener elementos para asegurar que estén disponibles
+              
+              console.log('🎭 Estado de elementos de UI:', {
+                loadingElement: !!loadingElement,
+                contentContainer: !!contentContainer,
+                loadingHidden: loadingElement ? loadingElement.classList.contains('hidden') : 'N/A',
+                contentVisible: contentContainer ? !contentContainer.classList.contains('hidden') : 'N/A'
+              });
+              
+              if (loadingElement) {
+                loadingElement.classList.add("hidden");
+                console.log('✅ Loading ocultado');
+              }
+              if (contentContainer) {
+                contentContainer.classList.remove("hidden");
+                console.log('✅ Content container mostrado');
+              }
 
-            loadData();
-          }, 150); // Pequeño delay para asegurar que el DOM esté listo
-        } else {
-          console.log('[Articles] Usuario no autenticado, redirigiendo...');
-          // Redirigir al login si no hay usuario autenticado
-          window.location.href = '/login';
-        }
-      });
-      
-      // Limpiar el listener cuando el componente se desmonte (si fuera React)
-      // En Astro, esto se maneja automáticamente al cambiar de página
-    } else {
-      console.error('[Articles] onAuthStateChanged o auth no disponibles');
-      showMessage('error', 'Error de autenticación. Recarga la página.');
-    }
+              loadData();
+            }, 150); // Pequeño delay para asegurar que el DOM esté listo
+          } else {
+            console.log('[Articles] Usuario no autenticado, redirigiendo...');
+            // Redirigir al login si no hay usuario autenticado
+            window.location.href = '/login';
+          }
+        });
+        
+        // Limpiar el listener cuando el componente se desmonte (si fuera React)
+        // En Astro, esto se maneja automáticamente al cambiar de página
+      } else {
+        console.error('[Articles] onAuthStateChanged o auth no disponibles');
+        showMessage('error', 'Error de autenticación. Recarga la página.');
+      }
+    }).catch((error) => {
+      console.error('[Articles] Error al inicializar servicios:', error);
+      showMessage('error', 'Error al inicializar servicios. Recarga la página.');
+    });
   }
 
   // Cargar datos cuando la página se cargue
   document.addEventListener('DOMContentLoaded', () => {
-    loadData();
+    initializeAdmin();
   });
 </script> 
