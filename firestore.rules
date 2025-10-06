@@ -158,7 +158,9 @@ service cloud.firestore {
       allow read: if true;
 
       // Solo administradores pueden crear/modificar planes
-      allow create, update, delete: if isAdmin();
+      // También permitir al usuario autenticado con email de admin
+      allow create, update, delete: if isAdmin() ||
+                                      (isAuthenticated() && request.auth.token.email == 'alexandersilvera@hotmail.com');
     }
 
     // Reglas para suscripciones de usuarios

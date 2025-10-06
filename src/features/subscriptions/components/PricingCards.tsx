@@ -186,7 +186,7 @@ export function PricingCards({
             {/* Features destacadas */}
             <div className="mb-6 flex-grow">
               <ul className="space-y-3">
-                {plan.highlights.map((highlight, index) => (
+                {plan.features.map((feature, index) => (
                   <li key={index} className="flex items-start">
                     <svg
                       className="w-5 h-5 text-green-500 mr-2 flex-shrink-0 mt-0.5"
@@ -199,7 +199,7 @@ export function PricingCards({
                         clipRule="evenodd"
                       />
                     </svg>
-                    <span className="text-gray-700 text-sm">{highlight}</span>
+                    <span className="text-gray-700 text-sm">{feature}</span>
                   </li>
                 ))}
               </ul>

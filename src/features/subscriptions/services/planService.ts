@@ -57,16 +57,19 @@ export class PlanService {
    */
   static async getActivePlans(): Promise<SubscriptionPlan[]> {
     try {
+      // Obtener todos los planes y filtrar en el cliente para evitar índice compuesto
       const q = query(
         collection(db, PLANS_COLLECTION),
-        where('isActive', '==', true),
         orderBy('order', 'asc')
       );
       const querySnapshot = await getDocs(q);
 
-      return querySnapshot.docs.map(doc =>
+      const allPlans = querySnapshot.docs.map(doc =>
         convertTimestamp({ id: doc.id, ...doc.data() })
       );
+
+      // Filtrar solo los activos en el cliente
+      return allPlans.filter(plan => plan.isActive);
     } catch (error) {
       console.error('Error getting active plans:', error);
       throw new Error('No se pudieron obtener los planes activos');
