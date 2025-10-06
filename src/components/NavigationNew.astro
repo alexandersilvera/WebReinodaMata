@@ -5,48 +5,48 @@
 // import { auth, db } from "@/core/firebase/config";
 ---
 
-<nav class="bg-gradient-to-b from-[#19181c] to-[#111] shadow-inner text-white">
+<nav class="bg-gradient-to-b from-[#19181c] to-[#111] shadow-inner text-white sticky top-0 z-50">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex justify-between h-16">
-      <!-- Logo y enlaces de navegación para escritorio -->
-      <div class="flex items-center">
-        <div class="flex-shrink-0">
-          <a href="/" class="text-2xl font-bold">Reino da Mata</a>
-        </div>
-        <!-- Enlaces de navegación para escritorio -->
-        <div class="hidden md:ml-10 md:flex md:space-x-8">
-          <a href="/" class="px-3 py-2 hover:bg-[#F08F4A] transition-colors rounded-md">Inicio</a>
-          <a href="/blog" class="px-3 py-2 hover:bg-[#D9734E] transition-colors rounded-md">Blog</a>
-          <a href="/instituto" class="px-3 py-2 hover:bg-[#F05E4A] transition-colors rounded-md">Instituto</a>
-          <a href="/contacto" class="px-3 py-2 hover:bg-[#E64755] transition-colors rounded-md">Contacto</a>
-          <!-- Enlace de administración (oculto por defecto) -->
-          <a href="/admin" id="admin-link-desktop" class="hidden px-3 py-2 bg-purple-700 hover:bg-purple-600 transition-colors rounded-md">Admin</a>
-        </div>
+    <div class="flex justify-between items-center h-16">
+      <!-- Logo -->
+      <div class="flex-shrink-0">
+        <a href="/" class="text-xl sm:text-2xl font-bold">Reino da Mata</a>
       </div>
-      
-      <!-- Sección de autenticación para escritorio -->
-      <div class="hidden md:flex md:items-center">
+
+      <!-- Enlaces de navegación para desktop (pantallas grandes) -->
+      <div class="hidden lg:flex lg:items-center lg:space-x-6">
+        <a href="/" class="px-2 xl:px-3 py-2 text-sm hover:bg-[#F08F4A] transition-colors rounded-md">Inicio</a>
+        <a href="/blog" class="px-2 xl:px-3 py-2 text-sm hover:bg-[#D9734E] transition-colors rounded-md">Blog</a>
+        <a href="/instituto" class="px-2 xl:px-3 py-2 text-sm hover:bg-[#F05E4A] transition-colors rounded-md">Instituto</a>
+        <a href="/planes" class="px-2 xl:px-3 py-2 text-sm hover:bg-[#4A9FF0] transition-colors rounded-md">Planes</a>
+        <a href="/contacto" class="px-2 xl:px-3 py-2 text-sm hover:bg-[#E64755] transition-colors rounded-md">Contacto</a>
+        <!-- Enlace de administración (oculto por defecto) -->
+        <a href="/admin" id="admin-link-desktop" class="hidden px-2 xl:px-3 py-2 text-sm bg-purple-700 hover:bg-purple-600 transition-colors rounded-md">Admin</a>
+      </div>
+
+      <!-- Sección de autenticación para desktop -->
+      <div class="hidden lg:flex lg:items-center lg:space-x-2">
         <!-- Links de autenticación (mostrados cuando el usuario NO está logueado) -->
-        <div id="auth-links-desktop" class="flex items-center space-x-4">
-          <a href="/login" class="login-link px-3 py-2 text-sm hover:text-gray-300 transition-colors">Iniciar Sesión</a>
-          <a href="/register" class="register-link px-3 py-2 text-sm bg-blue-600 hover:bg-blue-700 transition-colors rounded-md">Registrarse</a>
+        <div id="auth-links-desktop" class="flex items-center space-x-2">
+          <a href="/login" class="login-link px-2 xl:px-3 py-1.5 text-xs xl:text-sm hover:text-gray-300 transition-colors whitespace-nowrap">Iniciar Sesión</a>
+          <a href="/register" class="register-link px-2 xl:px-3 py-1.5 text-xs xl:text-sm bg-blue-600 hover:bg-blue-700 transition-colors rounded-md whitespace-nowrap">Registrarse</a>
         </div>
-        
+
         <!-- Información del usuario (mostrada cuando el usuario ESTÁ logueado) -->
-        <div id="user-info-desktop" class="hidden ml-6 flex items-center space-x-3">
+        <div id="user-info-desktop" class="hidden flex items-center space-x-2">
           <img id="user-avatar-desktop" src="/images/default-avatar.png" alt="Avatar" class="w-8 h-8 rounded-full object-cover bg-gray-600 border border-gray-500">
-          <a href="/perfil" class="px-3 py-1.5 text-sm text-gray-300 hover:bg-gray-700 transition-colors rounded-md">Mi Perfil</a>
-          <button id="logout-button-desktop" class="logout-button px-3 py-1.5 text-sm bg-red-600 hover:bg-red-700 transition-colors rounded-md">Cerrar Sesión</button>
+          <a href="/perfil" class="px-2 xl:px-3 py-1.5 text-xs xl:text-sm text-gray-300 hover:bg-gray-700 transition-colors rounded-md whitespace-nowrap">Mi Perfil</a>
+          <button id="logout-button-desktop" class="logout-button px-2 xl:px-3 py-1.5 text-xs xl:text-sm bg-red-600 hover:bg-red-700 transition-colors rounded-md whitespace-nowrap">Cerrar Sesión</button>
         </div>
       </div>
-      
-      <!-- Botón de menú móvil -->
-      <div class="flex items-center md:hidden">
-        <button 
-          type="button" 
+
+      <!-- Botón de menú móvil/tablet -->
+      <div class="flex items-center lg:hidden">
+        <button
+          type="button"
           id="mobile-menu-button"
-          class="inline-flex items-center justify-center p-2 rounded-md text-white hover:bg-gray-700 focus:outline-none"
-          aria-controls="mobile-menu" 
+          class="inline-flex items-center justify-center p-2 rounded-md text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+          aria-controls="mobile-menu"
           aria-expanded="false"
         >
           <span class="sr-only">Abrir menú principal</span>
@@ -59,29 +59,32 @@
     </div>
   </div>
 
-  <!-- Menú móvil (oculto por defecto) -->
-  <div class="md:hidden hidden bg-[#19181c] w-full border-t border-gray-700" id="mobile-menu">
-    <div class="px-2 pt-2 pb-3 space-y-1 border-t border-gray-700">
-      <a href="/" class="block px-3 py-2 hover:bg-[#F08F4A] transition-colors rounded-md text-center">Inicio</a>
-      <a href="/blog" class="block px-3 py-2 hover:bg-[#D9734E] transition-colors rounded-md text-center">Blog</a>
-      <a href="/instituto" class="block px-3 py-2 hover:bg-[#F05E4A] transition-colors rounded-md text-center">Instituto</a>
-      <a href="/contacto" class="block px-3 py-2 hover:bg-[#E64755] transition-colors rounded-md text-center">Contacto</a>
+  <!-- Menú móvil/tablet (oculto por defecto) -->
+  <div class="lg:hidden hidden bg-[#19181c] border-t border-gray-700" id="mobile-menu">
+    <div class="px-4 pt-4 pb-4 space-y-2">
+      <!-- Enlaces de navegación móvil -->
+      <a href="/" class="block px-4 py-3 text-base font-medium hover:bg-[#F08F4A] transition-colors rounded-md">Inicio</a>
+      <a href="/blog" class="block px-4 py-3 text-base font-medium hover:bg-[#D9734E] transition-colors rounded-md">Blog</a>
+      <a href="/instituto" class="block px-4 py-3 text-base font-medium hover:bg-[#F05E4A] transition-colors rounded-md">Instituto</a>
+      <a href="/planes" class="block px-4 py-3 text-base font-medium hover:bg-[#4A9FF0] transition-colors rounded-md">Planes</a>
+      <a href="/contacto" class="block px-4 py-3 text-base font-medium hover:bg-[#E64755] transition-colors rounded-md">Contacto</a>
+
       <!-- Enlace de administración móvil (oculto por defecto) -->
-      <a href="/admin" id="admin-link-mobile" class="hidden block px-3 py-2 bg-purple-700 hover:bg-purple-600 transition-colors rounded-md text-center">Administración</a>
-      
+      <a href="/admin" id="admin-link-mobile" class="hidden block px-4 py-3 text-base font-medium bg-purple-700 hover:bg-purple-600 transition-colors rounded-md">Administración</a>
+
       <!-- Links de autenticación móvil (mostrados cuando el usuario NO está logueado) -->
-      <div id="auth-links-mobile" class="pt-4 space-y-2 border-t border-gray-600 mt-2">
-        <a href="/login" class="login-link block px-3 py-2 hover:bg-gray-700 transition-colors rounded-md text-center">Iniciar Sesión</a>
-        <a href="/register" class="register-link block px-3 py-2 bg-blue-600 hover:bg-blue-700 transition-colors rounded-md text-center">Registrarse</a>
+      <div id="auth-links-mobile" class="pt-4 space-y-2 border-t border-gray-600">
+        <a href="/login" class="login-link block px-4 py-3 text-base font-medium text-center hover:bg-gray-700 transition-colors rounded-md">Iniciar Sesión</a>
+        <a href="/register" class="register-link block px-4 py-3 text-base font-medium text-center bg-blue-600 hover:bg-blue-700 transition-colors rounded-md">Registrarse</a>
       </div>
-      
+
       <!-- Información del usuario móvil (mostrada cuando el usuario ESTÁ logueado) -->
-      <div id="user-info-mobile" class="hidden pt-4 space-y-3 border-t border-gray-600 mt-2">
+      <div id="user-info-mobile" class="hidden pt-4 space-y-3 border-t border-gray-600">
         <div class="flex justify-center">
-          <img id="user-avatar-mobile" src="/images/default-avatar.png" alt="Avatar" class="w-10 h-10 rounded-full object-cover bg-gray-600 border border-gray-500">
+          <img id="user-avatar-mobile" src="/images/default-avatar.png" alt="Avatar" class="w-12 h-12 rounded-full object-cover bg-gray-600 border-2 border-gray-500">
         </div>
-        <a href="/perfil" class="block px-3 py-2 text-gray-300 hover:bg-gray-700 transition-colors rounded-md text-center">Mi Perfil</a>
-        <button id="logout-button-mobile" class="logout-button block w-full px-3 py-2 bg-red-600 hover:bg-red-700 transition-colors rounded-md text-center">Cerrar Sesión</button>
+        <a href="/perfil" class="block px-4 py-3 text-base font-medium text-center text-gray-300 hover:bg-gray-700 transition-colors rounded-md">Mi Perfil</a>
+        <button id="logout-button-mobile" class="logout-button block w-full px-4 py-3 text-base font-medium bg-red-600 hover:bg-red-700 transition-colors rounded-md">Cerrar Sesión</button>
       </div>
     </div>
   </div>
