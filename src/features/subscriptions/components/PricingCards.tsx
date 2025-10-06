@@ -207,7 +207,14 @@ export function PricingCards({
 
             {/* Botón de acción */}
             <button
-              onClick={() => onSelectPlan?.(plan.id, billingPeriod)}
+              onClick={() => {
+                if (onSelectPlan) {
+                  onSelectPlan(plan.id, billingPeriod);
+                } else {
+                  // Redirigir al checkout
+                  window.location.href = `/checkout/${plan.id}`;
+                }
+              }}
               disabled={currentPlanType === plan.type}
               className={`w-full py-3 px-6 rounded-lg font-medium transition-all ${
                 plan.isPopular

@@ -1,0 +1,267 @@
+---
+/**
+ * Página de checkout para suscripciones
+ */
+import MainLayout from '@/layouts/MainLayout.astro';
+export const prerender = false;
+
+const { planId } = Astro.params;
+---
+
+<MainLayout title="Checkout | Centro Umbandista Reino Da Mata">
+  <div class="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-16">
+    <div class="max-w-4xl mx-auto px-4">
+      <div class="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-8">
+        <!-- Header -->
+        <div class="text-center mb-8">
+          <h1 class="text-3xl font-bold text-white mb-2">Confirmar Suscripción</h1>
+          <p class="text-gray-400">Revisa los detalles antes de proceder al pago</p>
+        </div>
+
+        <!-- Plan Details -->
+        <div id="plan-details" class="mb-8">
+          <div class="animate-pulse">
+            <div class="h-32 bg-slate-700/50 rounded-lg"></div>
+          </div>
+        </div>
+
+        <!-- Billing Period Selection -->
+        <div class="mb-8">
+          <label class="block text-white font-medium mb-4">Período de facturación:</label>
+          <div class="grid grid-cols-2 gap-4">
+            <button
+              id="monthly-btn"
+              class="billing-period-btn active py-4 px-6 rounded-lg border-2 transition-all"
+            >
+              <div class="text-lg font-bold">Mensual</div>
+              <div class="text-sm text-gray-400" id="monthly-price">Cargando...</div>
+            </button>
+            <button
+              id="yearly-btn"
+              class="billing-period-btn py-4 px-6 rounded-lg border-2 transition-all"
+            >
+              <div class="text-lg font-bold">Anual</div>
+              <div class="text-sm text-gray-400" id="yearly-price">Cargando...</div>
+              <div class="text-sm text-green-400 font-medium">¡Ahorra 16%!</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Order Summary -->
+        <div class="bg-slate-900/50 rounded-lg p-6 mb-8">
+          <h3 class="text-xl font-bold text-white mb-4">Resumen del pedido</h3>
+          <div class="space-y-3">
+            <div class="flex justify-between text-gray-300">
+              <span id="summary-plan">Plan</span>
+              <span id="summary-period">Mensual</span>
+            </div>
+            <div class="flex justify-between text-gray-300">
+              <span>Subtotal</span>
+              <span id="summary-subtotal">$0</span>
+            </div>
+            <div class="border-t border-slate-700 pt-3 flex justify-between text-xl font-bold text-white">
+              <span>Total</span>
+              <span id="summary-total">$0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment Methods -->
+        <div class="mb-8">
+          <h3 class="text-xl font-bold text-white mb-4">Métodos de pago disponibles</h3>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="bg-slate-700/30 rounded-lg p-4 text-center">
+              <div class="text-gray-300 text-sm">Tarjetas</div>
+            </div>
+            <div class="bg-slate-700/30 rounded-lg p-4 text-center">
+              <div class="text-gray-300 text-sm">Débito</div>
+            </div>
+            <div class="bg-slate-700/30 rounded-lg p-4 text-center">
+              <div class="text-gray-300 text-sm">Abitab</div>
+            </div>
+            <div class="bg-slate-700/30 rounded-lg p-4 text-center">
+              <div class="text-gray-300 text-sm">RedPagos</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex gap-4">
+          <a
+            href="/planes"
+            class="flex-1 py-3 px-6 bg-slate-700 hover:bg-slate-600 text-white font-medium rounded-lg text-center transition-colors"
+          >
+            Volver a Planes
+          </a>
+          <button
+            id="proceed-btn"
+            disabled
+            class="flex-1 py-3 px-6 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors"
+          >
+            <span id="btn-text">Cargando...</span>
+          </button>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div id="loading-overlay" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div class="bg-slate-800 rounded-lg p-8 text-center">
+            <div class="animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
+            <p class="text-white text-lg">Redirigiendo a Mercado Pago...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</MainLayout>
+
+<script define:vars={{ planId }}>
+  import { PlanService } from '@/features/subscriptions';
+  import { MercadoPagoService } from '@/features/payments';
+  import { auth } from '@/core/firebase/config';
+  import { onAuthStateChanged } from 'firebase/auth';
+
+  let selectedPlan = null;
+  let selectedPeriod = 'monthly';
+  let currentUser = null;
+
+  // Check authentication
+  onAuthStateChanged(auth, (user) => {
+    currentUser = user;
+    if (!user) {
+      alert('Debes iniciar sesión para suscribirte');
+      window.location.href = '/login?redirect=/checkout/' + planId;
+    } else {
+      loadPlan();
+    }
+  });
+
+  async function loadPlan() {
+    try {
+      const plan = await PlanService.getPlanById(planId);
+      if (!plan) {
+        alert('Plan no encontrado');
+        window.location.href = '/planes';
+        return;
+      }
+
+      selectedPlan = plan;
+      renderPlanDetails();
+      updateSummary();
+
+      document.getElementById('proceed-btn').disabled = false;
+      document.getElementById('btn-text').textContent = 'Proceder al Pago';
+    } catch (error) {
+      console.error('Error loading plan:', error);
+      alert('Error al cargar el plan');
+      window.location.href = '/planes';
+    }
+  }
+
+  function renderPlanDetails() {
+    const detailsDiv = document.getElementById('plan-details');
+    detailsDiv.innerHTML = `
+      <div class="bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-lg p-6 border border-blue-500/30">
+        <div class="flex items-start justify-between">
+          <div>
+            <h2 class="text-2xl font-bold text-white mb-2">${selectedPlan.name}</h2>
+            <p class="text-gray-300 mb-4">${selectedPlan.description}</p>
+            <ul class="space-y-2">
+              ${selectedPlan.features.slice(0, 5).map(feature => `
+                <li class="flex items-start text-gray-300 text-sm">
+                  <svg class="w-5 h-5 text-green-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                  </svg>
+                  ${feature}
+                </li>
+              `).join('')}
+            </ul>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Update prices
+    document.getElementById('monthly-price').textContent = formatPrice(selectedPlan.price.monthly);
+    document.getElementById('yearly-price').textContent = formatPrice(selectedPlan.price.yearly);
+  }
+
+  function updateSummary() {
+    const price = selectedPeriod === 'monthly' ? selectedPlan.price.monthly : selectedPlan.price.yearly;
+
+    document.getElementById('summary-plan').textContent = selectedPlan.name;
+    document.getElementById('summary-period').textContent = selectedPeriod === 'monthly' ? 'Mensual' : 'Anual';
+    document.getElementById('summary-subtotal').textContent = formatPrice(price);
+    document.getElementById('summary-total').textContent = formatPrice(price);
+  }
+
+  function formatPrice(price) {
+    return new Intl.NumberFormat('es-UY', {
+      style: 'currency',
+      currency: 'UYU',
+    }).format(price);
+  }
+
+  // Billing period selection
+  document.getElementById('monthly-btn').addEventListener('click', () => {
+    selectedPeriod = 'monthly';
+    document.getElementById('monthly-btn').classList.add('active', 'bg-blue-600', 'border-blue-600');
+    document.getElementById('monthly-btn').classList.remove('border-slate-600');
+    document.getElementById('yearly-btn').classList.remove('active', 'bg-blue-600', 'border-blue-600');
+    document.getElementById('yearly-btn').classList.add('border-slate-600');
+    updateSummary();
+  });
+
+  document.getElementById('yearly-btn').addEventListener('click', () => {
+    selectedPeriod = 'yearly';
+    document.getElementById('yearly-btn').classList.add('active', 'bg-blue-600', 'border-blue-600');
+    document.getElementById('yearly-btn').classList.remove('border-slate-600');
+    document.getElementById('monthly-btn').classList.remove('active', 'bg-blue-600', 'border-blue-600');
+    document.getElementById('monthly-btn').classList.add('border-slate-600');
+    updateSummary();
+  });
+
+  // Proceed to payment
+  document.getElementById('proceed-btn').addEventListener('click', async () => {
+    if (!currentUser) {
+      alert('Debes iniciar sesión para continuar');
+      return;
+    }
+
+    try {
+      document.getElementById('loading-overlay').classList.remove('hidden');
+
+      const preference = await MercadoPagoService.createSubscriptionPreference(
+        planId,
+        selectedPeriod,
+        currentUser.uid
+      );
+
+      // Redirect to Mercado Pago
+      MercadoPagoService.redirectToCheckout(preference, false);
+    } catch (error) {
+      console.error('Error creating payment:', error);
+      document.getElementById('loading-overlay').classList.add('hidden');
+      alert('Error al procesar el pago. Por favor, intenta nuevamente.');
+    }
+  });
+
+  // Initialize monthly as selected
+  if (selectedPlan) {
+    document.getElementById('monthly-btn').classList.add('active', 'bg-blue-600', 'border-blue-600');
+    document.getElementById('yearly-btn').classList.add('border-slate-600');
+  }
+</script>
+
+<style>
+  .billing-period-btn {
+    @apply border-slate-600 text-white;
+  }
+
+  .billing-period-btn.active {
+    @apply bg-blue-600 border-blue-600;
+  }
+
+  .billing-period-btn:not(.active):hover {
+    @apply bg-slate-700 border-slate-500;
+  }
+</style>
