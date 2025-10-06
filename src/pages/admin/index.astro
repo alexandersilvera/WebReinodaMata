@@ -3,155 +3,404 @@ import MainLayout from "@/layouts/MainLayout.astro";
 import AdminProtection from "@/components/AdminProtection";
 
 export const prerender = false;
-
 ---
 
 <MainLayout title="Panel de Administración | Reino Da Mata">
   <AdminProtection client:load>
-    <div class="max-w-6xl mx-auto w-full px-4 py-8">
-      <div class="mb-10">
-        <h1 class="text-3xl font-bold text-green-700 mb-2">Panel de Administración</h1>
-        <p class="text-gray-200">Gestiona el contenido y configuración del sitio web.</p>
-      </div>
+    <div class="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      <div class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Header mejorado -->
+        <div class="mb-8">
+          <div class="flex items-center justify-between mb-2">
+            <div>
+              <h1 class="text-4xl font-bold text-white mb-2">Panel de Administración</h1>
+              <p class="text-gray-400 text-lg">Bienvenido al centro de control del sitio</p>
+            </div>
+            <div class="flex items-center gap-3">
+              <div id="user-info" class="text-right">
+                <p class="text-sm text-gray-400">Conectado como</p>
+                <p id="admin-email" class="text-white font-medium"></p>
+              </div>
+              <div class="h-12 w-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
 
-      <div id="dashboard-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <!-- Tarjeta para artículos -->
-        <a href="/admin/articles" class="bg-green-900/30 p-6 rounded-lg backdrop-blur-sm hover:bg-green-800/40 transition-colors duration-300 flex flex-col">
-          <div class="flex items-center mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1M19 20a2 2 0 002-2V8a2 2 0 00-2-2h-5a2 2 0 00-2 2v12a2 2 0 002 2h5z" />
-            </svg>
-            <h2 class="text-xl font-bold text-green-500 ml-3">Artículos</h2>
+        <!-- Métricas principales en cards modernas -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <!-- Card Suscripciones Activas -->
+          <div class="bg-gradient-to-br from-blue-500/10 to-blue-600/5 backdrop-blur-sm border border-blue-500/20 rounded-xl p-6 hover:border-blue-500/40 transition-all duration-300">
+            <div class="flex items-center justify-between mb-4">
+              <div class="p-3 bg-blue-500/20 rounded-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+              <span class="text-xs text-green-400 font-medium flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                </svg>
+                +12%
+              </span>
+            </div>
+            <div>
+              <p class="text-gray-400 text-sm mb-1">Suscripciones Activas</p>
+              <p id="active-subs-count" class="text-3xl font-bold text-white">--</p>
+            </div>
           </div>
-          <p class="text-gray-300 mb-4">Crea, edita y gestiona los artículos del blog.</p>
-          <div class="mt-auto text-green-400 font-medium flex items-center">
-            <span>Administrar artículos</span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
-            </svg>
-          </div>
-        </a>
 
-        <!-- Tarjeta para suscriptores -->
-        <a href="/admin/subscribers" class="bg-green-900/30 p-6 rounded-lg backdrop-blur-sm hover:bg-green-800/40 transition-colors duration-300 flex flex-col">
-          <div class="flex items-center mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-            </svg>
-            <h2 class="text-xl font-bold text-green-500 ml-3">Suscriptores</h2>
+          <!-- Card Ingresos Mensuales -->
+          <div class="bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 backdrop-blur-sm border border-emerald-500/20 rounded-xl p-6 hover:border-emerald-500/40 transition-all duration-300">
+            <div class="flex items-center justify-between mb-4">
+              <div class="p-3 bg-emerald-500/20 rounded-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <span class="text-xs text-green-400 font-medium flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                </svg>
+                +8%
+              </span>
+            </div>
+            <div>
+              <p class="text-gray-400 text-sm mb-1">Ingresos Mensuales</p>
+              <p id="monthly-revenue" class="text-3xl font-bold text-white">--</p>
+            </div>
           </div>
-          <p class="text-gray-300 mb-4">Administra la lista de suscriptores del blog.</p>
-          <div class="mt-auto text-green-400 font-medium flex items-center">
-            <span>Ver suscriptores</span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
-            </svg>
-          </div>
-        </a>
 
-        <!-- Tarjeta para newsletter -->
-        <a href="/admin/newsletter" class="bg-green-900/30 p-6 rounded-lg backdrop-blur-sm hover:bg-green-800/40 transition-colors duration-300 flex flex-col">
-          <div class="flex items-center mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
-            <h2 class="text-xl font-bold text-green-500 ml-3">Newsletter</h2>
+          <!-- Card Artículos -->
+          <div class="bg-gradient-to-br from-purple-500/10 to-purple-600/5 backdrop-blur-sm border border-purple-500/20 rounded-xl p-6 hover:border-purple-500/40 transition-all duration-300">
+            <div class="flex items-center justify-between mb-4">
+              <div class="p-3 bg-purple-500/20 rounded-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                </svg>
+              </div>
+              <span class="text-xs text-purple-400 font-medium">Publicados</span>
+            </div>
+            <div>
+              <p class="text-gray-400 text-sm mb-1">Total de Artículos</p>
+              <p id="articles-count" class="text-3xl font-bold text-white">--</p>
+            </div>
           </div>
-          <p class="text-gray-300 mb-4">Envía newsletters a los suscriptores del blog.</p>
-          <div class="mt-auto text-green-400 font-medium flex items-center">
-            <span>Enviar newsletter</span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
-            </svg>
-          </div>
-        </a>
 
-        <!-- Tarjeta para test de newsletter -->
-        <a href="/admin/newsletter-test" class="bg-blue-900/30 p-6 rounded-lg backdrop-blur-sm hover:bg-blue-800/40 transition-colors duration-300 flex flex-col">
-          <div class="flex items-center mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <h2 class="text-xl font-bold text-blue-500 ml-3">Test Newsletter</h2>
+          <!-- Card Eventos Próximos -->
+          <div class="bg-gradient-to-br from-orange-500/10 to-orange-600/5 backdrop-blur-sm border border-orange-500/20 rounded-xl p-6 hover:border-orange-500/40 transition-all duration-300">
+            <div class="flex items-center justify-between mb-4">
+              <div class="p-3 bg-orange-500/20 rounded-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <span class="text-xs text-orange-400 font-medium">Este mes</span>
+            </div>
+            <div>
+              <p class="text-gray-400 text-sm mb-1">Eventos Próximos</p>
+              <p id="events-count" class="text-3xl font-bold text-white">--</p>
+            </div>
           </div>
-          <p class="text-gray-300 mb-4">Prueba el servicio de envío de emails masivos.</p>
-          <div class="mt-auto text-blue-400 font-medium flex items-center">
-            <span>Probar servicio</span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
-            </svg>
-          </div>
-        </a>
+        </div>
 
-        <!-- Tarjeta para métricas -->
-        <a href="/admin/metrics" class="bg-green-900/30 p-6 rounded-lg backdrop-blur-sm hover:bg-green-800/40 transition-colors duration-300 flex flex-col">
-          <div class="flex items-center mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-            <h2 class="text-xl font-bold text-green-500 ml-3">Métricas</h2>
-          </div>
-          <p class="text-gray-300 mb-4">Visualiza estadísticas de interacción de los usuarios.</p>
-          <div class="mt-auto text-green-400 font-medium flex items-center">
-            <span>Ver métricas</span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
-            </svg>
-          </div>
-        </a>
+        <!-- Secciones del dashboard -->
+        <div class="grid lg:grid-cols-2 gap-8 mb-8">
+          <!-- Monetización y Suscripciones -->
+          <div class="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
+            <div class="flex items-center justify-between mb-6">
+              <h2 class="text-2xl font-bold text-white flex items-center">
+                <div class="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg mr-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                  </svg>
+                </div>
+                Monetización
+              </h2>
+            </div>
+            <div class="space-y-4">
+              <a href="/admin/subscriptions" class="block p-4 bg-slate-700/30 hover:bg-slate-700/50 border border-slate-600/50 hover:border-blue-500/50 rounded-lg transition-all duration-300 group">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center">
+                    <div class="p-2 bg-blue-500/20 rounded-lg mr-3 group-hover:bg-blue-500/30 transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 class="text-white font-medium">Planes y Suscripciones</h3>
+                      <p class="text-gray-400 text-sm">Gestionar planes y usuarios premium</p>
+                    </div>
+                  </div>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 group-hover:text-blue-400 transition-colors" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                  </svg>
+                </div>
+              </a>
 
-        <!-- Tarjeta para sincronización -->
-        <a href="/admin/sync" class="bg-green-900/30 p-6 rounded-lg backdrop-blur-sm hover:bg-green-800/40 transition-colors duration-300 flex flex-col">
-          <div class="flex items-center mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            <h2 class="text-xl font-bold text-green-500 ml-3">Sincronización</h2>
-          </div>
-          <p class="text-gray-300 mb-4">Gestiona la sincronización entre Firestore y archivos Markdown.</p>
-          <div class="mt-auto text-green-400 font-medium flex items-center">
-            <span>Sincronizar contenido</span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
-            </svg>
-          </div>
-        </a>
+              <a href="/admin/payments" class="block p-4 bg-slate-700/30 hover:bg-slate-700/50 border border-slate-600/50 hover:border-emerald-500/50 rounded-lg transition-all duration-300 group">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center">
+                    <div class="p-2 bg-emerald-500/20 rounded-lg mr-3 group-hover:bg-emerald-500/30 transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 class="text-white font-medium">Pagos y Transacciones</h3>
+                      <p class="text-gray-400 text-sm">Historial de pagos y Mercado Pago</p>
+                    </div>
+                  </div>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 group-hover:text-emerald-400 transition-colors" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                  </svg>
+                </div>
+              </a>
 
-        <!-- Tarjeta para configuración -->
-        <a href="/admin/settings" class="bg-green-900/30 p-6 rounded-lg backdrop-blur-sm hover:bg-green-800/40 transition-colors duration-300 flex flex-col">
-          <div class="flex items-center mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            <h2 class="text-xl font-bold text-green-500 ml-3">Configuración</h2>
+              <a href="/admin/donations" class="block p-4 bg-slate-700/30 hover:bg-slate-700/50 border border-slate-600/50 hover:border-pink-500/50 rounded-lg transition-all duration-300 group">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center">
+                    <div class="p-2 bg-pink-500/20 rounded-lg mr-3 group-hover:bg-pink-500/30 transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-pink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 class="text-white font-medium">Donaciones</h3>
+                      <p class="text-gray-400 text-sm">Gestionar donaciones y campañas</p>
+                    </div>
+                  </div>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 group-hover:text-pink-400 transition-colors" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                  </svg>
+                </div>
+              </a>
+            </div>
           </div>
-          <p class="text-gray-300 mb-4">Administra la configuración general del sitio.</p>
-          <div class="mt-auto text-green-400 font-medium flex items-center">
-            <span>Configurar sitio</span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
-            </svg>
-          </div>
-        </a>
 
-        <!-- Tarjeta para administradores -->
-        <a href="/admin/admin-config-simple" class="bg-green-900/30 p-6 rounded-lg backdrop-blur-sm hover:bg-green-800/40 transition-colors duration-300 flex flex-col">
-          <div class="flex items-center mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m-3 7a4 4 0 11-8 0 4 4 0 018 0z" />
-            </svg>
-            <h2 class="text-xl font-bold text-green-500 ml-3">Administradores</h2>
+          <!-- Instituto y Eventos -->
+          <div class="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
+            <div class="flex items-center justify-between mb-6">
+              <h2 class="text-2xl font-bold text-white flex items-center">
+                <div class="p-2 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg mr-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
+                </div>
+                Instituto
+              </h2>
+            </div>
+            <div class="space-y-4">
+              <a href="/admin/events" class="block p-4 bg-slate-700/30 hover:bg-slate-700/50 border border-slate-600/50 hover:border-orange-500/50 rounded-lg transition-all duration-300 group">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center">
+                    <div class="p-2 bg-orange-500/20 rounded-lg mr-3 group-hover:bg-orange-500/30 transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 class="text-white font-medium">Eventos Académicos</h3>
+                      <p class="text-gray-400 text-sm">Talleres, seminarios y registros</p>
+                    </div>
+                  </div>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 group-hover:text-orange-400 transition-colors" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                  </svg>
+                </div>
+              </a>
+
+              <a href="/admin/library" class="block p-4 bg-slate-700/30 hover:bg-slate-700/50 border border-slate-600/50 hover:border-indigo-500/50 rounded-lg transition-all duration-300 group">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center">
+                    <div class="p-2 bg-indigo-500/20 rounded-lg mr-3 group-hover:bg-indigo-500/30 transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 class="text-white font-medium">Biblioteca Digital</h3>
+                      <p class="text-gray-400 text-sm">Papers y recursos académicos</p>
+                    </div>
+                  </div>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 group-hover:text-indigo-400 transition-colors" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                  </svg>
+                </div>
+              </a>
+
+              <a href="/admin/certificates" class="block p-4 bg-slate-700/30 hover:bg-slate-700/50 border border-slate-600/50 hover:border-cyan-500/50 rounded-lg transition-all duration-300 group">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center">
+                    <div class="p-2 bg-cyan-500/20 rounded-lg mr-3 group-hover:bg-cyan-500/30 transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 class="text-white font-medium">Certificados</h3>
+                      <p class="text-gray-400 text-sm">Generar y gestionar certificados</p>
+                    </div>
+                  </div>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 group-hover:text-cyan-400 transition-colors" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                  </svg>
+                </div>
+              </a>
+            </div>
           </div>
-          <p class="text-gray-300 mb-4">Gestiona los usuarios administradores del sistema.</p>
-          <div class="mt-auto text-green-400 font-medium flex items-center">
-            <span>Configurar admins</span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
-            </svg>
-          </div>
-        </a>
+        </div>
+
+        <!-- Sección de Contenido y Configuración (grid 3 columnas) -->
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <!-- Artículos -->
+          <a href="/admin/articles" class="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 hover:border-purple-500/50 rounded-xl p-6 transition-all duration-300 group">
+            <div class="flex items-center mb-4">
+              <div class="p-3 bg-purple-500/20 rounded-lg mr-4 group-hover:bg-purple-500/30 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                </svg>
+              </div>
+              <h3 class="text-xl font-bold text-white">Artículos</h3>
+            </div>
+            <p class="text-gray-400 mb-4">Crea y gestiona artículos del blog</p>
+            <div class="flex items-center text-purple-400 font-medium">
+              Administrar
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+            </div>
+          </a>
+
+          <!-- Newsletter -->
+          <a href="/admin/newsletter" class="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 hover:border-blue-500/50 rounded-xl p-6 transition-all duration-300 group">
+            <div class="flex items-center mb-4">
+              <div class="p-3 bg-blue-500/20 rounded-lg mr-4 group-hover:bg-blue-500/30 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h3 class="text-xl font-bold text-white">Newsletter</h3>
+            </div>
+            <p class="text-gray-400 mb-4">Envía newsletters a suscriptores</p>
+            <div class="flex items-center text-blue-400 font-medium">
+              Enviar
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+            </div>
+          </a>
+
+          <!-- Suscriptores -->
+          <a href="/admin/subscribers" class="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 hover:border-emerald-500/50 rounded-xl p-6 transition-all duration-300 group">
+            <div class="flex items-center mb-4">
+              <div class="p-3 bg-emerald-500/20 rounded-lg mr-4 group-hover:bg-emerald-500/30 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+              </div>
+              <h3 class="text-xl font-bold text-white">Suscriptores</h3>
+            </div>
+            <p class="text-gray-400 mb-4">Gestiona lista de suscriptores</p>
+            <div class="flex items-center text-emerald-400 font-medium">
+              Ver lista
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+            </div>
+          </a>
+
+          <!-- Métricas -->
+          <a href="/admin/metrics" class="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 hover:border-indigo-500/50 rounded-xl p-6 transition-all duration-300 group">
+            <div class="flex items-center mb-4">
+              <div class="p-3 bg-indigo-500/20 rounded-lg mr-4 group-hover:bg-indigo-500/30 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </div>
+              <h3 class="text-xl font-bold text-white">Métricas</h3>
+            </div>
+            <p class="text-gray-400 mb-4">Estadísticas de usuarios</p>
+            <div class="flex items-center text-indigo-400 font-medium">
+              Ver estadísticas
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+            </div>
+          </a>
+
+          <!-- Sincronización -->
+          <a href="/admin/sync" class="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 hover:border-cyan-500/50 rounded-xl p-6 transition-all duration-300 group">
+            <div class="flex items-center mb-4">
+              <div class="p-3 bg-cyan-500/20 rounded-lg mr-4 group-hover:bg-cyan-500/30 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </div>
+              <h3 class="text-xl font-bold text-white">Sincronización</h3>
+            </div>
+            <p class="text-gray-400 mb-4">Firestore ↔ Markdown</p>
+            <div class="flex items-center text-cyan-400 font-medium">
+              Sincronizar
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+            </div>
+          </a>
+
+          <!-- Configuración -->
+          <a href="/admin/settings" class="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 hover:border-gray-500/50 rounded-xl p-6 transition-all duration-300 group">
+            <div class="flex items-center mb-4">
+              <div class="p-3 bg-gray-500/20 rounded-lg mr-4 group-hover:bg-gray-500/30 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </div>
+              <h3 class="text-xl font-bold text-white">Configuración</h3>
+            </div>
+            <p class="text-gray-400 mb-4">Configuración del sitio y admins</p>
+            <div class="flex items-center text-gray-400 font-medium">
+              Configurar
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+            </div>
+          </a>
+        </div>
       </div>
     </div>
   </AdminProtection>
-</MainLayout> 
+</MainLayout>
+
+<script>
+  import { onAuthStateChanged } from 'firebase/auth';
+  import { auth } from '@/core/firebase/config';
+
+  // Cargar información del usuario
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      const emailElement = document.getElementById('admin-email');
+      if (emailElement) {
+        emailElement.textContent = user.email || 'Admin';
+      }
+    }
+  });
+
+  // Aquí puedes agregar lógica para cargar métricas en tiempo real
+  // Por ahora mostramos placeholders
+  setTimeout(() => {
+    const activeSubsElement = document.getElementById('active-subs-count');
+    const monthlyRevenueElement = document.getElementById('monthly-revenue');
+    const articlesCountElement = document.getElementById('articles-count');
+    const eventsCountElement = document.getElementById('events-count');
+
+    if (activeSubsElement) activeSubsElement.textContent = '0';
+    if (monthlyRevenueElement) monthlyRevenueElement.textContent = '$0';
+    if (articlesCountElement) articlesCountElement.textContent = '0';
+    if (eventsCountElement) eventsCountElement.textContent = '0';
+  }, 500);
+</script>
