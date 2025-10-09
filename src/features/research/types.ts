@@ -82,17 +82,34 @@ export interface AcademicEvent {
   id: string;
   title: string;
   description: string;
-  type: 'workshop' | 'seminar' | 'conference' | 'lecture';
+  shortDescription?: string;
+  type: 'workshop' | 'seminar' | 'conference' | 'lecture' | 'course' | 'ceremony' | 'retreat';
   date: Date;
+  endDate?: Date;
   duration: number; // in hours
   location: string;
   isOnline: boolean;
+  meetingLink?: string;
   maxParticipants?: number;
+  currentParticipants: number;
   registrationRequired: boolean;
   registrationDeadline?: Date;
   speakers: string[];
   topics: string[];
   materials: string[];
+  imageUrl?: string;
+
+  // Precio y pago
+  isFree: boolean;
+  price?: number;
+  currency?: string;
+  requiresSubscription?: boolean;
+  allowedSubscriptionTiers?: string[];
+
+  // Estado
+  status: 'draft' | 'published' | 'registration_closed' | 'in_progress' | 'completed' | 'cancelled';
+  featured?: boolean;
+
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;

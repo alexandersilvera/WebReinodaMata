@@ -97,6 +97,34 @@ export class MercadoPagoService {
   }
 
   /**
+   * Crear una preferencia de pago para registro a evento
+   */
+  static async createEventRegistrationPreference(
+    eventId: string,
+    userId: string,
+    amount: number
+  ): Promise<MercadoPagoPreference> {
+    try {
+      const createPreference = httpsCallable(functions, 'createPaymentPreference');
+
+      const request: CreatePaymentPreferenceRequest = {
+        paymentType: 'event_registration',
+        eventId,
+        userId,
+        amount,
+      };
+
+      const result = await createPreference(request);
+      const data = result.data as { preference: MercadoPagoPreference };
+
+      return data.preference;
+    } catch (error) {
+      console.error('Error creating event registration preference:', error);
+      throw new Error('No se pudo crear la preferencia de pago para el evento');
+    }
+  }
+
+  /**
    * Redirigir al usuario al checkout de Mercado Pago
    */
   static redirectToCheckout(preference: MercadoPagoPreference, sandbox: boolean = false): void {
