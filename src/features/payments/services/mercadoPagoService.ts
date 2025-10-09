@@ -100,7 +100,12 @@ export class MercadoPagoService {
    * Redirigir al usuario al checkout de Mercado Pago
    */
   static redirectToCheckout(preference: MercadoPagoPreference, sandbox: boolean = false): void {
-    const checkoutUrl = preference.init_point || this.getCheckoutUrl(preference.id, sandbox);
+    // Usar sandbox_init_point si estamos en modo sandbox, sino init_point
+    const checkoutUrl = sandbox && preference.sandbox_init_point
+      ? preference.sandbox_init_point
+      : preference.init_point || this.getCheckoutUrl(preference.id, sandbox);
+
+    console.log('Redirecting to Mercado Pago:', checkoutUrl);
     window.location.href = checkoutUrl;
   }
 }

@@ -114,11 +114,14 @@ const { planId } = Astro.params;
   </div>
 </MainLayout>
 
-<script define:vars={{ planId }}>
+<script>
   import { PlanService } from '@/features/subscriptions';
   import { MercadoPagoService } from '@/features/payments';
   import { auth } from '@/core/firebase/config';
   import { onAuthStateChanged } from 'firebase/auth';
+
+  // Get planId from URL
+  const planId = window.location.pathname.split('/').pop();
 
   let selectedPlan = null;
   let selectedPeriod = 'monthly';
@@ -236,7 +239,7 @@ const { planId } = Astro.params;
         currentUser.uid
       );
 
-      // Redirect to Mercado Pago
+      // Redirect to Mercado Pago (producción)
       MercadoPagoService.redirectToCheckout(preference, false);
     } catch (error) {
       console.error('Error creating payment:', error);
