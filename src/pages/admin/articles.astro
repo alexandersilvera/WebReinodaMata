@@ -722,16 +722,22 @@ export const prerender = false;
           });
           if (articlesListElement && draftsListElement) {
             console.log('✅ Renderizando contenido (segundo intento)...');
-            
+
+            // Asegurar que el contenedor principal esté visible
+            if (contentContainer && contentContainer.classList.contains('hidden')) {
+              contentContainer.classList.remove('hidden');
+              console.log('🔓 Contenedor principal mostrado (segundo intento)');
+            }
+
             // Ocultar spinner de carga
             if (loadingElement && !loadingElement.classList.contains('hidden')) {
               loadingElement.classList.add('hidden');
               console.log('✅ Spinner de carga ocultado (segundo intento)');
             }
-            
+
             // Configurar event listeners ahora que todos los elementos están disponibles
             setupEventListeners();
-            
+
             filterAndRender();
             updateStats();
           } else {

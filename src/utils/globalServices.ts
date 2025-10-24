@@ -16,7 +16,13 @@ export const exposeGlobalServices = () => {
     
     // Exponer servicios de artículos
     window.articleServices = {
-      getAllArticles: articleService.getAllArticles,
+      // Wrapper para getAllArticles que incluye drafts por defecto en admin
+      getAllArticles: (options = {}) => {
+        return articleService.getAllArticles({
+          includeDrafts: true,  // Por defecto incluir borradores en admin
+          ...options
+        });
+      },
       getAllDrafts: articleService.getAllDrafts,
       deleteArticle: articleService.deleteArticle,
       deleteDraft: articleService.deleteDraft,
