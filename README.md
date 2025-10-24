@@ -8,7 +8,8 @@ Sitio web oficial del Centro Umbandista Reino Da Mata, construido con tecnologí
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/)
 - **Backend**: [Firebase](https://firebase.google.com/) (Firestore, Auth, Functions)
 - **Email**: [Mailgun](https://www.mailgun.com/)
-- **Hosting**: Firebase Hosting
+- **Payments**: [Mercado Pago](https://www.mercadopago.com.uy/) (Uruguay)
+- **Hosting**: Firebase Hosting + Vercel
 
 ## 🏗️ Estructura del Proyecto
 
@@ -34,10 +35,11 @@ Sitio web oficial del Centro Umbandista Reino Da Mata, construido con tecnologí
 
 ### 1. Prerrequisitos
 
-- Node.js 18+ 
+- Node.js 18+
 - npm o yarn
 - Cuenta de Firebase
 - Cuenta de Mailgun (para emails)
+- Cuenta de Mercado Pago (para pagos) - **[Guía completa](./MERCADOPAGO_SETUP.md)**
 
 ### 2. Configuración
 
@@ -56,10 +58,16 @@ cp ENV_VARIABLES.md .env.local
 # Configurar Firebase Functions
 cd functions
 npm install
+
+# Configurar Mailgun
 firebase functions:config:set mailgun.api_key="tu-api-key"
 firebase functions:config:set mailgun.domain="tu-dominio.com"
-# Ver ENV_VARIABLES.md para más configuraciones
 
+# Configurar Mercado Pago (ver MERCADOPAGO_SETUP.md para detalles)
+firebase functions:config:set mercadopago.access_token="tu-access-token"
+firebase functions:config:set app.url="https://tu-dominio.com"
+
+# Ver ENV_VARIABLES.md para más configuraciones
 cd ..
 ```
 
@@ -113,6 +121,10 @@ MAIN_ADMIN_EMAIL=
 - **Autenticación**: Sistema completo con Firebase Auth
 - **Newsletter**: Suscripción y envío de correos con Mailgun
 - **Admin Panel**: Gestión de contenido para administradores
+- **Sistema de Pagos**: Integración completa con Mercado Pago
+  - Suscripciones mensuales y anuales
+  - Donaciones con muro de donantes
+  - Registro a eventos académicos
 - **Responsive Design**: Optimizado para todos los dispositivos
 - **SEO**: Optimización para motores de búsqueda
 - **Security**: Sistema de configuración seguro y validación
@@ -122,8 +134,8 @@ MAIN_ADMIN_EMAIL=
 - Sistema de comentarios
 - Galería de imágenes avanzada
 - Blog/Artículos
-- Eventos y calendario
-- Sistema de donaciones
+- Calendario de eventos
+- Biblioteca digital
 
 ## 📊 Monitoreo y Analytics
 
@@ -179,8 +191,10 @@ firebase deploy --only hosting,functions
 
 - [`SECURITY_SETUP.md`](./SECURITY_SETUP.md) - Configuración de seguridad completa
 - [`ENV_VARIABLES.md`](./ENV_VARIABLES.md) - Variables de entorno detalladas
+- [`MERCADOPAGO_SETUP.md`](./MERCADOPAGO_SETUP.md) - **Configuración de Mercado Pago paso a paso**
 - [Astro Docs](https://docs.astro.build) - Documentación del framework
 - [Firebase Docs](https://firebase.google.com/docs) - Documentación de Firebase
+- [Mercado Pago Docs](https://www.mercadopago.com.uy/developers/es/docs) - API de Mercado Pago
 
 ## 🤝 Contribuciones
 

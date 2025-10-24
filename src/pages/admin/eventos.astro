@@ -1,0 +1,80 @@
+---
+import AdminProtection from "@/components/AdminProtection";
+import MainLayout from "@/layouts/MainLayout.astro";
+import EventsManager from "@/features/events/components/EventsManager";
+
+export const prerender = false;
+---
+
+<MainLayout title="Admin - Eventos | Centro Umbandista Reino Da Mata">
+  <AdminProtection client:load>
+    <div class="max-w-7xl mx-auto px-4 py-12">
+      <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Gestión de Eventos</h1>
+        <p class="text-gray-600">Administra los eventos académicos del instituto</p>
+      </div>
+
+      <EventsManager client:load />
+
+      <div class="mt-12 border-t pt-8">
+        <h2 class="text-xl font-bold text-gray-900 mb-4">Enlaces Útiles</h2>
+        <div class="grid md:grid-cols-2 gap-4">
+          <a
+            href="/eventos"
+            class="block bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+          >
+            <div class="flex items-center mb-4">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-8 w-8 text-blue-600 mr-3"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+              <div>
+                <h3 class="text-lg font-bold text-gray-900">Ver Eventos Públicos</h3>
+                <p class="text-sm text-gray-600">Vista pública de eventos</p>
+              </div>
+            </div>
+            <p class="text-gray-700 text-sm">
+              Visualiza cómo se ven los eventos para los usuarios.
+            </p>
+          </a>
+
+          <a
+            href="https://console.firebase.google.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="block bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+          >
+            <div class="flex items-center mb-4">
+              <svg
+                class="h-8 w-8 text-orange-500 mr-3"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M3.89 15.672L6.255.461A.542.542 0 017.27.288l2.543 4.771zm16.794 3.692l-2.25-14a.54.54 0 00-.919-.295L3.316 19.365l7.856 4.427a1.621 1.621 0 001.588 0zM14.3 7.147l-1.82-3.482a.542.542 0 00-.96 0L3.53 17.984z"
+                />
+              </svg>
+              <div>
+                <h3 class="text-lg font-bold text-gray-900">Firebase Console</h3>
+                <p class="text-sm text-gray-600">Administración avanzada</p>
+              </div>
+            </div>
+            <p class="text-gray-700 text-sm">
+              Accede a Firebase Console para gestión avanzada de datos.
+            </p>
+          </a>
+        </div>
+      </div>
+    </div>
+  </AdminProtection>
+</MainLayout>

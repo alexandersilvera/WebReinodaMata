@@ -1,7 +1,8 @@
 ---
 import MainLayout from "@/layouts/MainLayout.astro";
 import { Image } from "astro:assets";
-import institutoHeroImg from "@/assets/biblioteca.jpg"; // Puedes reemplazar esto con una imagen específica del instituto
+import institutoHeroImg from "@/assets/biblioteca.jpg";
+import UpcomingEventsWidget from "@/features/events/components/UpcomingEventsWidget";
 ---
 
 <MainLayout 
@@ -142,75 +143,16 @@ import institutoHeroImg from "@/assets/biblioteca.jpg"; // Puedes reemplazar est
   <!-- Talleres Académicos -->
   <section class="max-w-6xl mx-auto px-4 py-16">
     <h2 class="text-3xl font-bold text-blue-800 mb-8 text-center relative inline-block">
-      Talleres y Seminarios Académicos
+      Próximos Eventos Académicos
       <span class="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 to-green-400 rounded-full"></span>
     </h2>
-    
-    <div class="grid gap-6 md:grid-cols-2">
-      <!-- Taller 1 -->
-      <div class="flex bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-        <div class="w-1/4 bg-blue-700 flex items-center justify-center text-white p-4">
-          <div class="text-center">
-            <span class="block text-2xl font-bold">15</span>
-            <span class="block text-sm">Agosto</span>
-          </div>
-        </div>
-        <div class="w-3/4 p-4">
-          <h3 class="text-lg font-bold text-blue-800 mb-1">Metodología de Investigación en Religiones Afro</h3>
-          <p class="text-blue-600 text-sm mb-2">Sábado 15 de Agosto, 09:00 - 17:00</p>
-          <p class="text-gray-700 text-sm">Taller intensivo sobre métodos y técnicas de investigación académica en tradiciones afro-umbandistas.</p>
-        </div>
-      </div>
-      
-      <!-- Taller 2 -->
-      <div class="flex bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-        <div class="w-1/4 bg-red-700 flex items-center justify-center text-white p-4">
-          <div class="text-center">
-            <span class="block text-2xl font-bold">22</span>
-            <span class="block text-sm">Agosto</span>
-          </div>
-        </div>
-        <div class="w-3/4 p-4">
-          <h3 class="text-lg font-bold text-red-800 mb-1">Combatiendo el Racismo Religioso</h3>
-          <p class="text-red-600 text-sm mb-2">Sábado 22 de Agosto, 14:00 - 18:00</p>
-          <p class="text-gray-700 text-sm">Seminario sobre estrategias legales y sociales para combatir la discriminación religiosa.</p>
-        </div>
-      </div>
-      
-      <!-- Taller 3 -->
-      <div class="flex bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-        <div class="w-1/4 bg-green-700 flex items-center justify-center text-white p-4">
-          <div class="text-center">
-            <span class="block text-2xl font-bold">29</span>
-            <span class="block text-sm">Agosto</span>
-          </div>
-        </div>
-        <div class="w-3/4 p-4">
-          <h3 class="text-lg font-bold text-green-800 mb-1">Archivo Oral y Preservación Cultural</h3>
-          <p class="text-green-600 text-sm mb-2">Sábado 29 de Agosto, 10:00 - 16:00</p>
-          <p class="text-gray-700 text-sm">Técnicas de recolección y preservación de testimonios orales en comunidades afro-umbandistas.</p>
-        </div>
-      </div>
-      
-      <!-- Taller 4 -->
-      <div class="flex bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-        <div class="w-1/4 bg-orange-700 flex items-center justify-center text-white p-4">
-          <div class="text-center">
-            <span class="block text-2xl font-bold">05</span>
-            <span class="block text-sm">Septiembre</span>
-          </div>
-        </div>
-        <div class="w-3/4 p-4">
-          <h3 class="text-lg font-bold text-orange-800 mb-1">Derechos Humanos y Libertad Religiosa</h3>
-          <p class="text-orange-600 text-sm mb-2">Sábado 5 de Septiembre, 16:00 - 20:00</p>
-          <p class="text-gray-700 text-sm">Conferencia sobre el marco legal de derechos humanos y libertad religiosa en Uruguay.</p>
-        </div>
-      </div>
-    </div>
-    
+
+    <!-- Widget de eventos dinámicos -->
+    <UpcomingEventsWidget limit={4} client:load />
+
     <div class="mt-10 text-center">
-      <a href="#" class="inline-flex items-center px-6 py-3 bg-blue-700 text-white font-medium rounded-lg hover:bg-blue-600 transition-colors">
-        Ver calendario académico
+      <a href="/eventos" class="inline-flex items-center px-6 py-3 bg-blue-700 text-white font-medium rounded-lg hover:bg-blue-600 transition-colors">
+        Ver todos los eventos
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
           <path fill-rule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
         </svg>

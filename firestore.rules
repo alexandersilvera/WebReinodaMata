@@ -147,7 +147,205 @@ service cloud.firestore {
       // Solo los administradores pueden leer y escribir roles
       allow read, write: if isAdmin();
     }
-    
+
+    // ==========================================
+    // NUEVAS REGLAS: SISTEMA DE MONETIZACIÓN
+    // ==========================================
+
+    // Reglas para planes de suscripción
+    match /subscription_plans/{planId} {
+      // Lectura pública de planes
+      allow read: if true;
+
+      // Solo administradores pueden crear/modificar planes
+      // También permitir al usuario autenticado con email de admin
+      allow create, update, delete: if isAdmin() ||
+                                      (isAuthenticated() && request.auth.token.email == 'alexandersilvera@hotmail.com');
+    }
+
+    // Reglas para suscripciones de usuarios
+    match /subscriptions/{subscriptionId} {
+      // Usuario puede leer su propia suscripción o admin puede leer todas
+      allow read: if isAuthenticated() &&
+                   (resource.data.userId == request.auth.uid || isAdmin());
+
+      // Solo admin puede crear/modificar suscripciones directamente
+      allow create, update: if isAdmin();
+
+      // Usuario puede cancelar su propia suscripción
+      allow update: if isAuthenticated() &&
+                     resource.data.userId == request.auth.uid &&
+                     request.resource.data.diff(resource.data).affectedKeys().hasOnly(['cancelAtPeriodEnd', 'updatedAt']) &&
+                     request.resource.data.cancelAtPeriodEnd == true;
+
+      // Solo admin puede eliminar
+      allow delete: if isAdmin();
+    }
+
+    // Reglas para pagos
+    match /payments/{paymentId} {
+      // Usuario puede leer sus propios pagos o admin puede leer todos
+      allow read: if isAuthenticated() &&
+                   (resource.data.userId == request.auth.uid || isAdmin());
+
+      // Solo sistema (via Cloud Functions) puede crear pagos
+      allow create: if request.auth != null;
+
+      // Solo admin puede actualizar/eliminar
+      allow update, delete: if isAdmin();
+    }
+
+    // Reglas para registros de eventos académicos
+    match /event_registrations/{registrationId} {
+      // Usuario puede leer sus propios registros o admin puede leer todos
+      allow read: if isAuthenticated() &&
+                   (resource.data.userId == request.auth.uid || isAdmin());
+
+      // Usuario autenticado puede registrarse a eventos
+      allow create: if isAuthenticated() &&
+                     request.resource.data.userId == request.auth.uid;
+
+      // Usuario puede cancelar su propio registro
+      allow update: if isAuthenticated() &&
+                     resource.data.userId == request.auth.uid &&
+                     request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt']) &&
+                     request.resource.data.status == 'cancelled';
+
+      // Admin puede modificar cualquier registro
+      allow update, delete: if isAdmin();
+    }
+
+    // Reglas para certificados digitales
+    match /certificates/{certificateId} {
+      // Usuario puede leer sus propios certificados o admin puede leer todos
+      allow read: if isAuthenticated() &&
+                   (resource.data.userId == request.auth.uid || isAdmin());
+
+      // Solo sistema puede crear certificados
+      allow create: if isAdmin();
+
+      // Solo admin puede actualizar/eliminar
+      allow update, delete: if isAdmin();
+    }
+
+    // Verificación pública de certificados (por código único)
+    match /certificate_verifications/{verificationCode} {
+      // Lectura pública para verificar autenticidad
+      allow read: if true;
+
+      // Solo sistema puede crear
+      allow create: if isAdmin();
+
+      // Solo admin puede modificar
+      allow update, delete: if isAdmin();
+    }
+
+    // Reglas para biblioteca digital
+    match /digital_library/{paperId} {
+      // Lectura según nivel de acceso del documento
+      allow read: if true; // Control de acceso en la lógica de negocio
+
+      // Solo admin puede crear/modificar documentos
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Reglas para logs de acceso a documentos
+    match /access_logs/{logId} {
+      // Solo admin puede leer logs
+      allow read: if isAdmin();
+
+      // Sistema puede crear logs
+      allow create: if isAuthenticated();
+
+      // Solo admin puede modificar/eliminar
+      allow update, delete: if isAdmin();
+    }
+
+    // Reglas para donaciones
+    match /donations/{donationId} {
+      // Admin puede leer todas las donaciones
+      allow read: if isAdmin();
+
+      // Usuario puede leer sus propias donaciones
+      allow read: if isAuthenticated() &&
+                   resource.data.userId == request.auth.uid;
+
+      // Cualquiera puede crear donación (validación en Cloud Function)
+      allow create: if request.resource.data.keys().hasAll(['amount', 'currency']) &&
+                     request.resource.data.amount is number &&
+                     request.resource.data.amount > 0 &&
+                     request.resource.data.currency is string;
+
+      // Solo admin puede modificar/eliminar
+      allow update, delete: if isAdmin();
+    }
+
+    // Reglas para muro de donantes
+    match /donor_wall/{donorId} {
+      // Lectura pública del muro de donantes
+      allow read: if true;
+
+      // Solo sistema puede agregar al muro
+      allow create: if isAdmin();
+
+      // Solo admin puede modificar/eliminar
+      allow update, delete: if isAdmin();
+    }
+
+    // Reglas para eventos académicos
+    match /academic_events/{eventId} {
+      // Lectura pública de eventos
+      allow read: if true;
+
+      // Solo admin puede crear/modificar eventos
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Reglas alternativas (con guión) para mantener compatibilidad
+    match /academic-events/{eventId} {
+      // Lectura pública de eventos
+      allow read: if true;
+
+      // Solo admin puede crear/modificar eventos
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Reglas para líneas de investigación
+    match /research-lines/{lineId} {
+      // Lectura pública
+      allow read: if true;
+
+      // Solo admin puede modificar
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Reglas para proyectos de investigación
+    match /research-projects/{projectId} {
+      // Lectura pública
+      allow read: if true;
+
+      // Solo admin puede modificar
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Reglas para papers de investigación
+    match /research-papers/{paperId} {
+      // Lectura pública
+      allow read: if true;
+
+      // Solo admin puede modificar
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Reglas para investigadores
+    match /researchers/{researcherId} {
+      // Lectura pública
+      allow read: if true;
+
+      // Solo admin puede modificar
+      allow create, update, delete: if isAdmin();
+    }
+
     // Regla por defecto - denegar acceso a cualquier otra colección
     match /{document=**} {
       allow read, write: if false;
