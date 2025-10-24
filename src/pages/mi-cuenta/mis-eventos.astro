@@ -1,0 +1,11 @@
+---
+import MainLayout from "@/layouts/MainLayout.astro";
+import MyEventsClient from "@/features/events/components/MyEventsClient";
+---
+
+<MainLayout
+  title="Mis Eventos | Centro Umbandista Reino Da Mata"
+  description="Gestiona tus inscripciones a eventos académicos"
+>
+  <MyEventsClient client:load />
+</MainLayout>

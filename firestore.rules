@@ -292,7 +292,16 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
-    // Reglas para eventos académicos (ya existe en research pero agregamos control)
+    // Reglas para eventos académicos
+    match /academic_events/{eventId} {
+      // Lectura pública de eventos
+      allow read: if true;
+
+      // Solo admin puede crear/modificar eventos
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Reglas alternativas (con guión) para mantener compatibilidad
     match /academic-events/{eventId} {
       // Lectura pública de eventos
       allow read: if true;

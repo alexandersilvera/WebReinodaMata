@@ -1,0 +1,144 @@
+---
+import MainLayout from "@/layouts/MainLayout.astro";
+import EventsListClient from "@/features/events/components/EventsListClient";
+---
+
+<MainLayout
+  title="Eventos Académicos | Centro Umbandista Reino Da Mata"
+  description="Participa en talleres, seminarios y conferencias sobre tradiciones afro-umbandistas, derechos humanos y combate al racismo religioso."
+>
+  <!-- Hero Section -->
+  <div class="relative bg-gradient-to-r from-blue-900 via-purple-800 to-blue-900 py-20">
+    <div class="absolute inset-0 bg-black/30"></div>
+    <div class="relative max-w-6xl mx-auto px-4">
+      <div class="text-center text-white">
+        <h1 class="text-4xl md:text-5xl font-bold mb-4">
+          Eventos Académicos
+        </h1>
+        <p class="text-xl md:text-2xl text-blue-100 max-w-3xl mx-auto mb-6">
+          Talleres, seminarios y conferencias sobre tradiciones afro-umbandistas, derechos humanos y antirracismo
+        </p>
+        <div class="flex flex-wrap justify-center gap-3 mt-8">
+          <span class="px-4 py-2 bg-white/20 backdrop-blur-sm text-white rounded-full text-sm font-medium">
+            Educación Continua
+          </span>
+          <span class="px-4 py-2 bg-white/20 backdrop-blur-sm text-white rounded-full text-sm font-medium">
+            Certificación
+          </span>
+          <span class="px-4 py-2 bg-white/20 backdrop-blur-sm text-white rounded-full text-sm font-medium">
+            Networking
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="max-w-7xl mx-auto px-4 py-12">
+    <!-- Stats Section -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
+      <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-6 text-white text-center">
+        <div class="text-3xl font-bold mb-1" id="totalEvents">-</div>
+        <div class="text-sm opacity-90">Eventos Disponibles</div>
+      </div>
+      <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-lg p-6 text-white text-center">
+        <div class="text-3xl font-bold mb-1" id="upcomingEvents">-</div>
+        <div class="text-sm opacity-90">Próximos</div>
+      </div>
+      <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg p-6 text-white text-center">
+        <div class="text-3xl font-bold mb-1" id="freeEvents">-</div>
+        <div class="text-sm opacity-90">Gratuitos</div>
+      </div>
+      <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg p-6 text-white text-center">
+        <div class="text-3xl font-bold mb-1" id="onlineEvents">-</div>
+        <div class="text-sm opacity-90">Online</div>
+      </div>
+    </div>
+
+    <!-- Info Section -->
+    <div class="bg-blue-50 border-l-4 border-blue-600 rounded-r-lg p-6 mb-8">
+      <div class="flex items-start">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-6 w-6 text-blue-600 mr-3 flex-shrink-0 mt-1"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+        <div>
+          <h3 class="text-lg font-bold text-blue-900 mb-2">
+            Acerca de nuestros eventos
+          </h3>
+          <p class="text-blue-800">
+            Nuestros eventos académicos están diseñados para investigadores, estudiantes, activistas y miembros
+            de la comunidad interesados en profundizar su conocimiento sobre religiones afro-umbandistas,
+            derechos humanos y la lucha contra el racismo religioso. Ofrecemos certificados de asistencia
+            para eventos completados.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Events List Component (React) -->
+    <EventsListClient client:load />
+  </div>
+
+  <!-- CTA Section -->
+  <section class="bg-gradient-to-r from-blue-900 to-purple-900 py-16 px-4 mt-16">
+    <div class="max-w-4xl mx-auto text-center text-white">
+      <h2 class="text-3xl font-bold mb-4">
+        ¿No encontraste lo que buscabas?
+      </h2>
+      <p class="text-xl text-blue-100 mb-8">
+        Contáctanos para proponer nuevos talleres o recibir notificaciones sobre futuros eventos
+      </p>
+      <div class="flex flex-wrap justify-center gap-4">
+        <a
+          href="/contacto"
+          class="inline-flex items-center bg-white text-blue-900 font-bold py-3 px-8 rounded-lg hover:bg-blue-50 transition-colors"
+        >
+          Contactar
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5 ml-2"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"
+            />
+            <path
+              d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"
+            />
+          </svg>
+        </a>
+        <a
+          href="/newsletter"
+          class="inline-flex items-center bg-transparent border-2 border-white text-white font-bold py-3 px-8 rounded-lg hover:bg-white hover:text-blue-900 transition-colors"
+        >
+          Suscribirse al boletín
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5 ml-2"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"
+            />
+            <path
+              d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"
+            />
+          </svg>
+        </a>
+      </div>
+    </div>
+  </section>
+</MainLayout>

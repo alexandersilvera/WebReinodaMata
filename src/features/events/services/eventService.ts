@@ -1,5 +1,5 @@
 /**
- * Servicio para gestionar eventos académicos
+ * Servicio para gestionar eventos acadï¿½micos
  */
 
 import {
@@ -9,7 +9,6 @@ import {
   getDocs,
   addDoc,
   updateDoc,
-  deleteDoc,
   query,
   where,
   orderBy,
@@ -36,7 +35,33 @@ const convertTimestamp = (data: any): any => {
   return converted;
 };
 
+// Helper para remover valores undefined (Firestore no los permite)
+const removeUndefined = (obj: any): any => {
+  const cleaned: any = {};
+  Object.keys(obj).forEach((key) => {
+    if (obj[key] !== undefined) {
+      cleaned[key] = obj[key];
+    }
+  });
+  return cleaned;
+};
+
 export class EventService {
+  /**
+   * Obtener TODOS los eventos (para admin)
+   */
+  static async getAllEvents(): Promise<AcademicEvent[]> {
+    const q = query(
+      collection(db, EVENTS_COLLECTION),
+      orderBy('date', 'desc')
+    );
+
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map((doc) =>
+      convertTimestamp({ id: doc.id, ...doc.data() })
+    );
+  }
+
   /**
    * Obtener todos los eventos publicados
    */
@@ -74,26 +99,62 @@ export class EventService {
   }
 
   /**
-   * Obtener eventos próximos (futuro)
+   * Obtener eventos prï¿½ximos (futuro)
    */
   static async getUpcomingEvents(limitCount?: number): Promise<AcademicEvent[]> {
     const now = new Date();
-    let q = query(
-      collection(db, EVENTS_COLLECTION),
-      where('status', '==', 'published'),
-      where('date', '>=', now),
-      where('isActive', '==', true),
-      orderBy('date', 'asc')
-    );
 
-    if (limitCount) {
-      q = query(q, limit(limitCount));
+    try {
+      // Intentar con la consulta completa (requiere Ã­ndice)
+      let q = query(
+        collection(db, EVENTS_COLLECTION),
+        where('status', '==', 'published'),
+        where('date', '>=', now),
+        where('isActive', '==', true),
+        orderBy('date', 'asc')
+      );
+
+      if (limitCount) {
+        q = query(q, limit(limitCount));
+      }
+
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map((doc) =>
+        convertTimestamp({ id: doc.id, ...doc.data() })
+      );
+    } catch (error: any) {
+      // Si falla por falta de Ã­ndice, usar consulta mÃ¡s simple y filtrar en cliente
+      console.warn('Usando consulta simplificada (Ã­ndice en construcciÃ³n):', error.message);
+
+      const q = query(
+        collection(db, EVENTS_COLLECTION),
+        where('status', '==', 'published'),
+        where('isActive', '==', true)
+      );
+
+      const querySnapshot = await getDocs(q);
+      let events = querySnapshot.docs.map((doc) =>
+        convertTimestamp({ id: doc.id, ...doc.data() })
+      );
+
+      // Filtrar en cliente
+      events = events
+        .filter((event) => {
+          const eventDate = event.date instanceof Date ? event.date : new Date(event.date);
+          return eventDate >= now;
+        })
+        .sort((a, b) => {
+          const dateA = a.date instanceof Date ? a.date : new Date(a.date);
+          const dateB = b.date instanceof Date ? b.date : new Date(b.date);
+          return dateA.getTime() - dateB.getTime();
+        });
+
+      if (limitCount) {
+        events = events.slice(0, limitCount);
+      }
+
+      return events;
     }
-
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map((doc) =>
-      convertTimestamp({ id: doc.id, ...doc.data() })
-    );
   }
 
   /**
@@ -134,12 +195,15 @@ export class EventService {
    * Crear un nuevo evento
    */
   static async createEvent(eventData: Omit<AcademicEvent, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
-    const docRef = await addDoc(collection(db, EVENTS_COLLECTION), {
+    // Remover valores undefined antes de enviar a Firestore
+    const cleanData = removeUndefined({
       ...eventData,
       currentParticipants: 0,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
+
+    const docRef = await addDoc(collection(db, EVENTS_COLLECTION), cleanData);
 
     return docRef.id;
   }
@@ -152,10 +216,14 @@ export class EventService {
     eventData: Partial<Omit<AcademicEvent, 'id' | 'createdAt' | 'updatedAt'>>
   ): Promise<void> {
     const docRef = doc(db, EVENTS_COLLECTION, eventId);
-    await updateDoc(docRef, {
+
+    // Remover valores undefined antes de enviar a Firestore
+    const cleanData = removeUndefined({
       ...eventData,
       updatedAt: serverTimestamp(),
     });
+
+    await updateDoc(docRef, cleanData);
   }
 
   /**
@@ -198,13 +266,13 @@ export class EventService {
     const event = await this.getEventById(eventId);
     if (!event) return false;
 
-    if (!event.maxParticipants) return true; // Sin límite
+    if (!event.maxParticipants) return true; // Sin lï¿½mite
 
     return event.currentParticipants < event.maxParticipants;
   }
 
   /**
-   * Verificar si las inscripciones están abiertas
+   * Verificar si las inscripciones estï¿½n abiertas
    */
   static isRegistrationOpen(event: AcademicEvent): boolean {
     const now = new Date();

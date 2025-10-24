@@ -35,6 +35,17 @@ const convertTimestamp = (data: any): any => {
   return converted;
 };
 
+// Helper para remover valores undefined (Firestore no los permite)
+const removeUndefined = (obj: any): any => {
+  const cleaned: any = {};
+  Object.keys(obj).forEach((key) => {
+    if (obj[key] !== undefined) {
+      cleaned[key] = obj[key];
+    }
+  });
+  return cleaned;
+};
+
 export class EventRegistrationService {
   /**
    * Registrar un usuario a un evento
@@ -53,7 +64,7 @@ export class EventRegistrationService {
     }
 
     if (!EventService.isRegistrationOpen(event)) {
-      throw new Error('Las inscripciones están cerradas para este evento');
+      throw new Error('Las inscripciones estï¿½n cerradas para este evento');
     }
 
     const hasSpots = await EventService.hasAvailableSpots(eventId);
@@ -61,10 +72,10 @@ export class EventRegistrationService {
       throw new Error('No hay cupos disponibles');
     }
 
-    // Verificar si ya está registrado
+    // Verificar si ya estï¿½ registrado
     const existingRegistration = await this.getUserRegistrationForEvent(userId, eventId);
     if (existingRegistration && existingRegistration.status !== 'cancelled') {
-      throw new Error('Ya estás registrado en este evento');
+      throw new Error('Ya estï¿½s registrado en este evento');
     }
 
     // Determinar si requiere pago
@@ -87,12 +98,15 @@ export class EventRegistrationService {
       updatedAt: new Date(),
     };
 
-    const docRef = await addDoc(collection(db, REGISTRATIONS_COLLECTION), {
+    // Remover valores undefined antes de enviar a Firestore
+    const cleanData = removeUndefined({
       ...registrationData,
       registrationDate: serverTimestamp(),
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
+
+    const docRef = await addDoc(collection(db, REGISTRATIONS_COLLECTION), cleanData);
 
     // Incrementar contador de participantes
     await EventService.incrementParticipants(eventId);
@@ -296,14 +310,18 @@ export class EventRegistrationService {
     data: Partial<EventRegistration>
   ): Promise<void> {
     const docRef = doc(db, REGISTRATIONS_COLLECTION, registrationId);
-    await updateDoc(docRef, {
+
+    // Remover valores undefined antes de enviar a Firestore
+    const cleanData = removeUndefined({
       ...data,
       updatedAt: serverTimestamp(),
     });
+
+    await updateDoc(docRef, cleanData);
   }
 
   /**
-   * Obtener estadísticas de un evento
+   * Obtener estadï¿½sticas de un evento
    */
   static async getEventStats(eventId: string): Promise<{
     totalRegistrations: number;

@@ -1,0 +1,21 @@
+{
+  "mailgun": {
+    "from_email": "contacto@centroumbandistareinodamata.org",
+    "from_name": "Centro Umbandista Reino da Mata",
+    "api_key": "fb7f54955a8b980e36944f0f1f154a22-03fd4b1a-3ee46d81",
+    "key": "fd258af2e823b5b1319ba1530c869fdb-f3238714-5a5a2802",
+    "domain": "centroumbandistareinodamata.org"
+  },
+  "sendgrid": {
+    "key": "KOHjMuKeos52Q0SRFWOFJGnOhKE2WFWQ"
+  },
+  "app": {
+    "url": "http://localhost:4321",
+    "allowed_origins": "https://centroumbandistareinodamata.vercel.app,https://www.centroumbandistareinodamata.org,http://localhost:4321",
+    "admin_emails": "admin@centroumbandistareinodamata.org,administrador@centroumbandistareinodamata.org,alexandersilvera@hotmail.com",
+    "site_url": "https://www.centroumbandistareinodamata.org"
+  },
+  "mercadopago": {
+    "access_token": "TEST-4612501671988187-100813-ed62ee63d34c396471ac34446683586f-2913599714"
+  }
+}

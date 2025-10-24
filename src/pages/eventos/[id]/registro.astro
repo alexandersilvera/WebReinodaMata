@@ -1,0 +1,13 @@
+---
+import MainLayout from "@/layouts/MainLayout.astro";
+import EventRegistrationClient from "@/features/events/components/EventRegistrationClient";
+
+const { id } = Astro.params;
+---
+
+<MainLayout
+  title="Inscripción a Evento | Centro Umbandista Reino Da Mata"
+  description="Completa tu inscripción al evento académico"
+>
+  <EventRegistrationClient eventId={id} client:load />
+</MainLayout>
