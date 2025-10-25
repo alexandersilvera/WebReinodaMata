@@ -165,17 +165,29 @@ export interface MercadoPagoSubscription {
  * Request para crear preferencia de pago
  */
 export interface CreatePreferenceRequest {
-  userId: string;
-  title: string;
-  description: string;
-  amount: number;
-  currency: 'UYU' | 'USD';
-  type: PaymentType;
-  externalReference: string;
+  userId?: string;
+  title?: string;
+  description?: string;
+  amount?: number;
+  currency?: 'UYU' | 'USD';
+  type?: PaymentType;
+  paymentType?: PaymentType; // Alias para compatibilidad
+  externalReference?: string;
   successUrl?: string;
   failureUrl?: string;
   pendingUrl?: string;
   metadata?: Record<string, any>;
+  // Propiedades específicas para suscripciones
+  planId?: string;
+  billingPeriod?: 'monthly' | 'yearly';
+  // Propiedades específicas para donaciones
+  donorName?: string;
+  donorEmail?: string;
+  message?: string;
+  // Propiedades específicas para eventos
+  eventId?: string;
+  participantName?: string;
+  participantEmail?: string;
 }
 
 /**
