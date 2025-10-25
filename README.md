@@ -2,6 +2,17 @@
 
 Sitio web oficial del Centro Umbandista Reino Da Mata, construido con tecnologías modernas y un enfoque en la seguridad y el rendimiento.
 
+## 📋 Documentación de Planificación
+
+**Versión actual**: v1.0 | **Próxima versión**: v2.0 (en desarrollo)
+
+- 📖 **[PLAN_RESUMEN.md](./PLAN_RESUMEN.md)** - Resumen ejecutivo del plan de mejoras
+- 🗺️ **[ROADMAP_V2.md](./ROADMAP_V2.md)** - Roadmap completo v2.0 (5 fases, 6 meses)
+- 🏃 **[SPRINT_PLAN.md](./SPRINT_PLAN.md)** - Plan de sprint (próximas 2 semanas)
+- 🔧 **[TECHNICAL_DEBT.md](./TECHNICAL_DEBT.md)** - Deuda técnica y mejoras
+
+👉 **Empieza aquí**: Lee `PLAN_RESUMEN.md` para un overview completo.
+
 ## 🛠️ Tecnologías
 
 - **Frontend**: [Astro](https://astro.build/) + [React](https://reactjs.org/) + [TypeScript](https://www.typescriptlang.org/)
