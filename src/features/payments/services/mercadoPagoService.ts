@@ -4,7 +4,7 @@
 
 import type {
   MercadoPagoPreference,
-  CreatePaymentPreferenceRequest,
+  CreatePreferenceRequest,
   PaymentStatus,
 } from '../types';
 import { functions } from '@/core/firebase/config';
