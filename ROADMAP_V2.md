@@ -53,9 +53,9 @@
   - Testimonios de miembros
 
 - [ ] **Widgets interactivos**
-  - Próximos eventos destacados
-  - Últimos artículos del blog
-  - Contador de miembros/eventos
+  - Próximos 3 eventos destacados
+  - Últimos 2 artículos del blog (foco en calidad)
+  - Contador de miembros/eventos (opcional)
 
 - [ ] **Optimización de performance**
   - Lazy loading de imágenes
