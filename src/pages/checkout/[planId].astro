@@ -124,7 +124,7 @@ const { planId } = Astro.params;
   const planId = window.location.pathname.split('/').pop();
 
   let selectedPlan = null;
-  let selectedPeriod = 'monthly';
+  let selectedPeriod: 'monthly' | 'yearly' = 'monthly';
   let currentUser = null;
 
   // Check authentication

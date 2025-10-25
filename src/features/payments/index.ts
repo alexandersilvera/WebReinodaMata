@@ -10,7 +10,7 @@ export type {
   PaymentMethodType,
   MercadoPagoPreference,
   MercadoPagoPayment,
-  CreatePaymentPreferenceRequest,
+  CreatePreferenceRequest,
 } from './types';
 
 // Services

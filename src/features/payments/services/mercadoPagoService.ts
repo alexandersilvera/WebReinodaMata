@@ -4,7 +4,7 @@
 
 import type {
   MercadoPagoPreference,
-  CreatePaymentPreferenceRequest,
+  CreatePreferenceRequest,
   PaymentStatus,
 } from '../types';
 import { functions } from '@/core/firebase/config';
@@ -22,7 +22,7 @@ export class MercadoPagoService {
     try {
       const createPreference = httpsCallable(functions, 'createPaymentPreference');
 
-      const request: CreatePaymentPreferenceRequest = {
+      const request: CreatePreferenceRequest = {
         planId,
         billingPeriod,
         userId,
@@ -51,7 +51,7 @@ export class MercadoPagoService {
     try {
       const createPreference = httpsCallable(functions, 'createPaymentPreference');
 
-      const request: CreatePaymentPreferenceRequest = {
+      const request: CreatePreferenceRequest = {
         paymentType: 'donation',
         amount,
         donorName,
@@ -107,7 +107,7 @@ export class MercadoPagoService {
     try {
       const createPreference = httpsCallable(functions, 'createPaymentPreference');
 
-      const request: CreatePaymentPreferenceRequest = {
+      const request: CreatePreferenceRequest = {
         paymentType: 'event_registration',
         eventId,
         userId,
