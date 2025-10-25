@@ -77,14 +77,15 @@ src/pages/index.astro (integrar)
 ---
 
 #### **Tarea 3: Sección "Últimas del Blog"** ⏱️ 1 día
-**Descripción**: Mostrar últimos 4 artículos del blog
+**Descripción**: Mostrar últimos 2 artículos del blog (foco en calidad vs cantidad)
 
 **Subtareas**:
 - [ ] Crear componente `LatestBlogPosts.tsx`
-- [ ] Consultar últimos artículos publicados
-- [ ] Diseño de cards con imagen y excerpt
-- [ ] Link a página de blog
+- [ ] Consultar 2 últimos artículos publicados
+- [ ] Diseño de cards destacadas con imagen y excerpt
+- [ ] Link a página de blog completo
 - [ ] Tags destacados
+- [ ] CTA "Ver todos los artículos" al final de la sección
 
 **Archivos**:
 ```
@@ -93,10 +94,11 @@ src/pages/index.astro (integrar)
 ```
 
 **Criterios de aceptación**:
-- ✅ Muestra 4 artículos más recientes
-- ✅ Imagen, título, fecha, excerpt, tags
-- ✅ Hover effects
-- ✅ Link funcional a artículo completo
+- ✅ Muestra 2 artículos más recientes (mejor que 4 - menos sobrecarga visual)
+- ✅ Cards grandes con imagen destacada, título, fecha, excerpt, tags
+- ✅ Hover effects elegantes
+- ✅ Link funcional a cada artículo completo
+- ✅ Botón/link "Ver todos los artículos" → /blog
 
 ---
 
