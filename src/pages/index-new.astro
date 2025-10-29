@@ -6,30 +6,25 @@
 import MainLayout from "@/layouts/MainLayout.astro";
 import Hero from "@/components/landing/Hero.astro";
 import AboutSection from "@/components/landing/AboutSection.astro";
-// Componentes que crearemos después:
-// import UpcomingEventsHome from "@/components/landing/UpcomingEventsHome.tsx";
-// import LatestBlogPosts from "@/components/landing/LatestBlogPosts.tsx";
+import UpcomingEventsHome from "@/components/landing/UpcomingEventsHome";
+import LatestBlogPosts from "@/components/landing/LatestBlogPosts";
 ---
 
 <MainLayout
   title="Inicio | Centro Umbandista Reino Da Mata"
   description="Centro Umbandista Reino Da Mata - Un espacio sagrado para el crecimiento espiritual, el conocimiento y la comunidad. Práctica auténtica de la Umbanda en Uruguay."
 >
-  <!-- Hero Section con imagen del templo -->
+  <!-- Hero Section con imagen de ceremonia espiritual -->
   <Hero />
 
   <!-- Sección Sobre Nosotros con galería de imágenes -->
   <AboutSection />
 
-  <!-- Sección Próximos Eventos (por implementar) -->
-  <!--
+  <!-- Sección Próximos Eventos -->
   <UpcomingEventsHome client:load />
-  -->
 
-  <!-- Sección Últimos Artículos del Blog (por implementar) -->
-  <!--
+  <!-- Sección Últimos Artículos del Blog -->
   <LatestBlogPosts client:load />
-  -->
 
   <!-- CTA Final -->
   <section class="py-20 bg-gradient-to-b from-gray-800 to-gray-900">

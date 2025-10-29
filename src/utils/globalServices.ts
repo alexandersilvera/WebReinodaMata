@@ -1,10 +1,11 @@
 /**
  * Utilidad para exponer servicios globales en window object
- * para páginas de administración que los necesitan
+ * para páginas de administración y landing page que los necesitan
  */
 
 import { auth, onAuthStateChanged } from '@/core/firebase/config';
 import * as articleService from '@/services/articleService';
+import * as eventService from '@/features/events/services/eventService';
 
 export const exposeGlobalServices = () => {
   // Exponer servicios de Firebase
@@ -31,7 +32,17 @@ export const exposeGlobalServices = () => {
       updateArticle: articleService.updateArticle,
       checkSlugExists: articleService.checkSlugExists
     };
-    
+
+    // Exponer servicios de eventos
+    window.eventServices = {
+      getUpcomingEvents: eventService.getUpcomingEvents,
+      getAllEvents: eventService.getAllEvents,
+      getEventById: eventService.getEventById,
+      createEvent: eventService.createEvent,
+      updateEvent: eventService.updateEvent,
+      deleteEvent: eventService.deleteEvent
+    };
+
     console.log('[GlobalServices] Servicios expuestos globalmente');
   }
 };

@@ -4,20 +4,27 @@
  */
 
 export const LANDING_IMAGES = {
-  // Hero Section - Imagen principal del templo
+  // Hero Section - Imagen principal de ceremonia espiritual
   hero: {
-    url: 'https://firebasestorage.googleapis.com/v0/b/reino-da-mata-2fea3.firebasestorage.app/o/templo_112.jpg?alt=media&token=bcf09534-6397-4ad9-b21e-919b2f7ef59c',
-    alt: 'Templo Centro Umbandista Reino Da Mata',
-    title: 'Nuestro Espacio Sagrado'
+    url: 'https://firebasestorage.googleapis.com/v0/b/reino-da-mata-160a9.appspot.com/o/congal_1.webp?alt=media&token=cce2241f-fa25-4dca-9aa4-5b248ca2dd68',
+    alt: 'Ceremonia espiritual en Centro Umbandista Reino Da Mata',
+    title: 'Nuestra Práctica Espiritual'
   },
 
   // Galería para sección "Sobre Nosotros" y otras secciones
   gallery: [
     {
-      id: 'templo-2',
-      url: 'https://firebasestorage.googleapis.com/v0/b/reino-da-mata-2fea3.firebasestorage.app/o/templo_110.jpg?alt=media&token=17e7f62b-6609-4436-964c-ca13e73cb357',
+      id: 'templo-1',
+      url: 'https://firebasestorage.googleapis.com/v0/b/reino-da-mata-2fea3.firebasestorage.app/o/templo_112.jpg?alt=media&token=bcf09534-6397-4ad9-b21e-919b2f7ef59c',
       alt: 'Interior del Templo',
       title: 'Nuestro Espacio Sagrado',
+      category: 'templo'
+    },
+    {
+      id: 'templo-2',
+      url: 'https://firebasestorage.googleapis.com/v0/b/reino-da-mata-2fea3.firebasestorage.app/o/templo_110.jpg?alt=media&token=17e7f62b-6609-4436-964c-ca13e73cb357',
+      alt: 'Interior del Templo 2',
+      title: 'Altar Sagrado',
       category: 'templo'
     },
     {
@@ -26,13 +33,6 @@ export const LANDING_IMAGES = {
       alt: 'Comunidad reunida',
       title: 'Nuestra Comunidad',
       category: 'comunidad'
-    },
-    {
-      id: 'congal',
-      url: 'https://firebasestorage.googleapis.com/v0/b/reino-da-mata-160a9.appspot.com/o/congal_1.webp?alt=media&token=cce2241f-fa25-4dca-9aa4-5b248ca2dd68',
-      alt: 'Ceremonia espiritual',
-      title: 'Actividades Espirituales',
-      category: 'actividades'
     },
     {
       id: 'grupo-interno',
