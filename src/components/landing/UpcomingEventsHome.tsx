@@ -15,18 +15,34 @@ export default function UpcomingEventsHome() {
     async function loadEvents() {
       try {
         setLoading(true);
-        // @ts-ignore - globalServices está disponible en window
-        const upcomingEvents = await window.eventServices?.getUpcomingEvents(3);
+
+        console.log('[UpcomingEventsHome] Iniciando carga de eventos...');
+        console.log('[UpcomingEventsHome] window.eventServices:', window.eventServices);
+
+        if (!window.eventServices) {
+          console.error('[UpcomingEventsHome] eventServices no está disponible en window');
+          setError('Servicios no disponibles');
+          return;
+        }
+
+        const upcomingEvents = await window.eventServices.getUpcomingEvents(3);
+        console.log('[UpcomingEventsHome] Eventos cargados:', upcomingEvents);
+
         setEvents(upcomingEvents || []);
       } catch (err) {
-        console.error('Error cargando eventos:', err);
+        console.error('[UpcomingEventsHome] Error cargando eventos:', err);
         setError('No se pudieron cargar los eventos');
       } finally {
         setLoading(false);
       }
     }
 
-    loadEvents();
+    // Esperar un poco para asegurar que globalServices se haya cargado
+    const timer = setTimeout(() => {
+      loadEvents();
+    }, 100);
+
+    return () => clearTimeout(timer);
   }, []);
 
   if (loading) {

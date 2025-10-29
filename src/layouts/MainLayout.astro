@@ -20,7 +20,12 @@ const { title, description } = Astro.props;
 	<body class="bg-dark-blue py-6 flex flex-col min-h-screen">
 		<!-- Auth Recovery Script -->
 		<script src="/auth-recovery.js" is:inline></script>
-		
+
+		<!-- Global Services - Exponer servicios en window -->
+		<script>
+			import '@/utils/globalServices';
+		</script>
+
 		<!-- Rastreador de vistas de página -->
 		<PageViewTracker client:load />
 		

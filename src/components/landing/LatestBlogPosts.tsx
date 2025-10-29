@@ -14,21 +14,37 @@ export default function LatestBlogPosts() {
     async function loadArticles() {
       try {
         setLoading(true);
-        // @ts-ignore - globalServices está disponible en window
-        const allArticles = await window.articleServices?.getAllArticles({
+
+        console.log('[LatestBlogPosts] Iniciando carga de artículos...');
+        console.log('[LatestBlogPosts] window.articleServices:', window.articleServices);
+
+        if (!window.articleServices) {
+          console.error('[LatestBlogPosts] articleServices no está disponible en window');
+          setError('Servicios no disponibles');
+          return;
+        }
+
+        const allArticles = await window.articleServices.getAllArticles({
           includeDrafts: false,
           limit: 2
         });
+        console.log('[LatestBlogPosts] Artículos cargados:', allArticles);
+
         setArticles(allArticles || []);
       } catch (err) {
-        console.error('Error cargando artículos:', err);
+        console.error('[LatestBlogPosts] Error cargando artículos:', err);
         setError('No se pudieron cargar los artículos');
       } finally {
         setLoading(false);
       }
     }
 
-    loadArticles();
+    // Esperar un poco para asegurar que globalServices se haya cargado
+    const timer = setTimeout(() => {
+      loadArticles();
+    }, 100);
+
+    return () => clearTimeout(timer);
   }, []);
 
   if (loading) {
