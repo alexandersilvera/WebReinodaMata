@@ -102,13 +102,33 @@ export const prerender = false;
     popularArticles: any[];
   }
   
-  // Elementos del DOM
-  const loadingElement = document.getElementById("loading");
-  const metricsCardsContainer = document.getElementById("metrics-cards");
-  const chartsContainer = document.getElementById("charts-container");
-  const popularArticlesContainer = document.getElementById("popular-articles-container");
-  const periodSelector = document.getElementById("period-selector");
-  const errorMessageElement = document.getElementById("error-message");
+  // Función para obtener elementos del DOM (con retry para esperar a React)
+  const getElement = (id: string, maxRetries = 50): Promise<HTMLElement | null> => {
+    return new Promise((resolve) => {
+      let retries = 0;
+      const check = () => {
+        const element = document.getElementById(id);
+        if (element) {
+          resolve(element);
+        } else if (retries < maxRetries) {
+          retries++;
+          setTimeout(check, 100);
+        } else {
+          console.warn(`[Metrics] No se encontró el elemento #${id}`);
+          resolve(null);
+        }
+      };
+      check();
+    });
+  };
+
+  // Variables para elementos del DOM
+  let loadingElement: HTMLElement | null = null;
+  let metricsCardsContainer: HTMLElement | null = null;
+  let chartsContainer: HTMLElement | null = null;
+  let popularArticlesContainer: HTMLElement | null = null;
+  let periodSelector: HTMLElement | null = null;
+  let errorMessageElement: HTMLElement | null = null;
   
   // Referencias a los gráficos
   let visitsChart: any = null;
@@ -603,6 +623,25 @@ export const prerender = false;
   // Inicializar cuando el usuario esté autenticado
   onAuthStateChanged(auth, async (user) => {
     if (user) {
+      console.log('[Metrics] Usuario autenticado, esperando elementos del DOM...');
+
+      // Esperar a que los elementos estén disponibles
+      loadingElement = await getElement('loading');
+      metricsCardsContainer = await getElement('metrics-cards');
+      chartsContainer = await getElement('charts-container');
+      popularArticlesContainer = await getElement('popular-articles-container');
+      periodSelector = await getElement('period-selector');
+      errorMessageElement = await getElement('error-message');
+
+      console.log('[Metrics] Elementos encontrados:', {
+        loading: !!loadingElement,
+        cards: !!metricsCardsContainer,
+        charts: !!chartsContainer,
+        articles: !!popularArticlesContainer,
+        selector: !!periodSelector,
+        error: !!errorMessageElement
+      });
+
       // Configurar botones de periodo
       setupPeriodButtons();
 
