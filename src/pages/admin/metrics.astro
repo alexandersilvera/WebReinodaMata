@@ -237,16 +237,31 @@ export const prerender = false;
       };
 
       // Renderizar componentes
+      console.log('[Metrics] Renderizando componentes...', metricsData);
       renderMetricCards();
       renderVisitsChart();
       renderSubscribersChart();
       renderPopularArticles();
 
       // Mostrar los contenedores después de renderizar
-      if (metricsCardsContainer) metricsCardsContainer.classList.remove("hidden");
-      if (chartsContainer) chartsContainer.classList.remove("hidden");
-      if (popularArticlesContainer) popularArticlesContainer.classList.remove("hidden");
-      if (periodSelector) periodSelector.classList.remove("hidden");
+      console.log('[Metrics] Mostrando contenedores...');
+      if (metricsCardsContainer) {
+        metricsCardsContainer.classList.remove("hidden");
+        console.log('[Metrics] metricsCardsContainer mostrado');
+      }
+      if (chartsContainer) {
+        chartsContainer.classList.remove("hidden");
+        console.log('[Metrics] chartsContainer mostrado');
+      }
+      if (popularArticlesContainer) {
+        popularArticlesContainer.classList.remove("hidden");
+        console.log('[Metrics] popularArticlesContainer mostrado');
+      }
+      if (periodSelector) {
+        periodSelector.classList.remove("hidden");
+        console.log('[Metrics] periodSelector mostrado');
+      }
+      console.log('[Metrics] ✅ Métricas cargadas y mostradas correctamente');
     } catch (error) {
       console.error("Error al cargar métricas:", error);
       if (errorMessageElement) errorMessageElement.classList.remove("hidden");
