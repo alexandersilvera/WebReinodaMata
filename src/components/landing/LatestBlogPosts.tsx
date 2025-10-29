@@ -3,7 +3,7 @@
  * Muestra los últimos 2 artículos en cards grandes y destacadas
  */
 import { useEffect, useState } from 'react';
-import type { Article } from '@/features/blog/types';
+import type { Article } from '@/core/types';
 
 export default function LatestBlogPosts() {
   const [articles, setArticles] = useState<Article[]>([]);
