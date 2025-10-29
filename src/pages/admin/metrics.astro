@@ -235,12 +235,18 @@ export const prerender = false;
         subscribersPerDay: subscribersByDay,
         popularArticles: popularArticles.slice(0, 5) // Top 5
       };
-      
+
       // Renderizar componentes
       renderMetricCards();
       renderVisitsChart();
       renderSubscribersChart();
       renderPopularArticles();
+
+      // Mostrar los contenedores después de renderizar
+      if (metricsCardsContainer) metricsCardsContainer.classList.remove("hidden");
+      if (chartsContainer) chartsContainer.classList.remove("hidden");
+      if (popularArticlesContainer) popularArticlesContainer.classList.remove("hidden");
+      if (periodSelector) periodSelector.classList.remove("hidden");
     } catch (error) {
       console.error("Error al cargar métricas:", error);
       if (errorMessageElement) errorMessageElement.classList.remove("hidden");
