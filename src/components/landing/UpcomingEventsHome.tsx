@@ -139,7 +139,7 @@ export default function UpcomingEventsHome() {
 function EventCard({ event }: { event: AcademicEvent }) {
   const eventDate = event.date instanceof Date
     ? event.date
-    : event.date?.toDate?.() || new Date();
+    : (event.date as any)?.toDate?.() || new Date();
 
   const formattedDate = formatDate(eventDate);
 
