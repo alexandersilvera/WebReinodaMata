@@ -26,7 +26,7 @@ export default function LatestBlogPosts() {
 
         const allArticles = await window.articleServices.getAllArticles({
           includeDrafts: false,
-          limit: 2
+          limitCount: 2
         });
         console.log('[LatestBlogPosts] Artículos cargados:', allArticles);
 

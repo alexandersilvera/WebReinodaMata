@@ -10,7 +10,12 @@ declare global {
     };
     Chart?: any;
     articleServices?: {
-      getAllArticles: (options?: any) => Promise<any[]>;
+      getAllArticles: (options?: {
+        includeDrafts?: boolean;
+        limitCount?: number;
+        onlyFeatured?: boolean;
+        orderByField?: 'publishDate' | 'createdAt' | 'updatedAt';
+      }) => Promise<any[]>;
       getAllDrafts: () => Promise<any[]>;
       deleteArticle: (id: string) => Promise<void>;
       deleteDraft: (id: string) => Promise<void>;
