@@ -1,0 +1,110 @@
+---
+/**
+ * Hero Section - Landing Page
+ * Centro Umbandista Reino Da Mata
+ */
+import { LANDING_IMAGES } from '@/utils/images';
+---
+
+<section class="relative h-screen flex items-center justify-center overflow-hidden">
+  <!-- Imagen de fondo del templo -->
+  <div class="absolute inset-0 z-0">
+    <img
+      src={LANDING_IMAGES.hero.url}
+      alt={LANDING_IMAGES.hero.alt}
+      class="w-full h-full object-cover"
+      loading="eager"
+    />
+    <!-- Overlay gradiente para legibilidad del texto -->
+    <div class="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/80"></div>
+  </div>
+
+  <!-- Contenido principal -->
+  <div class="relative z-10 text-center text-white max-w-5xl px-4 sm:px-6 lg:px-8">
+    <!-- Título principal -->
+    <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 animate-fade-in leading-tight">
+      Centro Umbandista<br />Reino Da Mata
+    </h1>
+
+    <!-- Subtítulo -->
+    <p class="text-lg sm:text-xl md:text-2xl mb-10 text-gray-200 animate-fade-in-delay max-w-3xl mx-auto">
+      Un espacio sagrado para el crecimiento espiritual, el conocimiento y la comunidad
+    </p>
+
+    <!-- CTAs -->
+    <div class="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in-delay-2">
+      <a
+        href="/instituto"
+        class="w-full sm:w-auto px-8 py-4 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-lg text-lg transition-all transform hover:scale-105 shadow-lg hover:shadow-xl"
+      >
+        Conocer el Instituto →
+      </a>
+      <a
+        href="/eventos"
+        class="w-full sm:w-auto px-8 py-4 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white font-semibold rounded-lg text-lg transition-all border-2 border-white/30 hover:border-white/50"
+      >
+        Ver Próximos Eventos
+      </a>
+    </div>
+
+    <!-- Estadísticas rápidas (opcional) -->
+    <div class="mt-16 grid grid-cols-3 gap-8 max-w-2xl mx-auto animate-fade-in-delay-3">
+      <div class="text-center">
+        <div class="text-3xl md:text-4xl font-bold text-green-400">15+</div>
+        <div class="text-sm md:text-base text-gray-300 mt-1">Años de trayectoria</div>
+      </div>
+      <div class="text-center">
+        <div class="text-3xl md:text-4xl font-bold text-green-400">100+</div>
+        <div class="text-sm md:text-base text-gray-300 mt-1">Miembros activos</div>
+      </div>
+      <div class="text-center">
+        <div class="text-3xl md:text-4xl font-bold text-green-400">50+</div>
+        <div class="text-sm md:text-base text-gray-300 mt-1">Eventos anuales</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Indicador de scroll (flecha hacia abajo) -->
+  <div class="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 animate-bounce hidden md:block">
+    <svg class="w-6 h-6 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+    </svg>
+  </div>
+</section>
+
+<style>
+  /* Animaciones de entrada */
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.8s ease-out;
+  }
+
+  .animate-fade-in-delay {
+    animation: fade-in 0.8s ease-out 0.2s backwards;
+  }
+
+  .animate-fade-in-delay-2 {
+    animation: fade-in 0.8s ease-out 0.4s backwards;
+  }
+
+  .animate-fade-in-delay-3 {
+    animation: fade-in 0.8s ease-out 0.6s backwards;
+  }
+
+  /* Efecto parallax sutil en scroll (opcional - requiere JS) */
+  @media (prefers-reduced-motion: no-preference) {
+    .parallax-bg {
+      transform: translateY(var(--scroll-y, 0));
+    }
+  }
+</style>

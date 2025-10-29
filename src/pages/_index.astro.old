@@ -1,0 +1,137 @@
+---
+import MainLayout from "@/layouts/MainLayout.astro";
+import { Image } from "astro:assets";
+import Hero from "@/components/Hero.astro";
+import CountdownBanner from '@/components/CountdownBanner.tsx';
+import bibliotecaLocalImg from "@/assets/biblioteca.jpg";
+---
+
+<MainLayout 
+	title="Inicio | Centro Umbandista Reino Da Mata"
+	description="Bienvenido al Centro Umbandista Reino Da Mata, institución dedicada al estudio, investigación y difusión de la cultura y religiosidad Afro-amerindia en Montevideo."
+>
+	<Hero />
+
+	<CountdownBanner targetDate="2025-10-11T20:30:00" client:visible />
+
+	<section class="max-w-6xl mx-auto px-4 py-16">
+		<div class="text-center mb-12">
+			<h2 class="text-3xl md:text-4xl font-bold text-green-800 mb-4 relative inline-block">
+				Nuestra Comunidad
+				<span class="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-green-600 to-green-300 rounded-full"></span>
+			</h2>
+			<p class="text-lg text-green-700 max-w-3xl mx-auto">Conoce a las personas que forman parte de nuestro centro espiritual y las actividades que realizamos juntos como comunidad.</p>
+		</div>
+		
+		<div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+			<!-- Tarjeta 1 -->
+			<div class="group overflow-hidden rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 relative bg-white">
+				<div class="relative overflow-hidden">
+					<Image 
+						src={bibliotecaLocalImg}
+						alt="Biblioteca imagen"
+						width={400}
+						height={250} 
+						class="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110" 
+						loading="lazy" />
+					<div class="absolute inset-0 bg-gradient-to-t from-green-900 to-transparent opacity-60"></div>
+					<div class="absolute bottom-0 left-0 p-4 text-white">
+						<h3 class="text-xl font-bold mb-1">Nuestra Biblioteca</h3>
+						<p class="text-sm">Espacio de conocimiento y sabiduría ancestral</p>
+					</div>
+				</div>
+				<div class="p-4 bg-green-50">
+					<p class="text-green-800">Un lugar donde puedes encontrar literatura sobre Umbanda y tradiciones afro-amerindias.</p>
+				</div>
+			</div>
+			
+			<!-- Tarjeta 2 -->
+			<div class="group overflow-hidden rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 relative bg-white">
+				<div class="relative overflow-hidden">
+					<Image 
+						src="https://firebasestorage.googleapis.com/v0/b/reino-da-mata-160a9.appspot.com/o/grupo_interno.jpeg?alt=media&token=e796a669-de3d-4c61-8382-6ea4d83ef426" 
+						alt="Grupo Interno"
+						width={400}
+						height={250} 
+						class="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110" 
+						loading="lazy" />
+					<div class="absolute inset-0 bg-gradient-to-t from-green-900 to-transparent opacity-60"></div>
+					<div class="absolute bottom-0 left-0 p-4 text-white">
+						<h3 class="text-xl font-bold mb-1">Grupo Interno</h3>
+						<p class="text-sm">Practicantes dedicados a la Umbanda</p>
+					</div>
+				</div>
+				<div class="p-4 bg-green-50">
+					<p class="text-green-800">Miembros activos que practican y transmiten las enseñanzas de la religión umbandista.</p>
+				</div>
+			</div>
+			
+			<!-- Tarjeta 3 -->
+			<div class="group overflow-hidden rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 relative bg-white">
+				<div class="relative overflow-hidden">
+					<Image 
+						src="https://firebasestorage.googleapis.com/v0/b/reino-da-mata-160a9.appspot.com/o/comunidad_2.jpeg?alt=media&token=e4087073-729d-43f1-a23d-dfb8d8426bd6"
+						alt="Comunidad"
+						width={400}
+						height={250} 
+						class="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110" 
+						loading="lazy"/>
+					<div class="absolute inset-0 bg-gradient-to-t from-green-900 to-transparent opacity-60"></div>
+					<div class="absolute bottom-0 left-0 p-4 text-white">
+						<h3 class="text-xl font-bold mb-1">Eventos Comunitarios</h3>
+						<p class="text-sm">Celebraciones y ceremonias tradicionales</p>
+					</div>
+				</div>
+				<div class="p-4 bg-green-50">
+					<p class="text-green-800">Ceremonias, festividades y eventos donde participamos como comunidad siguiendo las tradiciones.</p>
+				</div>
+			</div>
+		</div>
+		
+		<div class="mt-10 text-center">
+			<a href="/nosotros" class="inline-flex items-center px-6 py-3 bg-green-700 text-white font-medium rounded-lg hover:bg-green-600 transition-colors">
+				Ver más sobre nuestra comunidad
+				<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
+					<path fill-rule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+				</svg>
+			</a>
+		</div>
+	</section>
+
+	<section class="bg-green-50 py-16 px-4">
+		<div class="max-w-4xl mx-auto text-center">
+			<h2 class="text-3xl md:text-4xl font-bold text-green-900 mb-6 relative inline-block">
+				Sobre Nosotros
+				<span class="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-green-600 to-green-300 rounded-full"></span>
+			</h2>
+			<p class="text-lg text-green-900 mb-8 leading-relaxed">
+				Centro Umbandista Reino da Mata es una institución dedicada a la investigación y difusión de la cultura y la religiosidad afro-umbandista. Nuestra misión es la investigación de las distintas escuelas Umbandistas, su historia, práctica y desarrollo ritualístico. Nos enfocamos en difundir las distintas tradiciones o raíces religiosas afro-umbandistas que se desarrollaron y expandieron en Brasil, y su afincamiento en Uruguay a través de los pioneros y pioneras de nuestra Umbanda.
+			</p>
+			<div class="flex flex-wrap justify-center gap-4">
+				<a href="/nosotros">
+					<button class="bg-green-700 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-all text-lg flex items-center">
+						<span>Conoce más</span>
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
+							<path fill-rule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+						</svg>
+					</button>
+				</a>
+				<a href="/contacto">
+					<button class="bg-white border-2 border-green-700 text-green-700 hover:bg-green-50 font-bold py-3 px-8 rounded-lg shadow-lg transition-all text-lg flex items-center">
+						<span>Contáctanos</span>
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
+							<path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+							<path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+						</svg>
+					</button>
+				</a>
+			</div>
+		</div>
+	</section>
+</MainLayout>
+
+<style>
+	h2 {
+		font-family: var(--serif-font);
+	}
+</style>
