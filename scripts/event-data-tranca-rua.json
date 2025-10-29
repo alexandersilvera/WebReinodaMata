@@ -1,0 +1,20 @@
+{
+  "title": "Ceremonia de Tranca Rua - Despedida del Mes de las Almas",
+  "description": "DICEN QUE EL ALMA NO MUERE, DICEN QUE REGRESA AL UNIVERSO... En el centro umbandista Reino Da Mata estaremos despidiendo este acontecimiento. Lindo acontecimiento. Ceremonia especial dedicada a Tranca Rua, guardián de los caminos y protector de las encrucijadas. Una noche para honrar las almas que regresan al universo y fortalecer nuestra conexión espiritual.",
+  "shortDescription": "Ceremonia especial de Tranca Rua para despedir el mes de las almas",
+  "type": "ceremony",
+  "date": "2025-11-01T21:00:00",
+  "endDate": "2025-11-02T00:00:00",
+  "duration": 3,
+  "location": "José María Delgado 1935 - Entre Avenida Italia y Taboba",
+  "isOnline": false,
+  "registrationRequired": false,
+  "maxParticipants": 50,
+  "registrationDeadline": "2025-11-01T12:00:00",
+  "speakers": ["Sacerdotes del Centro Umbandista Reino Da Mata"],
+  "topics": ["Tranca Rua", "Exu", "Guardianes de los caminos", "Mes de las almas", "Rituales umbandistas"],
+  "imageUrl": "https://firebasestorage.googleapis.com/v0/b/reino-da-mata-2fea3.firebasestorage.app/o/invitacion_tranca_rua.png?alt=media&token=33323717-46bb-437c-bc0a-61318fc994a4",
+  "isFree": true,
+  "status": "published",
+  "featured": true
+}

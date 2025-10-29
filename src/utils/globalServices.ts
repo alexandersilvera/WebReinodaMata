@@ -5,7 +5,7 @@
 
 import { auth, onAuthStateChanged } from '@/core/firebase/config';
 import * as articleService from '@/services/articleService';
-import * as eventService from '@/features/events/services/eventService';
+import { EventService } from '@/features/events/services/eventService';
 
 export const exposeGlobalServices = () => {
   // Exponer servicios de Firebase
@@ -35,12 +35,12 @@ export const exposeGlobalServices = () => {
 
     // Exponer servicios de eventos
     window.eventServices = {
-      getUpcomingEvents: eventService.getUpcomingEvents,
-      getAllEvents: eventService.getAllEvents,
-      getEventById: eventService.getEventById,
-      createEvent: eventService.createEvent,
-      updateEvent: eventService.updateEvent,
-      deleteEvent: eventService.deleteEvent
+      getUpcomingEvents: (limit?: number) => EventService.getUpcomingEvents(limit),
+      getAllEvents: () => EventService.getAllEvents(),
+      getEventById: (id: string) => EventService.getEventById(id),
+      createEvent: (data: any) => EventService.createEvent(data),
+      updateEvent: (id: string, data: any) => EventService.updateEvent(id, data),
+      deleteEvent: (id: string) => EventService.deleteEvent(id)
     };
 
     console.log('[GlobalServices] Servicios expuestos globalmente');
