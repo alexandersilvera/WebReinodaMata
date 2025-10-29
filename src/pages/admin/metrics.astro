@@ -52,12 +52,12 @@ export const prerender = false;
         <div id="charts-container" class="hidden grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div class="bg-green-900/30 p-6 rounded-lg backdrop-blur-sm">
             <h3 class="text-xl font-bold text-green-500 mb-4">Visitas por día</h3>
-            <div class="h-64" id="visits-chart"></div>
+            <canvas class="h-64" id="visits-chart"></canvas>
           </div>
 
           <div class="bg-green-900/30 p-6 rounded-lg backdrop-blur-sm">
             <h3 class="text-xl font-bold text-green-500 mb-4">Suscriptores nuevos</h3>
-            <div class="h-64" id="subscribers-chart"></div>
+            <canvas class="h-64" id="subscribers-chart"></canvas>
           </div>
         </div>
 
@@ -77,19 +77,10 @@ export const prerender = false;
 </MainLayout>
 
 <script>
-  // Importar Chart.js dinámicamente
-  let Chart: any;
-  
-  // Cargar Chart.js dinámicamente
-  const loadChart = async () => {
-    try {
-      // @ts-ignore
-      const chartModule = await import('https://cdn.skypack.dev/chart.js/auto');
-      Chart = chartModule.default;
-    } catch (error) {
-      console.error('Error cargando Chart.js:', error);
-    }
-  };
+  import { Chart, registerables } from 'chart.js';
+
+  // Registrar todos los componentes de Chart.js
+  Chart.register(...registerables);
 
   import { auth, db } from "@/core/firebase/config";
   import { onAuthStateChanged } from "firebase/auth";
@@ -406,14 +397,15 @@ export const prerender = false;
 
   // Renderizar gráfico de visitas
   const renderVisitsChart = () => {
-    const ctx = document.getElementById('visits-chart');
-    if (!ctx) return;
-    
+    const element = document.getElementById('visits-chart');
+    if (!element) return;
+    const ctx = element as HTMLCanvasElement;
+
     // Destruir gráfico existente si hay uno
     if (visitsChart) {
       visitsChart.destroy();
     }
-    
+
     // Crear nuevo gráfico
     visitsChart = new Chart(ctx, {
       type: 'line',
@@ -464,14 +456,15 @@ export const prerender = false;
 
   // Renderizar gráfico de suscriptores
   const renderSubscribersChart = () => {
-    const ctx = document.getElementById('subscribers-chart');
-    if (!ctx) return;
-    
+    const element = document.getElementById('subscribers-chart');
+    if (!element) return;
+    const ctx = element as HTMLCanvasElement;
+
     // Destruir gráfico existente si hay uno
     if (subscribersChart) {
       subscribersChart.destroy();
     }
-    
+
     // Crear nuevo gráfico
     subscribersChart = new Chart(ctx, {
       type: 'bar',
@@ -589,12 +582,9 @@ export const prerender = false;
   // Inicializar cuando el usuario esté autenticado
   onAuthStateChanged(auth, async (user) => {
     if (user) {
-      // Cargar Chart.js primero
-      await loadChart();
-      
       // Configurar botones de periodo
       setupPeriodButtons();
-      
+
       // Cargar datos iniciales
       await loadMetrics();
     } else {

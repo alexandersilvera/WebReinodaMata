@@ -43,6 +43,7 @@
 		"astro": "^5.9.2",
 		"astro-icon": "^1.1.0",
 		"astro-seo": "^0.8.4",
+		"chart.js": "^4.5.1",
 		"date-fns": "^4.1.0",
 		"firebase": "^11.6.1",
 		"firebase-admin": "^13.4.0",
