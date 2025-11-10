@@ -132,11 +132,11 @@ import { LANDING_IMAGES } from '@/utils/images';
   // Optimización del video: En móviles, mostrar imagen en lugar de video para mejor performance
   const isMobile = window.innerWidth < 768;
   const videoIframe = document.querySelector('section iframe');
-  const fallbackImage = document.getElementById('hero-fallback-image');
+  const fallbackImage = document.getElementById('hero-fallback-image') as HTMLElement | null;
 
   if (isMobile && videoIframe && fallbackImage) {
     // En móviles, ocultar video y mostrar imagen
-    videoIframe.style.display = 'none';
+    (videoIframe as HTMLElement).style.display = 'none';
     fallbackImage.style.display = 'block';
   }
 
@@ -144,7 +144,7 @@ import { LANDING_IMAGES } from '@/utils/images';
   if (videoIframe) {
     videoIframe.addEventListener('error', () => {
       if (fallbackImage) {
-        videoIframe.style.display = 'none';
+        (videoIframe as HTMLElement).style.display = 'none';
         fallbackImage.style.display = 'block';
       }
     });
