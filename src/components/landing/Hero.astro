@@ -12,9 +12,8 @@ import { LANDING_IMAGES } from '@/utils/images';
     <!-- iframe de Vimeo con autoplay y loop -->
     <iframe
       src="https://player.vimeo.com/video/1132797148?autoplay=1&loop=1&muted=1&controls=0&background=1"
-      class="absolute top-1/2 left-1/2 w-[100vw] h-[100vh] min-w-full min-h-full -translate-x-1/2 -translate-y-1/2"
+      class="absolute top-1/2 left-1/2 w-[100vw] h-[100vh] min-w-full min-h-full -translate-x-1/2 -translate-y-1/2 border-0"
       style="pointer-events: none;"
-      frameborder="0"
       allow="autoplay; fullscreen"
       title="Centro Umbandista Reino Da Mata"
     ></iframe>
@@ -135,8 +134,8 @@ import { LANDING_IMAGES } from '@/utils/images';
 <script>
   // Optimización del video: En móviles, mostrar imagen en lugar de video para mejor performance
   const isMobile = window.innerWidth < 768;
-  const videoIframe = document.querySelector('section iframe');
-  const fallbackImage = document.getElementById('hero-fallback-image');
+  const videoIframe = document.querySelector('section iframe') as HTMLIFrameElement | null;
+  const fallbackImage = document.getElementById('hero-fallback-image') as HTMLImageElement | null;
 
   if (isMobile && videoIframe && fallbackImage) {
     // En móviles, ocultar video y mostrar imagen
