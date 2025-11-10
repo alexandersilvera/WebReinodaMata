@@ -19,7 +19,7 @@ declare global {
       getAllDrafts: () => Promise<any[]>;
       deleteArticle: (id: string) => Promise<void>;
       deleteDraft: (id: string) => Promise<void>;
-      publishDraftAsArticle: (id: string) => Promise<void>;
+      publishDraftAsArticle: (id: string) => Promise<string>;
       getArticleById: (id: string) => Promise<any>;
       updateArticle: (id: string, data: any) => Promise<void>;
       checkSlugExists: (slug: string) => Promise<boolean>;

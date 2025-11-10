@@ -7,14 +7,28 @@ import { LANDING_IMAGES } from '@/utils/images';
 ---
 
 <section class="relative h-screen flex items-center justify-center overflow-hidden">
-  <!-- Imagen de fondo del templo -->
+  <!-- Video de fondo de Vimeo -->
   <div class="absolute inset-0 z-0">
+    <!-- iframe de Vimeo con autoplay y loop -->
+    <iframe
+      src="https://player.vimeo.com/video/1132797148?autoplay=1&loop=1&muted=1&controls=0&background=1"
+      class="absolute top-1/2 left-1/2 w-[100vw] h-[100vh] min-w-full min-h-full -translate-x-1/2 -translate-y-1/2"
+      style="pointer-events: none;"
+      frameborder="0"
+      allow="autoplay; fullscreen"
+      title="Centro Umbandista Reino Da Mata"
+    ></iframe>
+
+    <!-- Fallback: Imagen de fondo si el video no carga -->
     <img
       src={LANDING_IMAGES.hero.url}
       alt={LANDING_IMAGES.hero.alt}
       class="w-full h-full object-cover"
       loading="eager"
+      style="display: none;"
+      id="hero-fallback-image"
     />
+
     <!-- Overlay gradiente para legibilidad del texto -->
     <div class="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/80"></div>
   </div>
@@ -107,4 +121,32 @@ import { LANDING_IMAGES } from '@/utils/images';
       transform: translateY(var(--scroll-y, 0));
     }
   }
+
+  /* Optimización para el iframe de video */
+  iframe {
+    object-fit: cover;
+  }
 </style>
+
+<script>
+  // Optimización del video: En móviles, mostrar imagen en lugar de video para mejor performance
+  const isMobile = window.innerWidth < 768;
+  const videoIframe = document.querySelector('section iframe');
+  const fallbackImage = document.getElementById('hero-fallback-image');
+
+  if (isMobile && videoIframe && fallbackImage) {
+    // En móviles, ocultar video y mostrar imagen
+    videoIframe.style.display = 'none';
+    fallbackImage.style.display = 'block';
+  }
+
+  // Detectar si el video no carga y mostrar fallback
+  if (videoIframe) {
+    videoIframe.addEventListener('error', () => {
+      if (fallbackImage) {
+        videoIframe.style.display = 'none';
+        fallbackImage.style.display = 'block';
+      }
+    });
+  }
+</script>
