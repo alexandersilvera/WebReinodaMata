@@ -5,6 +5,7 @@
 import { useEffect, useState } from 'react';
 import type { AcademicEvent } from '@/features/research/types';
 import { formatDate } from '@/core/utils/dateUtils';
+import { SkeletonEventCard } from '@/components/Loading';
 
 export default function UpcomingEventsHome() {
   const [events, setEvents] = useState<AcademicEvent[]>([]);
@@ -56,17 +57,10 @@ export default function UpcomingEventsHome() {
             <div className="w-24 h-1 bg-green-600 mx-auto mb-6"></div>
           </div>
 
-          {/* Loading Skeleton */}
+          {/* Loading Skeleton - Usando componente reutilizable */}
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-gray-800 rounded-lg overflow-hidden animate-pulse">
-                <div className="h-48 bg-gray-700"></div>
-                <div className="p-6">
-                  <div className="h-4 bg-gray-700 rounded mb-4"></div>
-                  <div className="h-6 bg-gray-700 rounded mb-4"></div>
-                  <div className="h-4 bg-gray-700 rounded w-2/3"></div>
-                </div>
-              </div>
+              <SkeletonEventCard key={i} />
             ))}
           </div>
         </div>
