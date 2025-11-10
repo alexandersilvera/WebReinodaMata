@@ -26,6 +26,12 @@ const { title, description } = Astro.props;
 			import '@/utils/globalServices';
 		</script>
 
+		<!-- Sistema de Animaciones -->
+		<script>
+			import { initAllAnimations } from '@/utils/scrollAnimations';
+			initAllAnimations();
+		</script>
+
 		<!-- Rastreador de vistas de página -->
 		<PageViewTracker client:load />
 		
