@@ -25,6 +25,10 @@ import { LANDING_IMAGES } from '@/utils/images';
       alt={LANDING_IMAGES.hero.alt}
       class="w-full h-full object-cover"
       loading="eager"
+      fetchpriority="high"
+      decoding="async"
+      width="1920"
+      height="1080"
       style="display: none;"
       id="hero-fallback-image"
     />

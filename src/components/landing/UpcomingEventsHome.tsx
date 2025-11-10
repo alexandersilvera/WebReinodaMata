@@ -152,6 +152,10 @@ function EventCard({ event }: { event: AcademicEvent }) {
             src={event.imageUrl}
             alt={event.title}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+            loading="lazy"
+            decoding="async"
+            width="600"
+            height="400"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
 

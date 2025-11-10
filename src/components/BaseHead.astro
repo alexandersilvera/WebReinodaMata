@@ -19,20 +19,68 @@ const siteURL = Astro.site ? Astro.site.toString() : Astro.url.origin;
 const ogImageURL = new URL(image, siteURL).toString();
 
 // Define los datos de la organización para Schema.org
+const baseUrl = Astro.site ? Astro.site.toString() : Astro.url.origin;
+
+// Schema.org: PlaceOfWorship
 const placeOfWorshipSchema = {
 	"@context": "https://schema.org",
 	"@type": "PlaceOfWorship",
 	"name": "Centro Umbandista Reino da Mata",
-	"url": Astro.site ? Astro.site.toString() : Astro.url.origin, // Usa Astro.site si está definido
-	"logo": new URL("/assets/logo.svg", Astro.site || Astro.url.origin).toString(), // Asume logo en public/assets/logo.svg
+	"url": baseUrl,
+	"logo": new URL("/assets/logo.svg", baseUrl).toString(),
 	"description": "Centro Umbandista Reino da Mata, estudios investigación y difusión de la cultura y la religiosidad afro-umbandista. Nuestra misión es la investigación de las distintas escuelas Umbandistas, historia, practica y desarrollo ritualistico. Difundiendo las distintas tradiciones o raices religiosas afro-umbandistas que se desarrollaron y se expandieron en Brasil, su afincamiento en Uruguay através de los distintos pioneros y pioneras de nuestra Umbanda.",
 	"address": {
 		"@type": "PostalAddress",
 		"streetAddress": "José María Delgado 1935",
 		"addressLocality": "Montevideo",
-		"addressCountry": "UY" // Código ISO 3166-1 alpha-2 para Uruguay
+		"addressCountry": "UY"
 	},
 	"telephone": "095309322"
+};
+
+// Schema.org: Organization (para mejor SEO y reconocimiento)
+const organizationSchema = {
+	"@context": "https://schema.org",
+	"@type": "Organization",
+	"name": "Centro Umbandista Reino Da Mata",
+	"alternateName": "Reino Da Mata",
+	"url": baseUrl,
+	"logo": new URL("/assets/logo.svg", baseUrl).toString(),
+	"description": description,
+	"address": {
+		"@type": "PostalAddress",
+		"streetAddress": "José María Delgado 1935",
+		"addressLocality": "Montevideo",
+		"addressRegion": "Montevideo",
+		"postalCode": "11200",
+		"addressCountry": "UY"
+	},
+	"contactPoint": {
+		"@type": "ContactPoint",
+		"telephone": "+598-95-309-322",
+		"contactType": "Informes",
+		"availableLanguage": ["es", "pt"]
+	},
+	"sameAs": [
+		// Agregar redes sociales cuando estén disponibles
+	]
+};
+
+// Schema.org: WebSite con SearchAction (mejora búsqueda en Google)
+const websiteSchema = {
+	"@context": "https://schema.org",
+	"@type": "WebSite",
+	"name": "Centro Umbandista Reino Da Mata",
+	"url": baseUrl,
+	"description": description,
+	"potentialAction": {
+		"@type": "SearchAction",
+		"target": {
+			"@type": "EntryPoint",
+			"urlTemplate": baseUrl + "/blog?q={search_term_string}"
+		},
+		"query-input": "required name=search_term_string"
+	}
 };
 
 ---
@@ -41,11 +89,14 @@ const placeOfWorshipSchema = {
 	<!-- Global Metadata -->
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<link
-		rel="shortcut icon"
-		href="/assets/logo.svg"
-		type="image/svg+xml"
-	/>
+	<meta name="generator" content={Astro.generator} />
+	<meta name="author" content="Centro Umbandista Reino Da Mata" />
+	<meta name="theme-color" content="#16a34a" />
+
+	<!-- Favicons -->
+	<link rel="icon" type="image/svg+xml" href="/assets/logo.svg" />
+	<link rel="shortcut icon" href="/assets/logo.svg" type="image/svg+xml" />
+	<link rel="apple-touch-icon" href="/assets/logo.svg" />
 
 	<!-- DNS Prefetch & Preconnect para mejorar performance -->
 	<link rel="dns-prefetch" href="https://firebasestorage.googleapis.com" />
@@ -115,9 +166,11 @@ const placeOfWorshipSchema = {
 		}}
 	/>
 
-	<!-- Schema.org JSON-LD -->
+	<!-- Schema.org JSON-LD - Múltiples schemas para mejor SEO -->
 	<script type="application/ld+json" is:inline set:html={JSON.stringify(placeOfWorshipSchema)}></script>
-	
+	<script type="application/ld+json" is:inline set:html={JSON.stringify(organizationSchema)}></script>
+	<script type="application/ld+json" is:inline set:html={JSON.stringify(websiteSchema)}></script>
+
 	<!-- Enable view transitions for better page navigation -->
 	<meta name="view-transition" content="same-origin" />
 </head>
