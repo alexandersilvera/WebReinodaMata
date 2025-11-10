@@ -8,6 +8,7 @@ import Hero from "@/components/landing/Hero.astro";
 import AboutSection from "@/components/landing/AboutSection.astro";
 import UpcomingEventsHome from "@/components/landing/UpcomingEventsHome";
 import LatestBlogPosts from "@/components/landing/LatestBlogPosts";
+import ErrorBoundary from "@/components/ErrorBoundary";
 ---
 
 <MainLayout
@@ -20,11 +21,15 @@ import LatestBlogPosts from "@/components/landing/LatestBlogPosts";
   <!-- Sección Sobre Nosotros con galería de imágenes -->
   <AboutSection />
 
-  <!-- Sección Próximos Eventos -->
-  <UpcomingEventsHome client:load />
+  <!-- Sección Próximos Eventos con Error Boundary -->
+  <ErrorBoundary client:load>
+    <UpcomingEventsHome client:load />
+  </ErrorBoundary>
 
-  <!-- Sección Últimos Artículos del Blog -->
-  <LatestBlogPosts client:load />
+  <!-- Sección Últimos Artículos del Blog con Error Boundary -->
+  <ErrorBoundary client:load>
+    <LatestBlogPosts client:load />
+  </ErrorBoundary>
 
   <!-- CTA Final -->
   <section class="py-20 bg-gradient-to-b from-gray-800 to-gray-900">

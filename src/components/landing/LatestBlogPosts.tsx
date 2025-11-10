@@ -4,6 +4,7 @@
  */
 import { useEffect, useState } from 'react';
 import type { Article } from '@/core/types';
+import { SkeletonArticleCard } from '@/components/Loading';
 
 export default function LatestBlogPosts() {
   const [articles, setArticles] = useState<Article[]>([]);
@@ -58,18 +59,10 @@ export default function LatestBlogPosts() {
             <div className="w-24 h-1 bg-green-600 mx-auto mb-6"></div>
           </div>
 
-          {/* Loading Skeleton */}
+          {/* Loading Skeleton - Usando componente reutilizable */}
           <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
             {[1, 2].map((i) => (
-              <div key={i} className="bg-gray-800 rounded-lg overflow-hidden animate-pulse">
-                <div className="h-64 bg-gray-700"></div>
-                <div className="p-8">
-                  <div className="h-4 bg-gray-700 rounded mb-4"></div>
-                  <div className="h-8 bg-gray-700 rounded mb-4"></div>
-                  <div className="h-4 bg-gray-700 rounded mb-2"></div>
-                  <div className="h-4 bg-gray-700 rounded w-3/4"></div>
-                </div>
-              </div>
+              <SkeletonArticleCard key={i} />
             ))}
           </div>
         </div>
