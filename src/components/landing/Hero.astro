@@ -9,12 +9,14 @@ import { LANDING_IMAGES } from '@/utils/images';
 <section class="relative h-screen flex items-center justify-center overflow-hidden">
   <!-- Video de fondo de Vimeo -->
   <div class="absolute inset-0 z-0">
-    <!-- iframe de Vimeo con autoplay y loop -->
+    <!-- iframe de Vimeo con autoplay y loop - Optimizado para todos los dispositivos -->
     <iframe
-      src="https://player.vimeo.com/video/1132797148?autoplay=1&loop=1&muted=1&controls=0&background=1"
+      src="https://player.vimeo.com/video/1132797148?autoplay=1&loop=1&muted=1&controls=0&background=1&playsinline=1&quality=auto"
       class="absolute top-1/2 left-1/2 w-[100vw] h-[100vh] min-w-full min-h-full -translate-x-1/2 -translate-y-1/2 border-0"
       style="pointer-events: none;"
-      allow="autoplay; fullscreen"
+      allow="autoplay; fullscreen; picture-in-picture"
+      allowfullscreen
+      playsinline
       title="Centro Umbandista Reino Da Mata"
     ></iframe>
 
@@ -135,24 +137,39 @@ import { LANDING_IMAGES } from '@/utils/images';
 </style>
 
 <script>
-  // Optimización del video: En móviles, mostrar imagen en lugar de video para mejor performance
-  const isMobile = window.innerWidth < 768;
+  // Fallback inteligente: Mostrar imagen solo si el video falla en cargar
   const videoIframe = document.querySelector('section iframe') as HTMLIFrameElement | null;
   const fallbackImage = document.getElementById('hero-fallback-image') as HTMLImageElement | null;
 
-  if (isMobile && videoIframe && fallbackImage) {
-    // En móviles, ocultar video y mostrar imagen
-    videoIframe.style.display = 'none';
-    fallbackImage.style.display = 'block';
-  }
+  if (videoIframe && fallbackImage) {
+    // Detectar si el video no carga después de un timeout
+    const timeoutId = setTimeout(() => {
+      // Si después de 8 segundos el video no se visualiza, mostrar imagen
+      console.warn('[Hero] Video timeout - mostrando fallback');
+      videoIframe.style.display = 'none';
+      fallbackImage.style.display = 'block';
+    }, 8000);
 
-  // Detectar si el video no carga y mostrar fallback
-  if (videoIframe) {
+    // Si el iframe carga correctamente, cancelar el timeout
+    videoIframe.addEventListener('load', () => {
+      clearTimeout(timeoutId);
+      console.log('[Hero] Video cargado exitosamente');
+    });
+
+    // Si hay error, mostrar fallback inmediatamente
     videoIframe.addEventListener('error', () => {
-      if (fallbackImage) {
-        videoIframe.style.display = 'none';
-        fallbackImage.style.display = 'block';
-      }
+      clearTimeout(timeoutId);
+      console.error('[Hero] Error cargando video - mostrando fallback');
+      videoIframe.style.display = 'none';
+      fallbackImage.style.display = 'block';
     });
   }
+
+  // Forzar reproducción en iOS/Safari (workaround para autoplay)
+  window.addEventListener('load', () => {
+    if (videoIframe) {
+      // Intentar forzar carga del video
+      videoIframe.src = videoIframe.src;
+    }
+  });
 </script>
