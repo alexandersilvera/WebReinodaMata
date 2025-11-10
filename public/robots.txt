@@ -1,6 +1,27 @@
-# Allow all crawlers access to all content
+# Robots.txt para Centro Umbandista Reino Da Mata
+# https://www.centroumbandistareinodamata.org
+
+# Allow all major search engines
 User-agent: *
 Allow: /
+
+# Disallow admin and private routes
+Disallow: /admin
+Disallow: /api/
+Disallow: /_astro/
+
+# Disallow authentication pages
+Disallow: /login
+Disallow: /registro
+
+# Allow crawling of images
+User-agent: Googlebot-Image
+Allow: /images/
+Allow: /assets/
+
+# Crawl-delay for respectful crawling (optional)
+# User-agent: *
+# Crawl-delay: 10
 
 # Sitemap location
 Sitemap: https://www.centroumbandistareinodamata.org/sitemap-index.xml

@@ -9,10 +9,10 @@ import { LANDING_IMAGES } from '@/utils/images';
 const galleryImages = LANDING_IMAGES.gallery.slice(0, 3);
 ---
 
-<section class="py-20 bg-gray-900">
+<section id="sobre-nosotros" class="py-20 bg-gray-900 scroll-mt-20">
   <div class="container mx-auto px-4 sm:px-6 lg:px-8">
     <!-- Título de la sección -->
-    <div class="text-center mb-16">
+    <div class="text-center mb-16 scroll-animate">
       <h2 class="text-4xl md:text-5xl font-bold text-white mb-4">
         Sobre Nosotros
       </h2>
@@ -25,13 +25,16 @@ const galleryImages = LANDING_IMAGES.gallery.slice(0, 3);
 
     <!-- Grid de imágenes con efecto hover -->
     <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
-      {galleryImages.map((image) => (
-        <div class="group relative overflow-hidden rounded-lg aspect-[4/3] shadow-xl">
+      {galleryImages.map((image, index) => (
+        <div class={`group relative overflow-hidden rounded-lg aspect-[4/3] shadow-xl hover-lift scroll-animate-scale scroll-animate-delay-${index + 1}`}>
           <img
             src={image.url}
             alt={image.alt}
             class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
             loading="lazy"
+            decoding="async"
+            width="800"
+            height="600"
           />
           <!-- Overlay con título al hacer hover -->
           <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
@@ -46,7 +49,7 @@ const galleryImages = LANDING_IMAGES.gallery.slice(0, 3);
     <!-- Valores/Pilares del centro -->
     <div class="grid md:grid-cols-3 gap-8 mt-16">
       <!-- Pilar 1: Espiritualidad -->
-      <div class="text-center p-6 rounded-lg bg-gray-800/50 backdrop-blur-sm border border-gray-700 hover:border-green-600 transition-colors">
+      <div class="text-center p-6 rounded-lg bg-gray-800/50 backdrop-blur-sm border border-gray-700 hover:border-green-600 transition-colors scroll-animate-up scroll-animate-delay-1 hover-lift">
         <div class="text-5xl mb-4">🕯️</div>
         <h3 class="text-xl font-semibold text-white mb-3">Espiritualidad</h3>
         <p class="text-gray-400 leading-relaxed">
@@ -56,7 +59,7 @@ const galleryImages = LANDING_IMAGES.gallery.slice(0, 3);
       </div>
 
       <!-- Pilar 2: Comunidad -->
-      <div class="text-center p-6 rounded-lg bg-gray-800/50 backdrop-blur-sm border border-gray-700 hover:border-green-600 transition-colors">
+      <div class="text-center p-6 rounded-lg bg-gray-800/50 backdrop-blur-sm border border-gray-700 hover:border-green-600 transition-colors scroll-animate-up scroll-animate-delay-2 hover-lift">
         <div class="text-5xl mb-4">🤝</div>
         <h3 class="text-xl font-semibold text-white mb-3">Comunidad</h3>
         <p class="text-gray-400 leading-relaxed">
@@ -66,7 +69,7 @@ const galleryImages = LANDING_IMAGES.gallery.slice(0, 3);
       </div>
 
       <!-- Pilar 3: Conocimiento -->
-      <div class="text-center p-6 rounded-lg bg-gray-800/50 backdrop-blur-sm border border-gray-700 hover:border-green-600 transition-colors">
+      <div class="text-center p-6 rounded-lg bg-gray-800/50 backdrop-blur-sm border border-gray-700 hover:border-green-600 transition-colors scroll-animate-up scroll-animate-delay-3 hover-lift">
         <div class="text-5xl mb-4">📚</div>
         <h3 class="text-xl font-semibold text-white mb-3">Conocimiento</h3>
         <p class="text-gray-400 leading-relaxed">
@@ -77,7 +80,7 @@ const galleryImages = LANDING_IMAGES.gallery.slice(0, 3);
     </div>
 
     <!-- Breve descripción del templo -->
-    <div class="mt-16 max-w-4xl mx-auto text-center">
+    <div class="mt-16 max-w-4xl mx-auto text-center scroll-animate">
       <p class="text-lg text-gray-300 leading-relaxed mb-8">
         Fundado hace más de 15 años, el Centro Umbandista Reino Da Mata se ha
         consolidado como un espacio de referencia para la práctica de la Umbanda
@@ -88,7 +91,7 @@ const galleryImages = LANDING_IMAGES.gallery.slice(0, 3);
       <!-- CTA para conocer más -->
       <a
         href="/nosotros"
-        class="inline-block px-8 py-3 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-lg transition-all transform hover:scale-105 shadow-lg"
+        class="inline-block px-8 py-3 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-lg transition-all transform hover:scale-105 shadow-lg hover-shine"
       >
         Conocer Nuestra Historia Completa →
       </a>

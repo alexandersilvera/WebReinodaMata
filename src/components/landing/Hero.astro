@@ -9,13 +9,13 @@ import { LANDING_IMAGES } from '@/utils/images';
 <section class="relative h-screen flex items-center justify-center overflow-hidden">
   <!-- Video de fondo de Vimeo -->
   <div class="absolute inset-0 z-0">
-    <!-- iframe de Vimeo con autoplay y loop -->
+    <!-- iframe de Vimeo con autoplay y loop - Optimizado para todos los dispositivos -->
     <iframe
-      src="https://player.vimeo.com/video/1132797148?autoplay=1&loop=1&muted=1&controls=0&background=1"
-      class="absolute top-1/2 left-1/2 w-[100vw] h-[100vh] min-w-full min-h-full -translate-x-1/2 -translate-y-1/2"
+      src="https://player.vimeo.com/video/1132797148?autoplay=1&loop=1&muted=1&controls=0&background=1&playsinline=1&quality=auto"
+      class="absolute top-1/2 left-1/2 w-[100vw] h-[100vh] min-w-full min-h-full -translate-x-1/2 -translate-y-1/2 border-0"
       style="pointer-events: none;"
-      frameborder="0"
-      allow="autoplay; fullscreen"
+      allow="autoplay; fullscreen; picture-in-picture"
+      allowfullscreen
       title="Centro Umbandista Reino Da Mata"
     ></iframe>
 
@@ -25,6 +25,10 @@ import { LANDING_IMAGES } from '@/utils/images';
       alt={LANDING_IMAGES.hero.alt}
       class="w-full h-full object-cover"
       loading="eager"
+      fetchpriority="high"
+      decoding="async"
+      width="1920"
+      height="1080"
       style="display: none;"
       id="hero-fallback-image"
     />
@@ -79,11 +83,14 @@ import { LANDING_IMAGES } from '@/utils/images';
   </div>
 
   <!-- Indicador de scroll (flecha hacia abajo) -->
-  <div class="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 animate-bounce hidden md:block">
-    <svg class="w-6 h-6 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
-    </svg>
-  </div>
+  <a href="#sobre-nosotros" class="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 animate-bounce-arrow hidden md:block group cursor-pointer">
+    <div class="flex flex-col items-center gap-2">
+      <span class="text-white/60 text-sm group-hover:text-white/90 transition-colors">Descubre más</span>
+      <svg class="w-6 h-6 text-white/60 group-hover:text-white/90 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+      </svg>
+    </div>
+  </a>
 </section>
 
 <style>
@@ -129,24 +136,39 @@ import { LANDING_IMAGES } from '@/utils/images';
 </style>
 
 <script>
-  // Optimización del video: En móviles, mostrar imagen en lugar de video para mejor performance
-  const isMobile = window.innerWidth < 768;
-  const videoIframe = document.querySelector('section iframe');
-  const fallbackImage = document.getElementById('hero-fallback-image');
+  // Fallback inteligente: Mostrar imagen solo si el video falla en cargar
+  const videoIframe = document.querySelector('section iframe') as HTMLIFrameElement | null;
+  const fallbackImage = document.getElementById('hero-fallback-image') as HTMLImageElement | null;
 
-  if (isMobile && videoIframe && fallbackImage) {
-    // En móviles, ocultar video y mostrar imagen
-    videoIframe.style.display = 'none';
-    fallbackImage.style.display = 'block';
-  }
+  if (videoIframe && fallbackImage) {
+    // Detectar si el video no carga después de un timeout
+    const timeoutId = setTimeout(() => {
+      // Si después de 8 segundos el video no se visualiza, mostrar imagen
+      console.warn('[Hero] Video timeout - mostrando fallback');
+      videoIframe.style.display = 'none';
+      fallbackImage.style.display = 'block';
+    }, 8000);
 
-  // Detectar si el video no carga y mostrar fallback
-  if (videoIframe) {
+    // Si el iframe carga correctamente, cancelar el timeout
+    videoIframe.addEventListener('load', () => {
+      clearTimeout(timeoutId);
+      console.log('[Hero] Video cargado exitosamente');
+    });
+
+    // Si hay error, mostrar fallback inmediatamente
     videoIframe.addEventListener('error', () => {
-      if (fallbackImage) {
-        videoIframe.style.display = 'none';
-        fallbackImage.style.display = 'block';
-      }
+      clearTimeout(timeoutId);
+      console.error('[Hero] Error cargando video - mostrando fallback');
+      videoIframe.style.display = 'none';
+      fallbackImage.style.display = 'block';
     });
   }
+
+  // Forzar reproducción en iOS/Safari (workaround para autoplay)
+  window.addEventListener('load', () => {
+    if (videoIframe) {
+      // Intentar forzar carga del video
+      videoIframe.src = videoIframe.src;
+    }
+  });
 </script>

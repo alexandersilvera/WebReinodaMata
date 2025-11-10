@@ -162,6 +162,10 @@ function ArticleCard({ article }: { article: Article }) {
             src={articleImage}
             alt={article.title}
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+            loading="lazy"
+            decoding="async"
+            width="800"
+            height="600"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-gray-800 via-transparent to-transparent"></div>
 
