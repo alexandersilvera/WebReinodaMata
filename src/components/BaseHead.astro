@@ -46,7 +46,18 @@ const placeOfWorshipSchema = {
 		href="/assets/logo.svg"
 		type="image/svg+xml"
 	/>
-	
+
+	<!-- DNS Prefetch & Preconnect para mejorar performance -->
+	<link rel="dns-prefetch" href="https://firebasestorage.googleapis.com" />
+	<link rel="preconnect" href="https://firebasestorage.googleapis.com" crossorigin />
+	<link rel="dns-prefetch" href="https://player.vimeo.com" />
+	<link rel="preconnect" href="https://player.vimeo.com" crossorigin />
+	<link rel="dns-prefetch" href="https://i.vimeocdn.com" />
+	<link rel="preconnect" href="https://i.vimeocdn.com" crossorigin />
+
+	<!-- Canonical URL -->
+	<link rel="canonical" href={Astro.url.toString()} />
+
 	<!-- Font Preloads -->
 	<link
 		rel="preload"
@@ -79,26 +90,28 @@ const placeOfWorshipSchema = {
 
 	{/* Reemplazo de meta tags manuales con el componente SEO */}
 	<SEO
-		title={title} 
-		description={description} 
+		title={title}
+		description={description}
 		openGraph={{
 			basic: {
 				title: title,
 				type: "website",
-				image: ogImageURL, // Use the full URL
-				// url: Astro.url.toString() // Generally, Astro.site is preferred here if set
+				image: ogImageURL,
 			},
-			// Puedes añadir más propiedades de OpenGraph aquí si es necesario
-			// image: {
-			//   alt: 'Texto alternativo para la imagen OG',
-			// },
+			optional: {
+				locale: "es_UY",
+				siteName: "Centro Umbandista Reino Da Mata",
+			},
+			image: {
+				alt: "Centro Umbandista Reino Da Mata - Espiritualidad y Comunidad",
+			},
 		}}
 		twitter={{
-			// card: "summary_large_image", 
-			// title: title, 
-			// description: description, 
-			// image: image, 
-			// imageAlt: 'Texto alternativo para la imagen de Twitter'
+			card: "summary_large_image",
+			title: title,
+			description: description,
+			image: ogImageURL,
+			imageAlt: "Centro Umbandista Reino Da Mata"
 		}}
 	/>
 
