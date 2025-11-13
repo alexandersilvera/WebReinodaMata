@@ -1,6 +1,10 @@
 ---
 import MainLayout from "@/layouts/MainLayout.astro";
 import AuthSync from "@/components/AuthSync";
+
+// Obtener el parámetro redirect de la URL
+const redirectUrl = Astro.url.searchParams.get('redirect') || '';
+const registerUrl = redirectUrl ? `/register?redirect=${encodeURIComponent(redirectUrl)}` : '/register';
 ---
 
 <MainLayout title="Iniciar Sesión - Reino da Mata" description="Inicia sesión en tu cuenta.">
@@ -22,7 +26,7 @@ import AuthSync from "@/components/AuthSync";
       </button>
       <div id="error-message" class="text-red-500 text-sm mt-4 text-center hidden"></div>
        <p class="text-center text-sm text-gray-400 mt-4">
-        ¿No tienes cuenta? <a href="/register" class="text-[#F08F4A] hover:underline">Regístrate aquí</a>
+        ¿No tienes cuenta? <a href={registerUrl} class="text-[#F08F4A] hover:underline">Regístrate aquí</a>
       </p>
     </form>
   </div>
@@ -49,8 +53,10 @@ import AuthSync from "@/components/AuthSync";
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      // Login successful! Redirect to homepage or dashboard
-      window.location.href = '/'; // Redirect to home
+      // Login successful! Redirect to redirect param or homepage
+      const urlParams = new URLSearchParams(window.location.search);
+      const redirectUrl = urlParams.get('redirect');
+      window.location.href = redirectUrl || '/'; // Redirect to specified URL or home
     } catch (error: any) {
       console.error("Login error:", error);
       // Handle specific errors
