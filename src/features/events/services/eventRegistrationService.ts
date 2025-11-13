@@ -35,12 +35,21 @@ const convertTimestamp = (data: any): any => {
   return converted;
 };
 
-// Helper para remover valores undefined (Firestore no los permite)
+// Helper para remover valores undefined recursivamente (Firestore no los permite)
 const removeUndefined = (obj: any): any => {
+  if (obj === null || obj === undefined) return obj;
+  if (typeof obj !== 'object') return obj;
+
   const cleaned: any = {};
   Object.keys(obj).forEach((key) => {
-    if (obj[key] !== undefined) {
-      cleaned[key] = obj[key];
+    const value = obj[key];
+    if (value !== undefined) {
+      // Si es un objeto anidado, limpiar recursivamente
+      if (value !== null && typeof value === 'object' && !Array.isArray(value) && !(value instanceof Date)) {
+        cleaned[key] = removeUndefined(value);
+      } else {
+        cleaned[key] = value;
+      }
     }
   });
   return cleaned;

@@ -84,13 +84,15 @@ export default function EventRegistrationClient({ eventId }: EventRegistrationCl
       setSubmitting(true);
       setError(null);
 
-      const additionalInfo = {
-        phone: formData.phone,
-        institution: formData.institution,
-        role: formData.role,
+      // Crear additionalInfo solo con campos definidos (Firestore no acepta undefined)
+      const additionalInfo: Record<string, any> = {
         interests: formData.interests,
-        specialRequirements: formData.specialRequirements,
       };
+
+      if (formData.phone) additionalInfo.phone = formData.phone;
+      if (formData.institution) additionalInfo.institution = formData.institution;
+      if (formData.role) additionalInfo.role = formData.role;
+      if (formData.specialRequirements) additionalInfo.specialRequirements = formData.specialRequirements;
 
       if (event.isFree) {
         // Registro gratuito directo
