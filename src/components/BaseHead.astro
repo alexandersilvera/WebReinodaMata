@@ -110,33 +110,30 @@ const websiteSchema = {
 	<link rel="canonical" href={Astro.url.toString()} />
 
 	<!-- Font Preloads -->
+	<!-- Removido crossorigin porque las fuentes están en el mismo origen -->
 	<link
 		rel="preload"
 		href="/fonts/ProductSans-Bold.woff"
 		as="font"
 		type="font/woff"
-		crossorigin
 	/>
 	<link
 		rel="preload"
 		href="/fonts/ProductSans-Light.woff"
 		as="font"
 		type="font/woff"
-		crossorigin
 	/>
 	<link
 		rel="preload"
 		href="/fonts/ProductSans-Medium.woff"
 		as="font"
 		type="font/woff"
-		crossorigin
 	/>
 	<link
 		rel="preload"
 		href="/fonts/ProductSans-Regular.woff"
 		as="font"
 		type="font/woff"
-		crossorigin
 	/>
 
 	{/* Reemplazo de meta tags manuales con el componente SEO */}
