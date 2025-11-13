@@ -13,37 +13,60 @@ export default function UpcomingEventsHome() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+
+    async function waitForServices(): Promise<boolean> {
+      // Esperar hasta que los servicios estén disponibles (máx 5 segundos)
+      const maxAttempts = 50; // 50 intentos x 100ms = 5 segundos
+      for (let i = 0; i < maxAttempts; i++) {
+        if (cancelled) return false;
+        if (window.eventServices) {
+          console.log('[UpcomingEventsHome] Servicios disponibles después de', i * 100, 'ms');
+          return true;
+        }
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      console.error('[UpcomingEventsHome] Timeout esperando servicios');
+      return false;
+    }
+
     async function loadEvents() {
       try {
         setLoading(true);
 
-        console.log('[UpcomingEventsHome] Iniciando carga de eventos...');
-        console.log('[UpcomingEventsHome] window.eventServices:', window.eventServices);
+        console.log('[UpcomingEventsHome] Esperando servicios...');
+        const servicesAvailable = await waitForServices();
 
-        if (!window.eventServices) {
-          console.error('[UpcomingEventsHome] eventServices no está disponible en window');
-          setError('Servicios no disponibles');
+        if (!servicesAvailable || cancelled) {
+          if (!cancelled) {
+            setError('Servicios no disponibles');
+          }
           return;
         }
 
         const upcomingEvents = await window.eventServices.getUpcomingEvents(3);
-        console.log('[UpcomingEventsHome] Eventos cargados:', upcomingEvents);
 
-        setEvents(upcomingEvents || []);
+        if (!cancelled) {
+          console.log('[UpcomingEventsHome] Eventos cargados:', upcomingEvents);
+          setEvents(upcomingEvents || []);
+        }
       } catch (err) {
-        console.error('[UpcomingEventsHome] Error cargando eventos:', err);
-        setError('No se pudieron cargar los eventos');
+        if (!cancelled) {
+          console.error('[UpcomingEventsHome] Error cargando eventos:', err);
+          setError('No se pudieron cargar los eventos');
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     }
 
-    // Esperar un poco para asegurar que globalServices se haya cargado
-    const timer = setTimeout(() => {
-      loadEvents();
-    }, 100);
+    loadEvents();
 
-    return () => clearTimeout(timer);
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   if (loading) {

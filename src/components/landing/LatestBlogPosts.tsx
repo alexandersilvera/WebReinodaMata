@@ -12,16 +12,34 @@ export default function LatestBlogPosts() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+
+    async function waitForServices(): Promise<boolean> {
+      // Esperar hasta que los servicios estén disponibles (máx 5 segundos)
+      const maxAttempts = 50; // 50 intentos x 100ms = 5 segundos
+      for (let i = 0; i < maxAttempts; i++) {
+        if (cancelled) return false;
+        if (window.articleServices) {
+          console.log('[LatestBlogPosts] Servicios disponibles después de', i * 100, 'ms');
+          return true;
+        }
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      console.error('[LatestBlogPosts] Timeout esperando servicios');
+      return false;
+    }
+
     async function loadArticles() {
       try {
         setLoading(true);
 
-        console.log('[LatestBlogPosts] Iniciando carga de artículos...');
-        console.log('[LatestBlogPosts] window.articleServices:', window.articleServices);
+        console.log('[LatestBlogPosts] Esperando servicios...');
+        const servicesAvailable = await waitForServices();
 
-        if (!window.articleServices) {
-          console.error('[LatestBlogPosts] articleServices no está disponible en window');
-          setError('Servicios no disponibles');
+        if (!servicesAvailable || cancelled) {
+          if (!cancelled) {
+            setError('Servicios no disponibles');
+          }
           return;
         }
 
@@ -29,23 +47,28 @@ export default function LatestBlogPosts() {
           includeDrafts: false,
           limitCount: 2
         });
-        console.log('[LatestBlogPosts] Artículos cargados:', allArticles);
 
-        setArticles(allArticles || []);
+        if (!cancelled) {
+          console.log('[LatestBlogPosts] Artículos cargados:', allArticles);
+          setArticles(allArticles || []);
+        }
       } catch (err) {
-        console.error('[LatestBlogPosts] Error cargando artículos:', err);
-        setError('No se pudieron cargar los artículos');
+        if (!cancelled) {
+          console.error('[LatestBlogPosts] Error cargando artículos:', err);
+          setError('No se pudieron cargar los artículos');
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     }
 
-    // Esperar un poco para asegurar que globalServices se haya cargado
-    const timer = setTimeout(() => {
-      loadArticles();
-    }, 100);
+    loadArticles();
 
-    return () => clearTimeout(timer);
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   if (loading) {
