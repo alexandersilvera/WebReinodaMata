@@ -666,8 +666,8 @@ export const cleanupInactiveSubscribers = onSchedule(
  * Esta función puede ser llamada desde el cliente para registrar visitas anónimas
  */
 export const recordPageView = onCall(
-  { 
-    memory: "128MiB",
+  {
+    memory: "256MiB",
     cors: CORS_CONFIG
   },
   async (request) => {

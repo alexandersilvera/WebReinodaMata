@@ -6,6 +6,7 @@ import { EventService } from '../services/eventService';
 import EventCard from './EventCard';
 import EventFilters, { type EventFilterState } from './EventFilters';
 import type { AcademicEvent } from '@/features/research/types';
+import { handleFirebaseError } from '@/core/utils/errorHandling';
 
 export default function EventsListClient() {
   const [events, setEvents] = useState<AcademicEvent[]>([]);
@@ -36,8 +37,9 @@ export default function EventsListClient() {
       const data = await EventService.getPublishedEvents();
       setEvents(data);
     } catch (err) {
-      console.error('Error loading events:', err);
-      setError('No se pudieron cargar los eventos. Por favor, intenta más tarde.');
+      // Usar manejo seguro de errores
+      const errorMessage = handleFirebaseError(err, 'loadEvents');
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

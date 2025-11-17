@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '../core/firebase/config';
+import { logError } from '../core/utils/errorHandling';
 
 /**
  * Componente para rastrear vistas de página y enviar la información a Firebase
@@ -32,8 +33,9 @@ export default function PageViewTracker() {
 
         // No necesitamos manejar la respuesta, solo registrar en caso de error
       } catch (error) {
-        // No mostrar errores al usuario, solo registrar en la consola
-        console.error('Error al registrar vista de página:', error);
+        // Usar manejo seguro de errores (solo logea detalles en desarrollo)
+        logError('Error al registrar vista de página', error);
+        // Silenciosamente ignorar el error para no afectar la UX
       }
     };
 

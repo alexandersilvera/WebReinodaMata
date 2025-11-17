@@ -94,13 +94,17 @@ service cloud.firestore {
     // Reglas para vistas de página (analytics básico)
     match /pageViews/{viewId} {
       // Permitir crear vistas a cualquier usuario (para analytics)
+      // Los campos opcionales son: referrer, userAgent, userId
       allow create: if request.resource.data.keys().hasAll(['path', 'timestamp']) &&
                     request.resource.data.path is string &&
-                    request.resource.data.path.size() > 0;
-      
+                    request.resource.data.path.size() > 0 &&
+                    (!request.resource.data.keys().hasAny(['referrer']) || request.resource.data.referrer is string) &&
+                    (!request.resource.data.keys().hasAny(['userAgent']) || request.resource.data.userAgent is string) &&
+                    (!request.resource.data.keys().hasAny(['userId']) || request.resource.data.userId is string);
+
       // Solo el administrador puede leer analytics
       allow read: if isAdmin();
-      
+
       // Solo el administrador puede actualizar/eliminar analytics
       allow update, delete: if isAdmin();
     }
