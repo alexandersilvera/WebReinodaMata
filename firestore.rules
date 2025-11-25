@@ -350,6 +350,16 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
+    // Reglas para eventos de autenticación (analytics)
+    match /auth_events/{eventId} {
+      // Solo admin puede leer eventos de autenticación
+      allow read: if isAdmin();
+
+      // No permitir escritura directa desde cliente
+      // (se escribe via API endpoint con Firebase Admin SDK)
+      allow create, update, delete: if false;
+    }
+
     // Regla por defecto - denegar acceso a cualquier otra colección
     match /{document=**} {
       allow read, write: if false;
