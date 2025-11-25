@@ -20,7 +20,11 @@ const registerUrl = redirectUrl ? `/register?redirect=${encodeURIComponent(redir
       <div>
         <label for="password" class="block text-sm font-medium text-gray-300 mb-1">Contraseña</label>
         <input type="password" id="password" name="password" required class="w-full px-4 py-2 bg-[#2a292e] border border-gray-600 rounded-md text-white focus:ring-[#F08F4A] focus:border-[#F08F4A] transition" placeholder="********">
-        <div class="text-right mt-2">
+        <div class="flex justify-between items-center mt-2">
+          <label class="flex items-center text-sm text-gray-300 cursor-pointer">
+            <input type="checkbox" id="remember-me" name="remember-me" checked class="mr-2 rounded border-gray-600 bg-[#2a292e] text-[#F08F4A] focus:ring-[#F08F4A]">
+            <span>Recordarme</span>
+          </label>
           <a href="/forgot-password" class="text-sm text-[#F08F4A] hover:underline">¿Olvidaste tu contraseña?</a>
         </div>
       </div>
@@ -37,11 +41,14 @@ const registerUrl = redirectUrl ? `/register?redirect=${encodeURIComponent(redir
 
 <script>
   import { auth, signInWithEmailAndPassword } from "../core/firebase/config.js";
+  import { setPersistence, browserLocalPersistence, browserSessionPersistence } from "firebase/auth";
   import { isBlocked, recordFailedAttempt, recordSuccessfulAttempt, formatBlockTime } from "../core/auth/rateLimiter.js";
+  import { trackAuthEvent } from "../core/auth/authAnalytics.js";
 
   const loginForm = document.getElementById('login-form') as HTMLFormElement;
   const emailInput = document.getElementById('email') as HTMLInputElement;
   const passwordInput = document.getElementById('password') as HTMLInputElement;
+  const rememberMeCheckbox = document.getElementById('remember-me') as HTMLInputElement;
   const submitButton = document.getElementById('submit-button') as HTMLButtonElement;
   const errorMessageDiv = document.getElementById('error-message') as HTMLDivElement;
 
@@ -87,12 +94,25 @@ const registerUrl = redirectUrl ? `/register?redirect=${encodeURIComponent(redir
 
     const email = emailInput.value;
     const password = passwordInput.value;
+    const rememberMe = rememberMeCheckbox.checked;
 
     try {
+      // Establecer persistencia según "Remember Me"
+      const persistence = rememberMe ? browserLocalPersistence : browserSessionPersistence;
+      await setPersistence(auth, persistence);
+
+      console.log('[Login] Persistencia configurada:', rememberMe ? 'Local (permanente)' : 'Sesión (temporal)');
+
       await signInWithEmailAndPassword(auth, email, password);
 
       // Login exitoso - resetear contador
       recordSuccessfulAttempt('login');
+
+      // Track evento exitoso
+      trackAuthEvent('login', true, {
+        rememberMe,
+        persistence: rememberMe ? 'local' : 'session'
+      });
 
       // Redirect
       const urlParams = new URLSearchParams(window.location.search);
@@ -103,6 +123,12 @@ const registerUrl = redirectUrl ? `/register?redirect=${encodeURIComponent(redir
 
       // Registrar intento fallido
       const result = recordFailedAttempt('login');
+
+      // Track evento fallido
+      trackAuthEvent('login', false, {
+        errorCode: error.code,
+        blocked: result.blocked
+      });
 
       let friendlyMessage = "Error al iniciar sesión. Por favor, verifica tus credenciales.";
 

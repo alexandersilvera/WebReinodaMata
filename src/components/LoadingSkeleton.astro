@@ -1,0 +1,55 @@
+---
+interface Props {
+  type?: 'button' | 'input' | 'text' | 'form';
+  className?: string;
+}
+
+const { type = 'text', className = '' } = Astro.props;
+
+const baseClass = 'animate-pulse bg-gray-700 rounded';
+
+const skeletonClasses = {
+  button: 'h-10 w-full',
+  input: 'h-10 w-full',
+  text: 'h-4 w-3/4',
+  form: 'space-y-4',
+};
+---
+
+{type === 'form' ? (
+  <div class={`${baseClass} ${className}`}>
+    <div class="space-y-6 p-8">
+      <!-- Email field skeleton -->
+      <div class="space-y-2">
+        <div class="h-4 w-32 bg-gray-600 rounded"></div>
+        <div class="h-10 w-full bg-gray-600 rounded"></div>
+      </div>
+      <!-- Password field skeleton -->
+      <div class="space-y-2">
+        <div class="h-4 w-24 bg-gray-600 rounded"></div>
+        <div class="h-10 w-full bg-gray-600 rounded"></div>
+      </div>
+      <!-- Button skeleton -->
+      <div class="h-10 w-full bg-gray-600 rounded"></div>
+      <!-- Text skeleton -->
+      <div class="h-4 w-48 mx-auto bg-gray-600 rounded"></div>
+    </div>
+  </div>
+) : (
+  <div class={`${baseClass} ${skeletonClasses[type]} ${className}`}></div>
+)}
+
+<style>
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  .animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+</style>
