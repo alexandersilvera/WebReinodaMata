@@ -12,17 +12,19 @@ interface AdminProtectionProps {
   allowedRoles?: AdminRole[];
   requireAll?: boolean; // true = todas las permissions, false = cualquiera
   showRoleInfo?: boolean; // Mostrar información del rol del usuario
+  requireEmailVerification?: boolean; // Requiere que el email esté verificado
 }
 
-export default function AdminProtection({ 
-  children, 
+export default function AdminProtection({
+  children,
   fallback,
   requiredPermissions,
   allowedRoles,
   requireAll = true,
-  showRoleInfo = false
+  showRoleInfo = false,
+  requireEmailVerification = false
 }: AdminProtectionProps) {
-  const { isAdmin: legacyIsAdmin } = useAuth(); // Sistema anterior
+  const { isAdmin: legacyIsAdmin, user } = useAuth(); // Sistema anterior
   const rbac = useRBAC();
   
   // Si se especifican permisos específicos, usar hook de permisos
@@ -84,6 +86,36 @@ export default function AdminProtection({
         <span className="ml-2 text-gray-300 text-sm mt-2">
           {requiredPermissions ? 'Verificando permisos...' : 'Verificando acceso...'}
         </span>
+      </div>
+    );
+  }
+
+  // Verificación de email si se requiere
+  if (requireEmailVerification && user && !user.emailVerified) {
+    return fallback || (
+      <div className="flex flex-col items-center justify-center min-h-[400px] bg-yellow-900/20 border border-yellow-600/30 rounded-lg p-8">
+        <div className="text-yellow-400 text-6xl mb-4">📧</div>
+        <h2 className="text-2xl font-bold text-yellow-300 mb-2">Verificación de Email Requerida</h2>
+        <p className="text-yellow-200 text-center max-w-md mb-4">
+          Para acceder a esta sección, debes verificar tu correo electrónico.
+        </p>
+        <p className="text-yellow-300 text-sm mb-6">
+          Hemos enviado un enlace de verificación a: <strong>{user.email}</strong>
+        </p>
+        <div className="flex gap-4">
+          <button
+            onClick={() => window.location.href = '/verify-email'}
+            className="px-6 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
+          >
+            Verificar Email
+          </button>
+          <button
+            onClick={() => window.location.href = '/'}
+            className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+          >
+            Ir al Inicio
+          </button>
+        </div>
       </div>
     );
   }

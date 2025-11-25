@@ -38,7 +38,7 @@ const loginUrl = redirectUrl ? `/login?redirect=${encodeURIComponent(redirectUrl
 </MainLayout>
 
 <script>
-  import { createUserWithEmailAndPassword } from "firebase/auth";
+  import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
   import { auth } from "@/core/firebase/config"; // Import auth instance
 
   const registerForm = document.getElementById('register-form') as HTMLFormElement;
@@ -73,12 +73,19 @@ const loginUrl = redirectUrl ? `/login?redirect=${encodeURIComponent(redirectUrl
     submitButton.textContent = 'Registrando...';
 
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      // Registration successful! Redirect to redirect param or homepage
-      // Firebase automatically signs in the user upon successful registration
-      const urlParams = new URLSearchParams(window.location.search);
-      const redirectUrl = urlParams.get('redirect');
-      window.location.href = redirectUrl || '/'; // Redirect to specified URL or home
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+
+      // Enviar email de verificación
+      try {
+        await sendEmailVerification(userCredential.user);
+        console.log('[Register] Email de verificación enviado a:', email);
+      } catch (verifyError) {
+        console.error('[Register] Error al enviar email de verificación:', verifyError);
+        // No bloqueamos el registro si falla el envío del email
+      }
+
+      // Registration successful! Redirect to verify-email page
+      window.location.href = '/verify-email';
     } catch (error: any) {
       console.error("Registration error:", error);
       // Handle specific errors

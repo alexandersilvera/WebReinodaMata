@@ -1,6 +1,7 @@
 import { signal } from "@preact/signals";
 import { onAuthStateChanged, type User } from "firebase/auth";
 import { auth } from "@/core/firebase/config";
+import { configUtils } from "@/core/config";
 
 // Definimos la estructura del estado de autenticación
 type AuthState = {
@@ -27,8 +28,9 @@ onAuthStateChanged(auth, (user) => {
 });
 
 // Función de utilidad para verificar si el usuario es administrador.
+// Usa la configuración centralizada de emails admin.
 export function isAdmin() {
-    // Aquí puedes añadir tu lógica para verificar si el email del usuario está en la lista de administradores
-    // Por ahora, simplemente verificamos si el usuario está logueado.
-    return authState.value.user !== null;
+    const user = authState.value.user;
+    if (!user?.email) return false;
+    return configUtils.isAdminEmail(user.email);
 } 

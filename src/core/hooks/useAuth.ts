@@ -4,7 +4,9 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
-  onAuthStateChanged
+  onAuthStateChanged,
+  sendPasswordResetEmail,
+  sendEmailVerification
 } from 'firebase/auth';
 import { auth, firebaseUtils } from '../firebase/config';
 
@@ -183,6 +185,90 @@ export function useAuth() {
     photoURL: user?.photoURL || null,
   });
 
+  // Enviar email de recuperación de contraseña
+  const resetPassword = async (email: string) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      if (!email || !email.includes('@')) {
+        throw new Error('Correo electrónico inválido');
+      }
+
+      console.log('[useAuth] Enviando email de recuperación a:', email);
+      await sendPasswordResetEmail(auth, email);
+
+      console.log('[useAuth] Email de recuperación enviado exitosamente');
+      return { success: true };
+    } catch (err: any) {
+      console.error('[useAuth] Error al enviar email de recuperación:', err);
+
+      let friendlyMessage = 'Error al enviar email de recuperación';
+
+      switch (err.code) {
+        case 'auth/user-not-found':
+          friendlyMessage = 'No existe una cuenta con este correo electrónico';
+          break;
+        case 'auth/invalid-email':
+          friendlyMessage = 'El formato del correo electrónico no es válido';
+          break;
+        case 'auth/network-request-failed':
+          friendlyMessage = 'Error de conexión. Verifica tu internet';
+          break;
+        default:
+          friendlyMessage = err.message || 'Error desconocido';
+      }
+
+      setError(friendlyMessage);
+      return { success: false, error: friendlyMessage };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Enviar email de verificación al usuario actual
+  const sendVerification = async () => {
+    if (!user) {
+      setError('No hay usuario autenticado');
+      return { success: false, error: 'No hay usuario autenticado' };
+    }
+
+    if (user.emailVerified) {
+      return { success: true, message: 'El email ya está verificado' };
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      console.log('[useAuth] Enviando email de verificación a:', user.email);
+      await sendEmailVerification(user);
+
+      console.log('[useAuth] Email de verificación enviado exitosamente');
+      return { success: true };
+    } catch (err: any) {
+      console.error('[useAuth] Error al enviar email de verificación:', err);
+
+      let friendlyMessage = 'Error al enviar email de verificación';
+
+      switch (err.code) {
+        case 'auth/too-many-requests':
+          friendlyMessage = 'Demasiados intentos. Espera unos minutos';
+          break;
+        case 'auth/network-request-failed':
+          friendlyMessage = 'Error de conexión. Verifica tu internet';
+          break;
+        default:
+          friendlyMessage = err.message || 'Error desconocido';
+      }
+
+      setError(friendlyMessage);
+      return { success: false, error: friendlyMessage };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     user,
     loading,
@@ -193,6 +279,8 @@ export function useAuth() {
     logout,
     clearError,
     getUserInfo,
+    resetPassword,
+    sendVerification,
     // Información adicional del entorno
     environmentInfo: firebaseUtils.getEnvironmentInfo(),
   };

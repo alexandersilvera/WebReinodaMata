@@ -1,0 +1,172 @@
+---
+import MainLayout from "@/layouts/MainLayout.astro";
+
+export const prerender = false;
+---
+
+<MainLayout title="Verifica tu Email - Reino da Mata" description="Verifica tu correo electrónico.">
+  <div class="container mx-auto px-4 py-12 max-w-2xl">
+    <div class="bg-[#1f1e23] p-8 rounded-lg shadow-lg text-center">
+      <div class="mb-6">
+        <svg class="w-20 h-20 mx-auto text-[#F08F4A]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+        </svg>
+      </div>
+
+      <h1 class="text-3xl font-bold text-[#F08F4A] mb-4">Verifica tu Correo Electrónico</h1>
+
+      <p class="text-gray-300 mb-6" id="user-email-text">
+        Hemos enviado un enlace de verificación a tu correo electrónico.
+      </p>
+
+      <div class="bg-[#2a292e] p-6 rounded-md mb-6">
+        <h2 class="text-lg font-semibold text-white mb-3">¿Qué hacer ahora?</h2>
+        <ol class="text-left text-gray-300 space-y-2">
+          <li>1. Revisa tu bandeja de entrada</li>
+          <li>2. Busca un correo de Firebase Authentication</li>
+          <li>3. Haz clic en el enlace de verificación</li>
+          <li>4. Una vez verificado, ya puedes acceder a todas las funcionalidades</li>
+        </ol>
+      </div>
+
+      <div class="space-y-4">
+        <button
+          id="resend-button"
+          class="w-full bg-[#F08F4A] hover:bg-[#D9734E] text-white font-bold py-3 px-4 rounded-md transition duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Reenviar Email de Verificación
+        </button>
+
+        <button
+          id="refresh-button"
+          class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-4 rounded-md transition duration-300 ease-in-out"
+        >
+          Ya Verifiqué mi Email
+        </button>
+
+        <div id="message" class="text-sm mt-4 hidden"></div>
+
+        <p class="text-sm text-gray-400 mt-6">
+          <a href="/login" class="text-[#F08F4A] hover:underline">Volver al inicio de sesión</a>
+        </p>
+      </div>
+    </div>
+
+    <div class="mt-6 bg-yellow-900/20 border border-yellow-600/50 rounded-lg p-4">
+      <p class="text-sm text-yellow-200">
+        <strong>Nota:</strong> Si no encuentras el correo, revisa tu carpeta de spam o correo no deseado.
+      </p>
+    </div>
+  </div>
+</MainLayout>
+
+<script>
+  import { auth, sendEmailVerification, onAuthStateChanged } from "@/core/firebase/config";
+  import type { User } from "firebase/auth";
+
+  const resendButton = document.getElementById('resend-button') as HTMLButtonElement;
+  const refreshButton = document.getElementById('refresh-button') as HTMLButtonElement;
+  const messageDiv = document.getElementById('message') as HTMLDivElement;
+  const userEmailText = document.getElementById('user-email-text') as HTMLParagraphElement;
+
+  let currentUser: User | null = null;
+
+  // Escuchar cambios de autenticación
+  onAuthStateChanged(auth, (user) => {
+    currentUser = user;
+
+    if (user) {
+      // Mostrar el email del usuario
+      userEmailText.textContent = `Hemos enviado un enlace de verificación a ${user.email}.`;
+
+      // Si el email ya está verificado, redirigir automáticamente
+      if (user.emailVerified) {
+        showMessage('Tu email ya está verificado. Redirigiendo...', 'success');
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 2000);
+      }
+    } else {
+      // Si no hay usuario autenticado, redirigir al login
+      window.location.href = '/login';
+    }
+  });
+
+  // Reenviar email de verificación
+  resendButton.addEventListener('click', async () => {
+    if (!currentUser) {
+      showMessage('No hay usuario autenticado. Por favor, inicia sesión.', 'error');
+      return;
+    }
+
+    if (currentUser.emailVerified) {
+      showMessage('Tu email ya está verificado.', 'success');
+      return;
+    }
+
+    resendButton.disabled = true;
+    resendButton.textContent = 'Enviando...';
+
+    try {
+      await sendEmailVerification(currentUser);
+      showMessage('Email de verificación enviado correctamente. Revisa tu bandeja de entrada.', 'success');
+    } catch (error: any) {
+      console.error('Error al reenviar email:', error);
+
+      let friendlyMessage = 'Error al enviar el email.';
+      if (error.code === 'auth/too-many-requests') {
+        friendlyMessage = 'Demasiados intentos. Espera unos minutos antes de intentar de nuevo.';
+      }
+
+      showMessage(friendlyMessage, 'error');
+    } finally {
+      resendButton.disabled = false;
+      resendButton.textContent = 'Reenviar Email de Verificación';
+    }
+  });
+
+  // Verificar si ya se verificó el email
+  refreshButton.addEventListener('click', async () => {
+    if (!currentUser) {
+      showMessage('No hay usuario autenticado.', 'error');
+      return;
+    }
+
+    refreshButton.disabled = true;
+    refreshButton.textContent = 'Verificando...';
+
+    try {
+      // Recargar los datos del usuario
+      await currentUser.reload();
+
+      // Verificar si ahora está verificado
+      if (currentUser.emailVerified) {
+        showMessage('¡Email verificado exitosamente! Redirigiendo...', 'success');
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 2000);
+      } else {
+        showMessage('Aún no has verificado tu email. Por favor, revisa tu correo y haz clic en el enlace.', 'warning');
+      }
+    } catch (error) {
+      console.error('Error al verificar estado:', error);
+      showMessage('Error al verificar el estado. Intenta de nuevo.', 'error');
+    } finally {
+      refreshButton.disabled = false;
+      refreshButton.textContent = 'Ya Verifiqué mi Email';
+    }
+  });
+
+  function showMessage(text: string, type: 'success' | 'error' | 'warning') {
+    messageDiv.textContent = text;
+    messageDiv.classList.remove('hidden', 'text-green-500', 'text-red-500', 'text-yellow-500');
+
+    if (type === 'success') {
+      messageDiv.classList.add('text-green-500');
+    } else if (type === 'error') {
+      messageDiv.classList.add('text-red-500');
+    } else {
+      messageDiv.classList.add('text-yellow-500');
+    }
+  }
+</script>
