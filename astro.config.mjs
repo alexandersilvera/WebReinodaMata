@@ -35,6 +35,7 @@ export default defineConfig({
 		imageService: false, // Disable Vercel image service for external images
 		webAnalytics: { enabled: true },
 		speedInsights: { enabled: true },
+		runtime: 'nodejs20.x', // Specify Node.js 20 runtime for Vercel
 	}),
 	vite: {
 		resolve: {
