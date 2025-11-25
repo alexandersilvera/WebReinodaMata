@@ -2,6 +2,11 @@
   "buildCommand": "npm run build",
   "framework": null,
   "installCommand": "npm install",
+  "functions": {
+    "**/*": {
+      "runtime": "nodejs20.x"
+    }
+  },
   "headers": [
     {
       "source": "/(.*)",
