@@ -36,7 +36,8 @@ const registerUrl = redirectUrl ? `/register?redirect=${encodeURIComponent(redir
 </MainLayout>
 
 <script>
-  import { auth, signInWithEmailAndPassword } from "../core/firebase/config.js"; // Import auth instance
+  import { auth, signInWithEmailAndPassword } from "../core/firebase/config.js";
+  import { isBlocked, recordFailedAttempt, recordSuccessfulAttempt, formatBlockTime } from "../core/auth/rateLimiter.js";
 
   const loginForm = document.getElementById('login-form') as HTMLFormElement;
   const emailInput = document.getElementById('email') as HTMLInputElement;
@@ -44,8 +45,41 @@ const registerUrl = redirectUrl ? `/register?redirect=${encodeURIComponent(redir
   const submitButton = document.getElementById('submit-button') as HTMLButtonElement;
   const errorMessageDiv = document.getElementById('error-message') as HTMLDivElement;
 
+  // Verificar si está bloqueado al cargar la página
+  function checkBlockStatus() {
+    const blockStatus = isBlocked('login');
+    if (blockStatus.blocked && blockStatus.remainingTime) {
+      submitButton.disabled = true;
+      errorMessageDiv.textContent = `Demasiados intentos fallidos. Intenta de nuevo en ${formatBlockTime(blockStatus.remainingTime)}.`;
+      errorMessageDiv.classList.remove('hidden');
+
+      // Actualizar el contador cada segundo
+      const interval = setInterval(() => {
+        const newStatus = isBlocked('login');
+        if (!newStatus.blocked) {
+          clearInterval(interval);
+          submitButton.disabled = false;
+          errorMessageDiv.textContent = '';
+          errorMessageDiv.classList.add('hidden');
+        } else if (newStatus.remainingTime) {
+          errorMessageDiv.textContent = `Demasiados intentos fallidos. Intenta de nuevo en ${formatBlockTime(newStatus.remainingTime)}.`;
+        }
+      }, 1000);
+    }
+  }
+
+  // Verificar estado al cargar
+  checkBlockStatus();
+
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+
+    // Verificar si está bloqueado
+    const blockStatus = isBlocked('login');
+    if (blockStatus.blocked) {
+      return; // No permitir submit si está bloqueado
+    }
+
     errorMessageDiv.textContent = '';
     errorMessageDiv.classList.add('hidden');
     submitButton.disabled = true;
@@ -56,22 +90,42 @@ const registerUrl = redirectUrl ? `/register?redirect=${encodeURIComponent(redir
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      // Login successful! Redirect to redirect param or homepage
+
+      // Login exitoso - resetear contador
+      recordSuccessfulAttempt('login');
+
+      // Redirect
       const urlParams = new URLSearchParams(window.location.search);
       const redirectUrl = urlParams.get('redirect');
-      window.location.href = redirectUrl || '/'; // Redirect to specified URL or home
+      window.location.href = redirectUrl || '/';
     } catch (error: any) {
       console.error("Login error:", error);
-      // Handle specific errors
+
+      // Registrar intento fallido
+      const result = recordFailedAttempt('login');
+
       let friendlyMessage = "Error al iniciar sesión. Por favor, verifica tus credenciales.";
+
       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
         friendlyMessage = "Correo electrónico o contraseña incorrectos.";
+
+        // Agregar información de intentos restantes
+        if (!result.blocked && result.remainingAttempts > 0) {
+          friendlyMessage += ` Intentos restantes: ${result.remainingAttempts}`;
+        }
       } else if (error.code === 'auth/invalid-email') {
-          friendlyMessage = "El formato del correo electrónico no es válido.";
+        friendlyMessage = "El formato del correo electrónico no es válido.";
       }
+
+      // Si fue bloqueado en este intento
+      if (result.blocked) {
+        friendlyMessage = "Demasiados intentos fallidos. Tu cuenta ha sido bloqueada temporalmente por 15 minutos.";
+        checkBlockStatus(); // Iniciar el contador
+      }
+
       errorMessageDiv.textContent = friendlyMessage;
       errorMessageDiv.classList.remove('hidden');
-      submitButton.disabled = false;
+      submitButton.disabled = result.blocked;
       submitButton.textContent = 'Iniciar Sesión';
     }
   });

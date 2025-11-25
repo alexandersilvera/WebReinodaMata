@@ -20,7 +20,24 @@ const loginUrl = redirectUrl ? `/login?redirect=${encodeURIComponent(redirectUrl
       </div>
       <div>
         <label for="password" class="block text-sm font-medium text-gray-300 mb-1">Contraseña</label>
-        <input type="password" id="password" name="password" required minlength="6" class="w-full px-4 py-2 bg-[#2a292e] border border-gray-600 rounded-md text-white focus:ring-[#F08F4A] focus:border-[#F08F4A] transition" placeholder="Mínimo 6 caracteres">
+        <input type="password" id="password" name="password" required minlength="8" class="w-full px-4 py-2 bg-[#2a292e] border border-gray-600 rounded-md text-white focus:ring-[#F08F4A] focus:border-[#F08F4A] transition" placeholder="Mínimo 8 caracteres">
+        <!-- Indicador de fuerza de contraseña -->
+        <div id="password-strength" class="mt-2 hidden">
+          <div class="flex gap-1 mb-1">
+            <div id="strength-bar-1" class="h-1 flex-1 bg-gray-600 rounded transition-colors"></div>
+            <div id="strength-bar-2" class="h-1 flex-1 bg-gray-600 rounded transition-colors"></div>
+            <div id="strength-bar-3" class="h-1 flex-1 bg-gray-600 rounded transition-colors"></div>
+            <div id="strength-bar-4" class="h-1 flex-1 bg-gray-600 rounded transition-colors"></div>
+          </div>
+          <p id="strength-text" class="text-xs text-gray-400"></p>
+        </div>
+        <!-- Requisitos de contraseña -->
+        <ul id="password-requirements" class="mt-2 text-xs space-y-1 hidden">
+          <li id="req-length" class="text-gray-400">✗ Mínimo 8 caracteres</li>
+          <li id="req-uppercase" class="text-gray-400">✗ Una letra mayúscula</li>
+          <li id="req-number" class="text-gray-400">✗ Un número</li>
+          <li id="req-special" class="text-gray-400">✗ Un carácter especial</li>
+        </ul>
       </div>
        <div>
         <label for="confirm-password" class="block text-sm font-medium text-gray-300 mb-1">Confirmar Contraseña</label>
@@ -39,7 +56,8 @@ const loginUrl = redirectUrl ? `/login?redirect=${encodeURIComponent(redirectUrl
 
 <script>
   import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
-  import { auth } from "@/core/firebase/config"; // Import auth instance
+  import { auth } from "@/core/firebase/config";
+  import { isBlocked, recordFailedAttempt, recordSuccessfulAttempt, formatBlockTime } from "../core/auth/rateLimiter.js";
 
   const registerForm = document.getElementById('register-form') as HTMLFormElement;
   const emailInput = document.getElementById('email') as HTMLInputElement;
@@ -48,8 +66,124 @@ const loginUrl = redirectUrl ? `/login?redirect=${encodeURIComponent(redirectUrl
   const submitButton = document.getElementById('submit-button') as HTMLButtonElement;
   const errorMessageDiv = document.getElementById('error-message') as HTMLDivElement;
 
+  // Elementos del indicador de contraseña
+  const strengthContainer = document.getElementById('password-strength')!;
+  const strengthBars = [
+    document.getElementById('strength-bar-1')!,
+    document.getElementById('strength-bar-2')!,
+    document.getElementById('strength-bar-3')!,
+    document.getElementById('strength-bar-4')!,
+  ];
+  const strengthText = document.getElementById('strength-text')!;
+  const requirementsContainer = document.getElementById('password-requirements')!;
+  const reqLength = document.getElementById('req-length')!;
+  const reqUppercase = document.getElementById('req-uppercase')!;
+  const reqNumber = document.getElementById('req-number')!;
+  const reqSpecial = document.getElementById('req-special')!;
+
+  // Validación de contraseña en tiempo real
+  function validatePassword(password: string) {
+    const requirements = {
+      length: password.length >= 8,
+      uppercase: /[A-Z]/.test(password),
+      number: /[0-9]/.test(password),
+      special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password),
+    };
+
+    // Actualizar requisitos visuales
+    reqLength.textContent = requirements.length ? '✓ Mínimo 8 caracteres' : '✗ Mínimo 8 caracteres';
+    reqLength.className = requirements.length ? 'text-green-500' : 'text-gray-400';
+
+    reqUppercase.textContent = requirements.uppercase ? '✓ Una letra mayúscula' : '✗ Una letra mayúscula';
+    reqUppercase.className = requirements.uppercase ? 'text-green-500' : 'text-gray-400';
+
+    reqNumber.textContent = requirements.number ? '✓ Un número' : '✗ Un número';
+    reqNumber.className = requirements.number ? 'text-green-500' : 'text-gray-400';
+
+    reqSpecial.textContent = requirements.special ? '✓ Un carácter especial' : '✗ Un carácter especial';
+    reqSpecial.className = requirements.special ? 'text-green-500' : 'text-gray-400';
+
+    // Calcular fuerza
+    const met = Object.values(requirements).filter(Boolean).length;
+    let strength = 0;
+    let strengthLabel = '';
+    let color = '';
+
+    if (met === 0) {
+      strength = 0;
+      strengthLabel = '';
+    } else if (met === 1) {
+      strength = 1;
+      strengthLabel = 'Muy débil';
+      color = 'bg-red-500';
+    } else if (met === 2) {
+      strength = 2;
+      strengthLabel = 'Débil';
+      color = 'bg-orange-500';
+    } else if (met === 3) {
+      strength = 3;
+      strengthLabel = 'Buena';
+      color = 'bg-yellow-500';
+    } else if (met === 4) {
+      strength = 4;
+      strengthLabel = 'Fuerte';
+      color = 'bg-green-500';
+    }
+
+    // Actualizar barras
+    strengthBars.forEach((bar, index) => {
+      bar.className = `h-1 flex-1 rounded transition-colors ${index < strength ? color : 'bg-gray-600'}`;
+    });
+
+    strengthText.textContent = strengthLabel;
+
+    return { requirements, strength, valid: met === 4 };
+  }
+
+  // Mostrar/ocultar indicadores al enfocar
+  passwordInput.addEventListener('focus', () => {
+    strengthContainer.classList.remove('hidden');
+    requirementsContainer.classList.remove('hidden');
+  });
+
+  // Validar en tiempo real
+  passwordInput.addEventListener('input', () => {
+    validatePassword(passwordInput.value);
+  });
+
+  // Verificar si está bloqueado al cargar
+  function checkBlockStatus() {
+    const blockStatus = isBlocked('register');
+    if (blockStatus.blocked && blockStatus.remainingTime) {
+      submitButton.disabled = true;
+      errorMessageDiv.textContent = `Demasiados intentos de registro. Intenta de nuevo en ${formatBlockTime(blockStatus.remainingTime)}.`;
+      errorMessageDiv.classList.remove('hidden');
+
+      const interval = setInterval(() => {
+        const newStatus = isBlocked('register');
+        if (!newStatus.blocked) {
+          clearInterval(interval);
+          submitButton.disabled = false;
+          errorMessageDiv.textContent = '';
+          errorMessageDiv.classList.add('hidden');
+        } else if (newStatus.remainingTime) {
+          errorMessageDiv.textContent = `Demasiados intentos de registro. Intenta de nuevo en ${formatBlockTime(newStatus.remainingTime)}.`;
+        }
+      }, 1000);
+    }
+  }
+
+  checkBlockStatus();
+
   registerForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+
+    // Verificar si está bloqueado
+    const blockStatus = isBlocked('register');
+    if (blockStatus.blocked) {
+      return;
+    }
+
     errorMessageDiv.textContent = '';
     errorMessageDiv.classList.add('hidden');
 
@@ -57,16 +191,18 @@ const loginUrl = redirectUrl ? `/login?redirect=${encodeURIComponent(redirectUrl
     const password = passwordInput.value;
     const confirmPassword = confirmPasswordInput.value;
 
+    // Validar contraseña
+    const validation = validatePassword(password);
+    if (!validation.valid) {
+      errorMessageDiv.textContent = 'La contraseña no cumple con todos los requisitos de seguridad.';
+      errorMessageDiv.classList.remove('hidden');
+      return;
+    }
+
     if (password !== confirmPassword) {
       errorMessageDiv.textContent = 'Las contraseñas no coinciden.';
       errorMessageDiv.classList.remove('hidden');
-      return; // Stop submission
-    }
-
-    if (password.length < 6) {
-         errorMessageDiv.textContent = 'La contraseña debe tener al menos 6 caracteres.';
-         errorMessageDiv.classList.remove('hidden');
-         return; // Stop submission
+      return;
     }
 
     submitButton.disabled = true;
@@ -75,31 +211,41 @@ const loginUrl = redirectUrl ? `/login?redirect=${encodeURIComponent(redirectUrl
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 
+      // Registro exitoso - resetear contador
+      recordSuccessfulAttempt('register');
+
       // Enviar email de verificación
       try {
         await sendEmailVerification(userCredential.user);
         console.log('[Register] Email de verificación enviado a:', email);
       } catch (verifyError) {
         console.error('[Register] Error al enviar email de verificación:', verifyError);
-        // No bloqueamos el registro si falla el envío del email
       }
 
-      // Registration successful! Redirect to verify-email page
       window.location.href = '/verify-email';
     } catch (error: any) {
       console.error("Registration error:", error);
-      // Handle specific errors
+
+      // Registrar intento fallido
+      const result = recordFailedAttempt('register');
+
       let friendlyMessage = "Error al registrar la cuenta. Inténtalo de nuevo.";
       if (error.code === 'auth/email-already-in-use') {
         friendlyMessage = "Este correo electrónico ya está registrado. Intenta iniciar sesión.";
       } else if (error.code === 'auth/weak-password') {
-        friendlyMessage = "La contraseña es demasiado débil. Debe tener al menos 6 caracteres.";
+        friendlyMessage = "La contraseña es demasiado débil.";
       } else if (error.code === 'auth/invalid-email') {
-          friendlyMessage = "El formato del correo electrónico no es válido.";
+        friendlyMessage = "El formato del correo electrónico no es válido.";
       }
+
+      if (result.blocked) {
+        friendlyMessage = "Demasiados intentos de registro. Tu acceso ha sido bloqueado temporalmente por 15 minutos.";
+        checkBlockStatus();
+      }
+
       errorMessageDiv.textContent = friendlyMessage;
       errorMessageDiv.classList.remove('hidden');
-      submitButton.disabled = false;
+      submitButton.disabled = result.blocked;
       submitButton.textContent = 'Registrarse';
     }
   });
