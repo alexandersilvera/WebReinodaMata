@@ -66,61 +66,78 @@ export class EventRegistrationService {
     eventId: string,
     additionalInfo?: any
   ): Promise<string> {
-    // Verificar si el evento existe y tiene cupos
-    const event = await EventService.getEventById(eventId);
-    if (!event) {
-      throw new Error('Evento no encontrado');
+    try {
+      console.log('[EventRegistration] Iniciando registro - Usuario:', userId, 'Evento:', eventId);
+
+      // Verificar si el evento existe y tiene cupos
+      const event = await EventService.getEventById(eventId);
+      if (!event) {
+        console.error('[EventRegistration] Evento no encontrado:', eventId);
+        throw new Error('Evento no encontrado');
+      }
+
+      console.log('[EventRegistration] Evento encontrado:', event.title);
+
+      if (!EventService.isRegistrationOpen(event)) {
+        console.warn('[EventRegistration] Inscripciones cerradas para:', eventId);
+        throw new Error('Las inscripciones están cerradas para este evento');
+      }
+
+      const hasSpots = await EventService.hasAvailableSpots(eventId);
+      if (!hasSpots) {
+        console.warn('[EventRegistration] Sin cupos disponibles para:', eventId);
+        throw new Error('No hay cupos disponibles');
+      }
+
+      // Verificar si ya está registrado
+      const existingRegistration = await this.getUserRegistrationForEvent(userId, eventId);
+      if (existingRegistration && existingRegistration.status !== 'cancelled') {
+        console.warn('[EventRegistration] Usuario ya registrado:', userId, eventId);
+        throw new Error('Ya estás registrado en este evento');
+      }
+
+      // Determinar si requiere pago
+      const requiresPayment = !event.isFree;
+      console.log('[EventRegistration] Requiere pago:', requiresPayment);
+
+      // Crear registro
+      const registrationData: Omit<EventRegistration, 'id'> = {
+        userId,
+        userEmail,
+        userName,
+        eventId,
+        eventTitle: event.title,
+        status: requiresPayment ? 'registered' : 'confirmed',
+        registrationDate: new Date(),
+        certificateIssued: false,
+        paymentRequired: requiresPayment,
+        paymentStatus: requiresPayment ? 'pending' : undefined,
+        additionalInfo,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      // Remover valores undefined antes de enviar a Firestore
+      const cleanData = removeUndefined({
+        ...registrationData,
+        registrationDate: serverTimestamp(),
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+
+      console.log('[EventRegistration] Guardando registro en Firestore...');
+      const docRef = await addDoc(collection(db, REGISTRATIONS_COLLECTION), cleanData);
+      console.log('[EventRegistration] Registro guardado con ID:', docRef.id);
+
+      // Incrementar contador de participantes
+      await EventService.incrementParticipants(eventId);
+      console.log('[EventRegistration] Contador de participantes incrementado');
+
+      return docRef.id;
+    } catch (error: any) {
+      console.error('[EventRegistration] Error en registerToEvent:', error);
+      throw error; // Re-lanzar el error original para mantener el mensaje específico
     }
-
-    if (!EventService.isRegistrationOpen(event)) {
-      throw new Error('Las inscripciones est�n cerradas para este evento');
-    }
-
-    const hasSpots = await EventService.hasAvailableSpots(eventId);
-    if (!hasSpots) {
-      throw new Error('No hay cupos disponibles');
-    }
-
-    // Verificar si ya est� registrado
-    const existingRegistration = await this.getUserRegistrationForEvent(userId, eventId);
-    if (existingRegistration && existingRegistration.status !== 'cancelled') {
-      throw new Error('Ya est�s registrado en este evento');
-    }
-
-    // Determinar si requiere pago
-    const requiresPayment = !event.isFree;
-
-    // Crear registro
-    const registrationData: Omit<EventRegistration, 'id'> = {
-      userId,
-      userEmail,
-      userName,
-      eventId,
-      eventTitle: event.title,
-      status: requiresPayment ? 'registered' : 'confirmed',
-      registrationDate: new Date(),
-      certificateIssued: false,
-      paymentRequired: requiresPayment,
-      paymentStatus: requiresPayment ? 'pending' : undefined,
-      additionalInfo,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    // Remover valores undefined antes de enviar a Firestore
-    const cleanData = removeUndefined({
-      ...registrationData,
-      registrationDate: serverTimestamp(),
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    });
-
-    const docRef = await addDoc(collection(db, REGISTRATIONS_COLLECTION), cleanData);
-
-    // Incrementar contador de participantes
-    await EventService.incrementParticipants(eventId);
-
-    return docRef.id;
   }
 
   /**
@@ -133,38 +150,55 @@ export class EventRegistrationService {
     eventId: string,
     additionalInfo?: any
   ): Promise<{ registrationId: string; preferenceId: string; initPoint: string }> {
-    // Crear registro primero
-    const registrationId = await this.registerToEvent(
-      userId,
-      userEmail,
-      userName,
-      eventId,
-      additionalInfo
-    );
+    try {
+      // Crear registro primero
+      console.log('[EventRegistration] Creando registro para evento:', eventId, 'usuario:', userId);
+      const registrationId = await this.registerToEvent(
+        userId,
+        userEmail,
+        userName,
+        eventId,
+        additionalInfo
+      );
+      console.log('[EventRegistration] Registro creado exitosamente:', registrationId);
 
-    // Obtener evento para el precio
-    const event = await EventService.getEventById(eventId);
-    if (!event) {
-      throw new Error('Evento no encontrado');
+      // Obtener evento para el precio
+      const event = await EventService.getEventById(eventId);
+      if (!event) {
+        console.error('[EventRegistration] Evento no encontrado:', eventId);
+        throw new Error('Evento no encontrado');
+      }
+
+      // Crear preferencia de pago en Mercado Pago
+      console.log('[EventRegistration] Creando preferencia de pago para:', event.price);
+      const preference = await MercadoPagoService.createEventRegistrationPreference(
+        eventId,
+        userId,
+        event.price || 0
+      );
+      console.log('[EventRegistration] Preferencia creada:', preference.id);
+
+      // Actualizar registro con ID de preferencia
+      try {
+        await this.updateRegistration(registrationId, {
+          paymentId: preference.id,
+        });
+        console.log('[EventRegistration] PaymentId actualizado en registro');
+      } catch (updateError: any) {
+        console.error('[EventRegistration] Error al actualizar paymentId:', updateError);
+        // No lanzar error aquí - el registro ya se creó exitosamente
+        // El paymentId se puede actualizar después mediante webhook
+      }
+
+      return {
+        registrationId,
+        preferenceId: preference.id,
+        initPoint: preference.init_point || '',
+      };
+    } catch (error: any) {
+      console.error('[EventRegistration] Error en registerWithPayment:', error);
+      throw new Error(error.message || 'Error al procesar el registro con pago');
     }
-
-    // Crear preferencia de pago en Mercado Pago
-    const preference = await MercadoPagoService.createEventRegistrationPreference(
-      eventId,
-      userId,
-      event.price || 0
-    );
-
-    // Actualizar registro con ID de preferencia
-    await this.updateRegistration(registrationId, {
-      paymentId: preference.id,
-    });
-
-    return {
-      registrationId,
-      preferenceId: preference.id,
-      initPoint: preference.init_point || '',
-    };
   }
 
   /**
@@ -318,15 +352,30 @@ export class EventRegistrationService {
     registrationId: string,
     data: Partial<EventRegistration>
   ): Promise<void> {
-    const docRef = doc(db, REGISTRATIONS_COLLECTION, registrationId);
+    try {
+      const docRef = doc(db, REGISTRATIONS_COLLECTION, registrationId);
 
-    // Remover valores undefined antes de enviar a Firestore
-    const cleanData = removeUndefined({
-      ...data,
-      updatedAt: serverTimestamp(),
-    });
+      // Remover valores undefined antes de enviar a Firestore
+      const cleanData = removeUndefined({
+        ...data,
+        updatedAt: serverTimestamp(),
+      });
 
-    await updateDoc(docRef, cleanData);
+      console.log('[EventRegistration] Actualizando registro:', registrationId, 'con datos:', Object.keys(cleanData));
+      await updateDoc(docRef, cleanData);
+      console.log('[EventRegistration] Registro actualizado exitosamente');
+    } catch (error: any) {
+      console.error('[EventRegistration] Error al actualizar registro:', registrationId, error);
+
+      // Proporcionar mensaje de error más descriptivo
+      if (error.code === 'permission-denied') {
+        throw new Error('No tienes permisos para actualizar este registro. Por favor contacta al administrador.');
+      } else if (error.code === 'not-found') {
+        throw new Error('El registro no fue encontrado.');
+      } else {
+        throw new Error(`Error al actualizar el registro: ${error.message}`);
+      }
+    }
   }
 
   /**
