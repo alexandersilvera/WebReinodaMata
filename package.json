@@ -86,6 +86,9 @@
 		"vitest": "^3.2.2"
 	},
 	"resolutions": {
-		"path-to-regexp": "^7.2.0"
+		"path-to-regexp": "^8.2.0"
+	},
+	"overrides": {
+		"path-to-regexp": "^8.2.0"
 	}
 }
