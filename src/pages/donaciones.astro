@@ -1,0 +1,208 @@
+---
+import MainLayout from "@/layouts/MainLayout.astro";
+import DonationForm from "@/features/donations/components/DonationForm";
+
+export const prerender = true;
+---
+
+<MainLayout
+	title="Donaciones | Centro Umbandista Reino Da Mata"
+	description="Apoya nuestra misión. Tu contribución nos ayuda a mantener nuestro espacio sagrado y continuar con nuestras obras sociales y educativas."
+>
+	<!-- Hero Section -->
+	<div class="relative bg-slate-900 py-20 overflow-hidden">
+		<div class="absolute inset-0 overflow-hidden">
+			<div
+				class="absolute inset-0 bg-gradient-to-br from-green-900/40 to-slate-900/90 z-10"
+			>
+			</div>
+			<img
+				src="/images/templo_112.jpg"
+				alt="Fondo templo"
+				class="w-full h-full object-cover opacity-30"
+			/>
+		</div>
+
+		<div
+			class="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center"
+		>
+			<h1 class="text-4xl md:text-6xl font-bold text-white mb-6 tracking-tight">
+				Apoya Nuestra <span class="text-green-400">Misión</span>
+			</h1>
+			<p class="text-xl text-gray-300 max-w-3xl mx-auto mb-10 leading-relaxed">
+				El Centro Umbandista Reino Da Mata se sostiene gracias al amor y
+				compromiso de su comunidad. Tu aporte nos permite mantener las puertas
+				abiertas, realizar obras sociales y preservar nuestra tradición.
+			</p>
+		</div>
+	</div>
+
+	<!-- Content Section -->
+	<div class="bg-gray-50 py-16">
+		<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+			<div class="grid lg:grid-cols-3 gap-12 items-start">
+				<!-- Left Column: Info & Goal -->
+				<div class="lg:col-span-2 space-y-8">
+					<!-- Goal Section -->
+					<DonationGoal client:load />
+
+					<div>
+						<h2 class="text-3xl font-bold text-gray-900 mb-4">
+							¿Por qué donar?
+						</h2>
+						<div class="prose prose-lg text-gray-600">
+							<p>
+								Somos una institución sin fines de lucro comprometida con el
+								desarrollo espiritual y social. No recibimos subvenciones
+								estatales y dependemos enteramente de las colaboraciones de
+								nuestros miembros y amigos.
+							</p>
+						</div>
+					</div>
+
+					<div class="grid sm:grid-cols-2 gap-6">
+						<div
+							class="bg-white p-6 rounded-xl shadow-sm border border-gray-100"
+						>
+							<div
+								class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4"
+							>
+								<svg
+									class="w-6 h-6 text-green-600"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+									></path>
+								</svg>
+							</div>
+							<h3 class="font-bold text-gray-900 mb-2">Mantenimiento</h3>
+							<p class="text-sm text-gray-600">
+								Ayudas a cubrir alquiler, luz, agua y mantenimiento del templo.
+							</p>
+						</div>
+
+						<div
+							class="bg-white p-6 rounded-xl shadow-sm border border-gray-100"
+						>
+							<div
+								class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4"
+							>
+								<svg
+									class="w-6 h-6 text-blue-600"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+									></path>
+								</svg>
+							</div>
+							<h3 class="font-bold text-gray-900 mb-2">Educación</h3>
+							<p class="text-sm text-gray-600">
+								Apoyas la creación de materiales educativos y cursos gratuitos.
+							</p>
+						</div>
+
+						<div
+							class="bg-white p-6 rounded-xl shadow-sm border border-gray-100"
+						>
+							<div
+								class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-4"
+							>
+								<svg
+									class="w-6 h-6 text-purple-600"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+									></path>
+								</svg>
+							</div>
+							<h3 class="font-bold text-gray-900 mb-2">Obra Social</h3>
+							<p class="text-sm text-gray-600">
+								Contribuyes a nuestras campañas de donación de alimentos y ropa.
+							</p>
+						</div>
+
+						<div
+							class="bg-white p-6 rounded-xl shadow-sm border border-gray-100"
+						>
+							<div
+								class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center mb-4"
+							>
+								<svg
+									class="w-6 h-6 text-yellow-600"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
+									></path>
+								</svg>
+							</div>
+							<h3 class="font-bold text-gray-900 mb-2">Eventos</h3>
+							<p class="text-sm text-gray-600">
+								Permites que sigamos realizando ceremonias abiertas a la
+								comunidad.
+							</p>
+						</div>
+					</div>
+				</div>
+
+				<!-- Right Column: Donation Form & Recent Donors -->
+				<div class="space-y-8">
+					<div class="relative">
+						<div
+							class="absolute -inset-4 bg-gradient-to-r from-green-600 to-blue-600 rounded-2xl opacity-20 blur-lg"
+						>
+						</div>
+						<DonationForm client:load />
+					</div>
+
+					<RecentDonors client:load />
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Testimonial/Quote -->
+	<div class="bg-slate-900 py-16">
+		<div class="max-w-4xl mx-auto px-4 text-center">
+			<svg
+				class="w-12 h-12 text-green-500 mx-auto mb-6"
+				fill="currentColor"
+				viewBox="0 0 24 24"
+			>
+				<path
+					d="M14.017 21L14.017 18C14.017 16.8954 13.1216 16 12.017 16H9.01699V21H14.017ZM16.017 21V16C16.017 14.3431 14.6738 13 13.017 13H9.01699V8.00001H13.017C15.2261 8.00001 17.017 9.79087 17.017 12V21H16.017ZM19.017 21V12C19.017 8.6863 16.3307 6.00001 13.017 6.00001H9.01699V3.00001H7.01699V21H19.017Z"
+				></path>
+			</svg>
+			<blockquote class="text-2xl text-white font-serif italic mb-6">
+				"La caridad es el amor en acción. Cada gesto cuenta, cada ayuda suma,
+				cada corazón que se abre multiplica la luz."
+			</blockquote>
+			<cite class="text-green-400 font-medium not-italic"
+				>- Pae Alexander de Ogum</cite
+			>
+		</div>
+	</div>
+</MainLayout>
