@@ -2,8 +2,8 @@
 // Este archivo contiene la configuración de Firebase para la aplicación
 
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore, doc, getDoc, setDoc, serverTimestamp, collection, query, where, getDocs, enableNetwork, disableNetwork, orderBy, deleteDoc, limit, updateDoc, startAfter } from "firebase/firestore";
-import { getAuth, setPersistence, browserLocalPersistence, onAuthStateChanged, signInWithEmailAndPassword, signOut, sendPasswordResetEmail, sendEmailVerification } from "firebase/auth";
+import { getFirestore, doc, getDoc, setDoc, serverTimestamp, collection, query, where, getDocs, enableNetwork, disableNetwork, orderBy, deleteDoc, limit, updateDoc, startAfter, arrayUnion } from "firebase/firestore";
+import { getAuth, setPersistence, browserLocalPersistence, browserSessionPersistence, onAuthStateChanged, signInWithEmailAndPassword, signOut, sendPasswordResetEmail, sendEmailVerification, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { getStorage } from "firebase/storage";
 import { getFunctions, httpsCallable, connectFunctionsEmulator } from "firebase/functions";
 import { config, configUtils } from '../config';
@@ -32,10 +32,10 @@ export const storage = getStorage(app);
 export const functions = getFunctions(app);
 
 // Exportar funciones de Firebase Auth para uso en scripts del cliente
-export { onAuthStateChanged, signInWithEmailAndPassword, signOut, sendPasswordResetEmail, sendEmailVerification };
+export { onAuthStateChanged, signInWithEmailAndPassword, signOut, sendPasswordResetEmail, sendEmailVerification, GoogleAuthProvider, signInWithPopup, setPersistence, browserLocalPersistence, browserSessionPersistence };
 
 // Exportar funciones de Firestore para uso en scripts del cliente
-export { doc, getDoc, setDoc, serverTimestamp, collection, query, where, getDocs, enableNetwork, disableNetwork, orderBy, deleteDoc, limit, updateDoc, startAfter };
+export { getFirestore, doc, getDoc, setDoc, serverTimestamp, collection, query, where, getDocs, enableNetwork, disableNetwork, orderBy, deleteDoc, limit, updateDoc, startAfter, arrayUnion };
 
 // Exportar funciones de Firebase Functions para uso en scripts del cliente
 export { httpsCallable };

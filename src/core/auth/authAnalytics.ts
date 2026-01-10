@@ -18,7 +18,7 @@ const MAX_EVENTS = 100; // Máximo de eventos guardados localmente
  * Registra un evento de autenticación
  */
 export function trackAuthEvent(
-  event: 'login' | 'register' | 'logout' | 'password_reset' | 'email_verification',
+  event: 'login' | 'register' | 'logout' | 'password_reset' | 'email_verification' | 'login_google' | 'register_google' | 'login_email' | 'register_email',
   success: boolean,
   metadata?: Record<string, any>
 ): void {
