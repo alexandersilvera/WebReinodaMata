@@ -2,9 +2,15 @@
 /**
  * Landing Page V2 - Centro Umbandista Reino Da Mata
  * Nueva versión con Hero moderno y secciones optimizadas
+ *
+ * Actualización Enero 2026:
+ * - Hero V2 con Framer Motion
+ * - Animaciones fluidas y parallax
+ * - Números animados (count-up)
+ * - Micro-interacciones mejoradas
  */
 import MainLayout from "@/layouts/MainLayout.astro";
-import Hero from "@/components/landing/Hero.astro";
+import HeroV2 from "@/components/landing/HeroV2";
 import AboutSection from "@/components/landing/AboutSection.astro";
 import UpcomingEventsHome from "@/components/landing/UpcomingEventsHome";
 import LatestBlogPosts from "@/components/landing/LatestBlogPosts";
@@ -15,9 +21,9 @@ import ErrorBoundary from "@/components/ErrorBoundary";
   title="Inicio | Centro Umbandista Reino Da Mata"
   description="Centro Umbandista Reino Da Mata - Un espacio sagrado para el crecimiento espiritual, el conocimiento y la comunidad. Práctica auténtica de la Umbanda en Uruguay."
 >
-  <!-- Hero Section -->
+  <!-- Hero Section V2 con Framer Motion -->
   <div class="-mt-6">
-    <Hero />
+    <HeroV2 client:load />
   </div>
 
   <!-- Sección Sobre Nosotros con galería de imágenes -->

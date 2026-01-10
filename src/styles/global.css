@@ -103,3 +103,42 @@ body #mobile-menu.menu-visible {
 	padding-top: 0.5rem !important;
 	padding-bottom: 0.5rem !important;
 }
+
+/* ===== Hero V2 - Animaciones y Efectos ===== */
+
+/* Gradiente animado para el título del Hero */
+@keyframes gradient-animation {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient-animation 6s ease infinite;
+}
+
+/* Smooth scroll para los anchor links */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Optimización para animaciones de Framer Motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Mejora de performance para el video del Hero */
+iframe[loading="lazy"] {
+  content-visibility: auto;
+}
