@@ -1,16 +1,49 @@
 /**
  * Componente de Próximos Eventos para Landing Page
  * Muestra los próximos 3 eventos en cards destacadas
+ *
+ * Actualización Enero 2026:
+ * - Animaciones Framer Motion (staggered, fade-in)
+ * - Intersection Observer para lazy animations
+ * - Hover effects mejorados
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import { motion, useInView, type Variants } from 'framer-motion';
 import type { AcademicEvent } from '@/features/research/types';
 import { formatDate } from '@/core/utils/dateUtils';
 import { SkeletonEventCard } from '@/components/Loading';
+
+// Variantes de animación para el contenedor
+const containerVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.2,
+      delayChildren: 0.1
+    }
+  }
+};
+
+// Variantes de animación para items individuales
+const itemVariants: Variants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.6,
+      ease: [0.6, 0.05, 0.01, 0.9] as const
+    }
+  }
+};
 
 export default function UpcomingEventsHome() {
   const [events, setEvents] = useState<AcademicEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const sectionRef = useRef(null);
+  const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
 
   useEffect(() => {
     let cancelled = false;
@@ -116,10 +149,15 @@ export default function UpcomingEventsHome() {
   }
 
   return (
-    <section className="py-20 bg-gray-900">
+    <section ref={sectionRef} className="py-20 bg-gray-900">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Título de la sección */}
-        <div className="text-center mb-16">
+        <motion.div
+          className="text-center mb-16"
+          initial={{ opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6 }}
+        >
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
             Próximos Eventos
           </h2>
@@ -127,31 +165,50 @@ export default function UpcomingEventsHome() {
           <p className="text-xl text-gray-300 max-w-3xl mx-auto">
             Únete a nuestras actividades espirituales, talleres y ceremonias
           </p>
-        </div>
+        </motion.div>
 
-        {/* Grid de eventos */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-          {events.map((event) => (
-            <EventCard key={event.id} event={event} />
+        {/* Grid de eventos con animaciones staggered */}
+        <motion.div
+          className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12"
+          variants={containerVariants}
+          initial="hidden"
+          animate={isInView ? "visible" : "hidden"}
+        >
+          {events.map((event, index) => (
+            <motion.div key={event.id} variants={itemVariants}>
+              <EventCard event={event} />
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
 
         {/* CTA para ver todos los eventos */}
-        <div className="text-center">
-          <a
+        <motion.div
+          className="text-center"
+          initial={{ opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6, delay: 0.8 }}
+        >
+          <motion.a
             href="/eventos"
-            className="inline-block px-8 py-3 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-lg transition-all transform hover:scale-105 shadow-lg"
+            className="inline-block px-8 py-3 bg-green-600 text-white font-semibold rounded-lg shadow-lg"
+            whileHover={{
+              scale: 1.05,
+              boxShadow: "0 20px 40px rgba(34, 197, 94, 0.4)",
+              backgroundColor: "#16a34a"
+            }}
+            whileTap={{ scale: 0.95 }}
+            transition={{ duration: 0.2 }}
           >
             Ver Todos los Eventos →
-          </a>
-        </div>
+          </motion.a>
+        </motion.div>
       </div>
     </section>
   );
 }
 
 /**
- * Card individual de evento
+ * Card individual de evento con animaciones mejoradas
  */
 function EventCard({ event }: { event: AcademicEvent }) {
   const eventDate = event.date instanceof Date
@@ -164,9 +221,15 @@ function EventCard({ event }: { event: AcademicEvent }) {
   const isPaid = !event.isFree && (event.price ?? 0) > 0;
 
   return (
-    <a
+    <motion.a
       href={`/eventos/${event.id}`}
-      className="group bg-gray-800 rounded-lg overflow-hidden shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-2 border border-gray-700 hover:border-green-600"
+      className="block bg-gray-800 rounded-lg overflow-hidden shadow-xl border border-gray-700"
+      whileHover={{
+        y: -8,
+        boxShadow: "0 25px 50px -12px rgba(34, 197, 94, 0.25)",
+        borderColor: "#16a34a"
+      }}
+      transition={{ duration: 0.3 }}
     >
       {/* Imagen del evento */}
       {event.imageUrl ? (
@@ -234,13 +297,18 @@ function EventCard({ event }: { event: AcademicEvent }) {
         </div>
 
         {/* Indicador de "Ver más" */}
-        <div className="mt-4 text-green-400 text-sm font-semibold flex items-center group-hover:translate-x-2 transition-transform">
+        <motion.div
+          className="mt-4 text-green-400 text-sm font-semibold flex items-center"
+          initial={{ x: 0 }}
+          whileHover={{ x: 8 }}
+          transition={{ duration: 0.2 }}
+        >
           Ver detalles
           <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
-        </div>
+        </motion.div>
       </div>
-    </a>
+    </motion.a>
   );
 }

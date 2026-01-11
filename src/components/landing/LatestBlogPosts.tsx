@@ -1,15 +1,49 @@
 /**
  * Componente de Últimos Artículos del Blog para Landing Page
  * Muestra los últimos 2 artículos en cards grandes y destacadas
+ *
+ * Actualización Enero 2026:
+ * - Animaciones Framer Motion (staggered, fade-in)
+ * - Intersection Observer para lazy animations
+ * - Hover effects mejorados
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import { motion, useInView, type Variants } from 'framer-motion';
 import type { Article } from '@/core/types';
 import { SkeletonArticleCard } from '@/components/Loading';
+
+// Variantes de animación para el contenedor
+const containerVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.3,
+      delayChildren: 0.2
+    }
+  }
+};
+
+// Variantes de animación para items individuales
+const itemVariants: Variants = {
+  hidden: { opacity: 0, y: 40, scale: 0.95 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      duration: 0.7,
+      ease: [0.6, 0.05, 0.01, 0.9] as const
+    }
+  }
+};
 
 export default function LatestBlogPosts() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const sectionRef = useRef(null);
+  const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
 
   useEffect(() => {
     let cancelled = false;
@@ -118,10 +152,15 @@ export default function LatestBlogPosts() {
   }
 
   return (
-    <section className="py-20 bg-gradient-to-b from-gray-900 to-gray-800">
+    <section ref={sectionRef} className="py-20 bg-gradient-to-b from-gray-900 to-gray-800">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Título de la sección */}
-        <div className="text-center mb-16">
+        <motion.div
+          className="text-center mb-16"
+          initial={{ opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6 }}
+        >
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
             Últimos Artículos
           </h2>
@@ -129,31 +168,50 @@ export default function LatestBlogPosts() {
           <p className="text-xl text-gray-300 max-w-3xl mx-auto">
             Conocimiento, reflexiones y enseñanzas sobre la Umbanda
           </p>
-        </div>
+        </motion.div>
 
-        {/* Grid de artículos - 2 cards grandes */}
-        <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto mb-12">
+        {/* Grid de artículos - 2 cards grandes con animaciones staggered */}
+        <motion.div
+          className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto mb-12"
+          variants={containerVariants}
+          initial="hidden"
+          animate={isInView ? "visible" : "hidden"}
+        >
           {articles.map((article) => (
-            <ArticleCard key={article.id} article={article} />
+            <motion.div key={article.id} variants={itemVariants}>
+              <ArticleCard article={article} />
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
 
         {/* CTA para ver todos los artículos */}
-        <div className="text-center">
-          <a
+        <motion.div
+          className="text-center"
+          initial={{ opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6, delay: 1 }}
+        >
+          <motion.a
             href="/blog"
-            className="inline-block px-8 py-4 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-lg text-lg transition-all transform hover:scale-105 shadow-lg"
+            className="inline-block px-8 py-4 bg-green-600 text-white font-semibold rounded-lg text-lg shadow-lg"
+            whileHover={{
+              scale: 1.05,
+              boxShadow: "0 20px 40px rgba(34, 197, 94, 0.4)",
+              backgroundColor: "#16a34a"
+            }}
+            whileTap={{ scale: 0.95 }}
+            transition={{ duration: 0.2 }}
           >
             Ver Todos los Artículos →
-          </a>
-        </div>
+          </motion.a>
+        </motion.div>
       </div>
     </section>
   );
 }
 
 /**
- * Card individual de artículo - Diseño grande y destacado
+ * Card individual de artículo - Diseño grande y destacado con animaciones
  */
 function ArticleCard({ article }: { article: Article }) {
   // Formatear fecha - puede estar en publishDate, publishedAt o pubDate
@@ -177,7 +235,15 @@ function ArticleCard({ article }: { article: Article }) {
   const articleImage = article.image || article.heroImage || (article as any).imageUrl;
 
   return (
-    <article className="group bg-gray-800 rounded-xl overflow-hidden shadow-2xl hover:shadow-green-900/20 transition-all transform hover:-translate-y-2 border border-gray-700 hover:border-green-600">
+    <motion.article
+      className="bg-gray-800 rounded-xl overflow-hidden shadow-2xl border border-gray-700"
+      whileHover={{
+        y: -8,
+        boxShadow: "0 25px 50px -12px rgba(34, 197, 94, 0.25)",
+        borderColor: "#16a34a"
+      }}
+      transition={{ duration: 0.3 }}
+    >
       {/* Imagen destacada */}
       {articleImage ? (
         <div className="relative h-64 overflow-hidden">
@@ -248,17 +314,19 @@ function ArticleCard({ article }: { article: Article }) {
             </div>
           )}
 
-          <a
+          <motion.a
             href={`/blog/${article.slug}`}
-            className="text-green-400 hover:text-green-300 font-semibold text-sm flex items-center group-hover:translate-x-2 transition-transform"
+            className="text-green-400 hover:text-green-300 font-semibold text-sm flex items-center"
+            whileHover={{ x: 8 }}
+            transition={{ duration: 0.2 }}
           >
             Leer más
             <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
-          </a>
+          </motion.a>
         </div>
       </div>
-    </article>
+    </motion.article>
   );
 }

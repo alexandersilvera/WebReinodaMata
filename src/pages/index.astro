@@ -11,7 +11,7 @@
  */
 import MainLayout from "@/layouts/MainLayout.astro";
 import HeroV2 from "@/components/landing/HeroV2";
-import AboutSection from "@/components/landing/AboutSection.astro";
+import AboutSectionV2 from "@/components/landing/AboutSectionV2";
 import UpcomingEventsHome from "@/components/landing/UpcomingEventsHome";
 import LatestBlogPosts from "@/components/landing/LatestBlogPosts";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -26,8 +26,8 @@ import ErrorBoundary from "@/components/ErrorBoundary";
     <HeroV2 client:load />
   </div>
 
-  <!-- Sección Sobre Nosotros con galería de imágenes -->
-  <AboutSection />
+  <!-- Sección Sobre Nosotros V2 con Framer Motion -->
+  <AboutSectionV2 client:load />
 
   <!-- Sección Próximos Eventos con Error Boundary -->
   <ErrorBoundary client:load>
