@@ -44,7 +44,21 @@ export default defineConfig({
 		},
 		build: {
 			rollupOptions: {
-				external: ["firebase-admin"]
+				external: ["firebase-admin"],
+				output: {
+					manualChunks: {
+						'firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/storage'],
+						'framer-motion': ['framer-motion'],
+						'react-vendor': ['react', 'react-dom']
+					}
+				}
+			},
+			minify: 'terser',
+			terserOptions: {
+				compress: {
+					drop_console: true,
+					drop_debugger: true
+				}
 			}
 		},
 		ssr: {

@@ -93,18 +93,31 @@ const websiteSchema = {
 	<meta name="author" content="Centro Umbandista Reino Da Mata" />
 	<meta name="theme-color" content="#16a34a" />
 
+	<!-- SEO Keywords -->
+	<meta name="keywords" content="umbanda, centro umbandista, espiritualidad, religión afro-brasileña, orixás, Uruguay, Montevideo, ceremonias umbandistas, instituto umbandista, comunidad espiritual, religiosidad afro-amerindia" />
+
+	<!-- Additional SEO Meta Tags -->
+	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+	<meta name="googlebot" content="index, follow" />
+	<meta name="language" content="Spanish" />
+	<meta name="revisit-after" content="7 days" />
+
 	<!-- Favicons -->
 	<link rel="icon" type="image/svg+xml" href="/assets/logo.svg" />
 	<link rel="shortcut icon" href="/assets/logo.svg" type="image/svg+xml" />
 	<link rel="apple-touch-icon" href="/assets/logo.svg" />
 
-	<!-- DNS Prefetch & Preconnect para mejorar performance -->
-	<link rel="dns-prefetch" href="https://firebasestorage.googleapis.com" />
+	<!-- Critical DNS Prefetch & Preconnect para mejorar performance -->
 	<link rel="preconnect" href="https://firebasestorage.googleapis.com" crossorigin />
-	<link rel="dns-prefetch" href="https://player.vimeo.com" />
+	<link rel="dns-prefetch" href="https://firebasestorage.googleapis.com" />
 	<link rel="preconnect" href="https://player.vimeo.com" crossorigin />
-	<link rel="dns-prefetch" href="https://i.vimeocdn.com" />
+	<link rel="dns-prefetch" href="https://player.vimeo.com" />
 	<link rel="preconnect" href="https://i.vimeocdn.com" crossorigin />
+	<link rel="dns-prefetch" href="https://i.vimeocdn.com" />
+
+	<!-- Firebase CDN Preconnect -->
+	<link rel="preconnect" href="https://www.gstatic.com" crossorigin />
+	<link rel="dns-prefetch" href="https://www.gstatic.com" />
 
 	<!-- Canonical URL -->
 	<link rel="canonical" href={Astro.url.toString()} />
