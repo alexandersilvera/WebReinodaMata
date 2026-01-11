@@ -155,7 +155,7 @@ export default function UpcomingEventsHome() {
         <motion.div
           className="text-center mb-16"
           initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
@@ -172,7 +172,7 @@ export default function UpcomingEventsHome() {
           className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12"
           variants={containerVariants}
           initial="hidden"
-          animate={isInView ? "visible" : "hidden"}
+          animate="visible"
         >
           {events.map((event, index) => (
             <motion.div key={event.id} variants={itemVariants}>
@@ -185,7 +185,7 @@ export default function UpcomingEventsHome() {
         <motion.div
           className="text-center"
           initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.8 }}
         >
           <motion.a

@@ -96,7 +96,7 @@ export default function AboutSectionV2() {
         <motion.div
           className="text-center mb-16"
           initial={{ opacity: 0, y: 20 }}
-          animate={isSectionInView ? { opacity: 1, y: 0 } : {}}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
@@ -115,7 +115,7 @@ export default function AboutSectionV2() {
           className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16"
           variants={galleryContainerVariants}
           initial="hidden"
-          animate={isGalleryInView ? "visible" : "hidden"}
+          animate="visible"
         >
           {galleryImages.map((image, index) => (
             <motion.div
@@ -149,7 +149,7 @@ export default function AboutSectionV2() {
           ref={pillarsRef}
           className="grid md:grid-cols-3 gap-8 mt-16"
           initial="hidden"
-          animate={arePillarsInView ? "visible" : "hidden"}
+          animate="visible"
           transition={{ staggerChildren: 0.2, delayChildren: 0.1 }}
         >
           {pillars.map((pillar, index) => (
@@ -178,7 +178,7 @@ export default function AboutSectionV2() {
           ref={descriptionRef}
           className="mt-16 max-w-4xl mx-auto text-center"
           initial={{ opacity: 0, y: 30 }}
-          animate={isDescriptionInView ? { opacity: 1, y: 0 } : {}}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.3 }}
         >
           <p className="text-lg text-gray-300 leading-relaxed mb-8">

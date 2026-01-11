@@ -158,7 +158,7 @@ export default function LatestBlogPosts() {
         <motion.div
           className="text-center mb-16"
           initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
@@ -175,7 +175,7 @@ export default function LatestBlogPosts() {
           className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto mb-12"
           variants={containerVariants}
           initial="hidden"
-          animate={isInView ? "visible" : "hidden"}
+          animate="visible"
         >
           {articles.map((article) => (
             <motion.div key={article.id} variants={itemVariants}>
@@ -188,7 +188,7 @@ export default function LatestBlogPosts() {
         <motion.div
           className="text-center"
           initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 1 }}
         >
           <motion.a
