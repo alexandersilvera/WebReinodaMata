@@ -58,10 +58,10 @@ export default function AboutSectionV2() {
   const pillarsRef = useRef(null);
   const descriptionRef = useRef(null);
 
-  const isSectionInView = useInView(sectionRef, { once: true, margin: "-100px" });
-  const isGalleryInView = useInView(galleryRef, { once: true, margin: "-50px" });
-  const arePillarsInView = useInView(pillarsRef, { once: true, margin: "-50px" });
-  const isDescriptionInView = useInView(descriptionRef, { once: true, margin: "-50px" });
+  const isSectionInView = useInView(sectionRef, { once: true, margin: "0px" });
+  const isGalleryInView = useInView(galleryRef, { once: true, margin: "0px" });
+  const arePillarsInView = useInView(pillarsRef, { once: true, margin: "0px" });
+  const isDescriptionInView = useInView(descriptionRef, { once: true, margin: "0px" });
 
   // Primeras 3 imágenes para la galería principal
   const galleryImages = LANDING_IMAGES.gallery.slice(0, 3);

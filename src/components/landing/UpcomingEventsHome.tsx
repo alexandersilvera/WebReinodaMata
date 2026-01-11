@@ -43,7 +43,7 @@ export default function UpcomingEventsHome() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const sectionRef = useRef(null);
-  const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
+  const isInView = useInView(sectionRef, { once: true, margin: "0px" });
 
   useEffect(() => {
     let cancelled = false;
