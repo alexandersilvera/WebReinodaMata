@@ -129,9 +129,29 @@ export class EventRegistrationService {
       const docRef = await addDoc(collection(db, REGISTRATIONS_COLLECTION), cleanData);
       console.log('[EventRegistration] Registro guardado con ID:', docRef.id);
 
-      // Incrementar contador de participantes
-      await EventService.incrementParticipants(eventId);
-      console.log('[EventRegistration] Contador de participantes incrementado');
+      // Incrementar contador de participantes con manejo de errores
+      try {
+        await EventService.incrementParticipants(eventId);
+        console.log('[EventRegistration] Contador de participantes incrementado');
+      } catch (incrementError: any) {
+        console.error('[EventRegistration] Error al incrementar participantes:', incrementError);
+
+        // ROLLBACK: Eliminar el registro recién creado si falla el incremento
+        try {
+          console.warn('[EventRegistration] Ejecutando rollback - eliminando registro:', docRef.id);
+          await updateDoc(doc(db, REGISTRATIONS_COLLECTION, docRef.id), {
+            status: 'cancelled',
+            cancellationReason: 'Error al actualizar contador de participantes',
+            cancellationDate: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          });
+        } catch (rollbackError) {
+          console.error('[EventRegistration] Error en rollback:', rollbackError);
+        }
+
+        // Lanzar error original para que el usuario sepa qué pasó
+        throw new Error('Error al completar el registro. Por favor intenta nuevamente.');
+      }
 
       return docRef.id;
     } catch (error: any) {

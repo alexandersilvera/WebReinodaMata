@@ -18,6 +18,12 @@ export * from "./basic";
 // Exportar funciones de pagos
 export * from "./features/payments";
 
+// Exportar funciones de IA (TEMPORALMENTE DESHABILITADO - falta GEMINI_API_KEY)
+// export * from "./features/ai/chat";
+
+// Exportar funciones de eventos
+export * from "./features/events";
+
 // DESHABILITADO: Funciones de sincronización de contenido (obsoletas)
 // export * from "./content-sync";
 
