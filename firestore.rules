@@ -325,8 +325,16 @@ service cloud.firestore {
       // Lectura pública de eventos
       allow read: if true;
 
-      // Solo admin puede crear/modificar eventos
-      allow create, update, delete: if isAdmin();
+      // Solo admin puede crear/eliminar eventos
+      allow create, delete: if isAdmin();
+
+      // Admin puede actualizar cualquier campo
+      allow update: if isAdmin();
+
+      // Usuarios autenticados pueden incrementar/decrementar currentParticipants
+      // (necesario para el sistema de inscripciones)
+      allow update: if isAuthenticated() &&
+                     request.resource.data.diff(resource.data).affectedKeys().hasOnly(['currentParticipants', 'updatedAt']);
     }
 
     // Reglas alternativas (con guión) para mantener compatibilidad
@@ -334,8 +342,16 @@ service cloud.firestore {
       // Lectura pública de eventos
       allow read: if true;
 
-      // Solo admin puede crear/modificar eventos
-      allow create, update, delete: if isAdmin();
+      // Solo admin puede crear/eliminar eventos
+      allow create, delete: if isAdmin();
+
+      // Admin puede actualizar cualquier campo
+      allow update: if isAdmin();
+
+      // Usuarios autenticados pueden incrementar/decrementar currentParticipants
+      // (necesario para el sistema de inscripciones)
+      allow update: if isAuthenticated() &&
+                     request.resource.data.diff(resource.data).affectedKeys().hasOnly(['currentParticipants', 'updatedAt']);
     }
 
     // Reglas para líneas de investigación
