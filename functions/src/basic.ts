@@ -1,8 +1,9 @@
 import { onCall } from "firebase-functions/v2/https";
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import { onSchedule } from "firebase-functions/v2/scheduler";
+// import { onUserCreated } from "firebase-functions/v2/auth";
 // import { beforeUserCreated } from "firebase-functions/v2/identity"; // Para futura compatibilidad con GCIP
-import * as functions from "firebase-functions";
+
 import { logger } from "firebase-functions";
 import * as admin from "firebase-admin";
 import fetch from "node-fetch";
@@ -31,7 +32,7 @@ const CORS_CONFIG = [
  */
 export const sendNewsletterToSubscribers = onCall(
   { 
-    memory: "1GiB",
+    memory: "512MiB",
     cors: CORS_CONFIG
   },
   async (request) => {
@@ -125,7 +126,7 @@ export const sendNewsletterToSubscribers = onCall(
         htmlContent = loadEmailTemplate('newsletter-base', templateData);
       }
 
-      const BATCH_SIZE = 5; // Reducido para evitar restricciones de Mailgun
+      const BATCH_SIZE = 100; // Aumentado para mejorar el rendimiento
       let successfulBatches = 0;
       let failedBatches = 0;
       let successfulSends = 0;
@@ -225,7 +226,10 @@ export const sendNewsletterToSubscribers = onCall(
  * Envía automáticamente un email a todos los suscriptores activos
  */
 export const sendArticleNewsletter = onDocumentCreated(
-  "articles/{articleId}",
+  {
+    document: "articles/{articleId}",
+    memory: "128MiB"
+  },
   async (event) => {
     try {
       const articleData = event.data?.data();
@@ -401,7 +405,10 @@ ${siteUrlConfig.url}
  * Envía un correo de confirmación de suscripción
  */
 export const sendSubscriptionConfirmation = onDocumentCreated(
-  "subscribers/{subscriberId}",
+  {
+    document: "subscribers/{subscriberId}",
+    memory: "128MiB"
+  },
   async (event) => {
     try {
       // Obtener configuración segura de Mailgun
@@ -829,81 +836,7 @@ export const subscribeEmail = onCall(
 
 
 
-/**
- * Función que se ejecuta automáticamente cuando se crea un nuevo usuario en Firebase Auth
- * Sincroniza el usuario inmediatamente con la colección de suscriptores
- */
-export const onUserAuthCreate = onCall(
-  { 
-    memory: "128MiB",
-    cors: CORS_CONFIG
-  },
-  async (request) => {
-    try {
-      console.log('🔄 Iniciando sincronización automática de nuevo usuario Auth...');
 
-      // Obtener datos del usuario desde la solicitud
-      const { uid, email, displayName } = request.data;
-
-      if (!uid || !email) {
-        throw new Error('UID y email son requeridos para la sincronización');
-      }
-
-      console.log(`👤 Sincronizando usuario: ${email} (${uid})`);
-
-      // Verificar si ya existe en suscriptores
-      const existingQuery = await admin.firestore()
-        .collection('subscribers')
-        .where('email', '==', email.toLowerCase())
-        .get();
-
-      if (!existingQuery.empty) {
-        console.log(`⏭️ Usuario ${email} ya existe en suscriptores`);
-        return {
-          success: true,
-          message: 'Usuario ya sincronizado previamente',
-          skipped: true
-        };
-      }
-
-      // Crear nuevo suscriptor
-      const unsubscribeToken = uuidv4();
-      
-      const subscriberData = {
-        email: email.toLowerCase(),
-        name: displayName || '',
-        firstName: displayName?.split(' ')[0] || '',
-        lastName: displayName?.split(' ').slice(1).join(' ') || '',
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        active: true,
-        unsubscribeToken,
-        source: 'auth_auto',
-        authUid: uid,
-        syncedAt: admin.firestore.FieldValue.serverTimestamp()
-      };
-
-      const docRef = await admin.firestore().collection('subscribers').add(subscriberData);
-
-      console.log(`✅ Usuario sincronizado automáticamente: ${email} → ID: ${docRef.id}`);
-
-      return {
-        success: true,
-        message: `Usuario ${email} sincronizado automáticamente`,
-        subscriberId: docRef.id,
-        skipped: false
-      };
-
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-      console.error('❌ Error en sincronización automática:', error);
-      
-      return {
-        success: false,
-        message: `Error al sincronizar usuario: ${errorMessage}`
-      };
-    }
-  }
-);
 
 // Funciones de test eliminadas para optimizar recursos y resolver problemas de quota de CPU
 
@@ -1081,38 +1014,7 @@ const syncUserToSubscribersWithRetry = async (user: any, maxRetries: number = 3)
   return false;
 };
 
-/**
- * Trigger automático para nuevos usuarios - Versión simple y confiable
- * Se ejecuta automáticamente cuando se crea un usuario en Firebase Auth
- */
-export const onUserCreate = functions
-  .region('us-central1')
-  .runWith({
-    memory: '256MB',
-    timeoutSeconds: 30
-  })
-  .auth.user().onCreate(async (user: any) => {
-    try {
-      console.log('🔄 Trigger automático: nuevo usuario detectado', user.email);
 
-      if (!user.email) {
-        console.log('⚠️ Usuario sin email, saltando sincronización');
-        return;
-      }
-
-      // Usar la función de sincronización mejorada que ya tenemos
-      const syncSuccess = await syncUserToSubscribersWithRetry(user, 3);
-      
-      if (syncSuccess) {
-        console.log('✅ Sincronización automática exitosa:', user.email);
-      } else {
-        console.error('❌ Sincronización automática falló tras todos los intentos:', user.email);
-      }
-
-    } catch (error: any) {
-      console.error('❌ Error crítico en trigger automático:', error);
-    }
-  });
 
 /**
  * Función programada para procesar sincronizaciones fallidas
@@ -1225,11 +1127,57 @@ export const processFailedSyncs = onSchedule(
 );
 
 /**
+ * Función que se ejecuta cuando se crea un nuevo perfil de usuario en Firestore
+ * Sincroniza el usuario con la colección de suscriptores
+ */
+export const syncUserProfileToSubscribers = onDocumentCreated(
+  {
+    document: "user_profiles/{userId}",
+    memory: "128MiB"
+  },
+  async (event) => {
+    try {
+      const userProfile = event.data?.data();
+      const userId = event.params.userId;
+
+      if (!userProfile || !userProfile.email) {
+        console.log(`⚠️ User profile ${userId} o email faltante, omitiendo sincronización`);
+        return;
+      }
+
+      const user = {
+        uid: userId,
+        email: userProfile.email,
+        displayName: userProfile.displayName || userProfile.name || '',
+        emailVerified: userProfile.emailVerified || false,
+      };
+
+      console.log('🔄 Trigger automático: nuevo perfil de usuario detectado', user.email);
+
+      // Usar la función de sincronización mejorada que ya tenemos
+      const syncSuccess = await syncUserToSubscribersWithRetry(user, 3);
+      
+      if (syncSuccess) {
+        console.log('✅ Sincronización automática exitosa:', user.email);
+      } else {
+        console.error('❌ Sincronización automática falló tras todos los intentos:', user.email);
+      }
+
+    } catch (error: any) {
+      console.error('❌ Error crítico en trigger automático de perfil de usuario:', error);
+    }
+  }
+);
+
+/**
  * Función que se ejecuta cuando se crea un nuevo taller
  * Envía automáticamente invitaciones a todos los suscriptores activos
  */
 export const sendWorkshopInvitation = onDocumentCreated(
-  "workshops/{workshopId}",
+  {
+    document: "workshops/{workshopId}",
+    memory: "128MiB"
+  },
   async (event) => {
     try {
       const workshopData = event.data?.data();
@@ -1440,303 +1388,4 @@ ${workshopData.requirements ? `
   }
 );
 
-/**
- * Función que se ejecuta cuando se crea una nueva inscripción a evento
- * Envía un correo de confirmación al participante
- */
-export const sendEventRegistrationConfirmation = onDocumentCreated(
-  "event_registrations/{registrationId}",
-  async (event) => {
-    try {
-      const registrationData = event.data?.data();
-      if (!registrationData) {
-        console.error("No se encontraron datos de la inscripción");
-        return;
-      }
-
-      const {
-        userEmail,
-        userName,
-        eventId,
-        eventTitle,
-        status,
-        paymentRequired
-      } = registrationData;
-
-      if (!userEmail || !isValidEmail(userEmail)) {
-        console.error("Email inválido o faltante en la inscripción");
-        return;
-      }
-
-      console.log(`Enviando confirmación de inscripción a: ${userEmail} para evento: ${eventTitle}`);
-
-      // Obtener detalles del evento desde Firestore
-      let eventDetails: any = null;
-      try {
-        const eventDoc = await admin.firestore().collection("academic_events").doc(eventId).get();
-        if (eventDoc.exists) {
-          eventDetails = eventDoc.data();
-        }
-      } catch (error) {
-        console.error("Error obteniendo detalles del evento:", error);
-      }
-
-      // Obtener configuración de Mailgun
-      const mailgunConfig = getMailgunConfig();
-      const siteUrlConfig = getSiteUrlConfig();
-
-      // Construir URL del evento
-      const eventUrl = `${siteUrlConfig.url}/eventos/${eventId}`;
-      const myEventsUrl = `${siteUrlConfig.url}/mi-cuenta/mis-eventos`;
-
-      // Formatear fecha si está disponible
-      let formattedDate = "Fecha por confirmar";
-      if (eventDetails && eventDetails.date) {
-        try {
-          const eventDate = eventDetails.date.seconds
-            ? new Date(eventDetails.date.seconds * 1000)
-            : new Date(eventDetails.date);
-          formattedDate = eventDate.toLocaleDateString('es-ES', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-          });
-        } catch (dateError) {
-          console.error("Error formateando fecha:", dateError);
-        }
-      }
-
-      // Determinar el asunto y contenido según el estado
-      let subject = "";
-      let textContent = "";
-      let htmlContent = "";
-
-      if (paymentRequired && status === 'registered') {
-        // Inscripción pendiente de pago
-        subject = `Confirma tu inscripción: ${eventTitle}`;
-        textContent = `
-¡Hola ${userName}!
-
-Recibimos tu solicitud de inscripción para el evento:
-
-"${eventTitle}"
-
-📅 Fecha: ${formattedDate}
-${eventDetails?.location ? `📍 Ubicación: ${eventDetails.location}` : ''}
-${eventDetails?.duration ? `⏱️ Duración: ${eventDetails.duration} horas` : ''}
-
-Para completar tu inscripción, debes realizar el pago.
-
-Una vez confirmado el pago, recibirás un correo con todos los detalles del evento.
-
-Ver detalles del evento: ${eventUrl}
-Ver mis inscripciones: ${myEventsUrl}
-
-Si tienes alguna pregunta, no dudes en contactarnos.
-
-¡Axé!
-
-Centro Umbandista Reino Da Mata
-        `.trim();
-
-        htmlContent = `
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Confirmación de inscripción</title>
-</head>
-<body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
-    <table role="presentation" style="width: 100%; border-collapse: collapse;">
-        <tr>
-            <td style="padding: 20px 0;">
-                <table style="width: 600px; max-width: 100%; margin: 0 auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                    <tr>
-                        <td style="background-color: #2d5016; color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
-                            <h1 style="margin: 0; font-size: 24px;">Centro Umbandista Reino Da Mata</h1>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 30px;">
-                            <h2 style="color: #2d5016; margin-bottom: 20px;">¡Hola ${userName}!</h2>
-                            <p style="color: #666; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
-                                Recibimos tu solicitud de inscripción para el evento:
-                            </p>
-                            <div style="background-color: #f8f8f8; padding: 20px; border-left: 4px solid #4a7c2a; margin: 20px 0;">
-                                <h3 style="color: #2d5016; margin: 0 0 15px 0;">${eventTitle}</h3>
-                                <p style="color: #666; margin: 5px 0;">📅 <strong>Fecha:</strong> ${formattedDate}</p>
-                                ${eventDetails?.location ? `<p style="color: #666; margin: 5px 0;">📍 <strong>Ubicación:</strong> ${eventDetails.location}</p>` : ''}
-                                ${eventDetails?.duration ? `<p style="color: #666; margin: 5px 0;">⏱️ <strong>Duración:</strong> ${eventDetails.duration} horas</p>` : ''}
-                            </div>
-                            <div style="background-color: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                                <p style="color: #856404; margin: 0; font-size: 14px;">
-                                    ⚠️ <strong>Inscripción pendiente de pago</strong><br>
-                                    Para completar tu inscripción, debes realizar el pago. Una vez confirmado, recibirás un correo con todos los detalles.
-                                </p>
-                            </div>
-                            <div style="text-align: center; margin: 30px 0;">
-                                <a href="${eventUrl}" style="display: inline-block; background: linear-gradient(135deg, #4a7c2a 0%, #2d5016 100%); color: white; text-decoration: none; padding: 15px 30px; border-radius: 6px; font-weight: 600; font-size: 16px;">Ver detalles del evento</a>
-                            </div>
-                            <p style="color: #666; font-size: 14px; line-height: 1.6; margin-top: 20px;">
-                                Si tienes alguna pregunta, no dudes en contactarnos.
-                            </p>
-                            <p style="color: #2d5016; font-weight: 600; margin-top: 30px;">¡Axé!</p>
-                            <p style="color: #666; font-size: 14px;">Centro Umbandista Reino Da Mata</p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="background-color: #f8f8f8; padding: 20px; text-align: center; border-radius: 0 0 8px 8px;">
-                            <p style="color: #999; font-size: 12px; margin: 0;">
-                                Centro Umbandista Reino Da Mata<br>
-                                <a href="${myEventsUrl}" style="color: #4a7c2a; text-decoration: none;">Ver mis inscripciones</a>
-                            </p>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-    </table>
-</body>
-</html>
-        `;
-
-      } else {
-        // Inscripción confirmada (evento gratuito o pago completado)
-        subject = `✅ Inscripción confirmada: ${eventTitle}`;
-        textContent = `
-¡Hola ${userName}!
-
-¡Tu inscripción ha sido confirmada!
-
-Estás inscrito/a en el evento:
-
-"${eventTitle}"
-
-📅 Fecha: ${formattedDate}
-${eventDetails?.location ? `📍 Ubicación: ${eventDetails.location}` : ''}
-${eventDetails?.duration ? `⏱️ Duración: ${eventDetails.duration} horas` : ''}
-${eventDetails?.isOnline ? '💻 Este es un evento online. Recibirás el enlace de acceso antes del inicio.' : ''}
-
-${eventDetails?.description ? `\n${eventDetails.description}\n` : ''}
-
-Ver detalles completos: ${eventUrl}
-Ver mis inscripciones: ${myEventsUrl}
-
-Te esperamos. Si tienes alguna pregunta, no dudes en contactarnos.
-
-¡Axé!
-
-Centro Umbandista Reino Da Mata
-        `.trim();
-
-        htmlContent = `
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inscripción confirmada</title>
-</head>
-<body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
-    <table role="presentation" style="width: 100%; border-collapse: collapse;">
-        <tr>
-            <td style="padding: 20px 0;">
-                <table style="width: 600px; max-width: 100%; margin: 0 auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                    <tr>
-                        <td style="background-color: #2d5016; color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
-                            <h1 style="margin: 0; font-size: 24px;">Centro Umbandista Reino Da Mata</h1>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 30px;">
-                            <div style="text-align: center; margin-bottom: 20px;">
-                                <div style="display: inline-block; background-color: #d4edda; color: #155724; padding: 10px 20px; border-radius: 50px; font-weight: 600;">
-                                    ✅ Inscripción Confirmada
-                                </div>
-                            </div>
-                            <h2 style="color: #2d5016; margin-bottom: 20px;">¡Hola ${userName}!</h2>
-                            <p style="color: #666; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
-                                ¡Tu inscripción ha sido confirmada! Estás inscrito/a en:
-                            </p>
-                            <div style="background-color: #f8f8f8; padding: 20px; border-left: 4px solid #4a7c2a; margin: 20px 0;">
-                                <h3 style="color: #2d5016; margin: 0 0 15px 0;">${eventTitle}</h3>
-                                <p style="color: #666; margin: 5px 0;">📅 <strong>Fecha:</strong> ${formattedDate}</p>
-                                ${eventDetails?.location ? `<p style="color: #666; margin: 5px 0;">📍 <strong>Ubicación:</strong> ${eventDetails.location}</p>` : ''}
-                                ${eventDetails?.duration ? `<p style="color: #666; margin: 5px 0;">⏱️ <strong>Duración:</strong> ${eventDetails.duration} horas</p>` : ''}
-                                ${eventDetails?.isOnline ? '<p style="color: #666; margin: 5px 0;">💻 <strong>Modalidad:</strong> Online (recibirás el enlace antes del evento)</p>' : ''}
-                            </div>
-                            ${eventDetails?.description ? `<p style="color: #666; font-size: 14px; line-height: 1.6; margin: 20px 0;">${eventDetails.description}</p>` : ''}
-                            <div style="text-align: center; margin: 30px 0;">
-                                <a href="${eventUrl}" style="display: inline-block; background: linear-gradient(135deg, #4a7c2a 0%, #2d5016 100%); color: white; text-decoration: none; padding: 15px 30px; border-radius: 6px; font-weight: 600; font-size: 16px; margin-right: 10px;">Ver detalles</a>
-                                <a href="${myEventsUrl}" style="display: inline-block; background-color: #fff; border: 2px solid #4a7c2a; color: #4a7c2a; text-decoration: none; padding: 13px 28px; border-radius: 6px; font-weight: 600; font-size: 16px;">Mis eventos</a>
-                            </div>
-                            <p style="color: #666; font-size: 14px; line-height: 1.6; margin-top: 20px;">
-                                Te esperamos. Si tienes alguna pregunta, no dudes en contactarnos.
-                            </p>
-                            <p style="color: #2d5016; font-weight: 600; margin-top: 30px;">¡Axé!</p>
-                            <p style="color: #666; font-size: 14px;">Centro Umbandista Reino Da Mata</p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="background-color: #f8f8f8; padding: 20px; text-align: center; border-radius: 0 0 8px 8px;">
-                            <p style="color: #999; font-size: 12px; margin: 0;">
-                                Centro Umbandista Reino Da Mata<br>
-                                ${siteUrlConfig.url}
-                            </p>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-    </table>
-</body>
-</html>
-        `;
-      }
-
-      // Enviar correo usando Mailgun
-      const auth = Buffer.from(`api:${mailgunConfig.apiKey}`).toString("base64");
-      const formData = new URLSearchParams();
-
-      formData.append("from", `${mailgunConfig.fromName} <${mailgunConfig.fromEmail}>`);
-      formData.append("to", userEmail);
-      formData.append("subject", subject);
-      formData.append("text", textContent);
-      formData.append("html", htmlContent);
-
-      // Headers adicionales
-      formData.append("h:Reply-To", mailgunConfig.fromEmail);
-      formData.append("h:X-Mailgun-Native-Send", "true");
-
-      const response = await fetch(
-        `${mailgunConfig.baseUrl}/${mailgunConfig.domain}/messages`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Basic ${auth}`,
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          body: formData,
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.text();
-        console.error("Error en Mailgun:", errorData);
-        throw new Error(`Error al enviar el correo: ${response.statusText}`);
-      }
-
-      const responseData = await response.json();
-      console.log("Respuesta de Mailgun:", responseData);
-      console.log(`Correo de confirmación de evento enviado a ${userEmail} para evento ${eventTitle}`);
-
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      console.error("Error al enviar confirmación de inscripción:", errorMessage);
-    }
-  }
-); 
+ 

@@ -2,7 +2,7 @@
  * Webhook para recibir notificaciones de Mercado Pago
  */
 
-import * as functions from 'firebase-functions';
+import { onRequest } from "firebase-functions/v2/https";
 import * as admin from 'firebase-admin';
 import { MercadoPagoConfig, Payment } from 'mercadopago';
 
@@ -24,9 +24,13 @@ interface WebhookNotification {
 /**
  * Webhook para notificaciones de Mercado Pago
  */
-export const mercadoPagoWebhook = functions
-  .region('us-central1')
-  .https.onRequest(async (req, res) => {
+export const mercadoPagoWebhook = onRequest(
+  {
+    region: 'us-central1',
+    memory: '256MiB', // Asumiendo un valor razonable
+    timeoutSeconds: 60, // Asumiendo un valor razonable
+  },
+  async (req, res) => {
     try {
       // Solo aceptar POST
       if (req.method !== 'POST') {
@@ -46,7 +50,7 @@ export const mercadoPagoWebhook = functions
       }
 
       // Inicializar Mercado Pago
-      const accessToken = functions.config().mercadopago?.access_token;
+      const accessToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
       if (!accessToken) {
         console.error('❌ Mercado Pago access token not configured');
         res.status(500).send('Configuration error');

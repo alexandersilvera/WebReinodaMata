@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { auth, functions, onAuthStateChanged, httpsCallable } from '@/core/firebase/config';
+import { auth, functions, onAuthStateChanged, httpsCallable, getFirestore, doc, setDoc, serverTimestamp, getDoc } from '@/core/firebase/config';
 import type { User } from 'firebase/auth';
 
 // Tipos para las respuestas de la función
@@ -10,9 +10,13 @@ interface SyncResponse {
   subscriberId?: string;
 }
 
+const DEFAULT_AVATAR_URL = '/images/default-avatar.png';
+
+
 /**
  * Componente que maneja la sincronización automática de usuarios Auth con suscriptores
- * Se debe incluir en las páginas donde los usuarios se registran o inician sesión
+ * y la creación de perfiles de usuario en Firestore.
+ * Se debe incluir en las páginas donde los usuarios se registran o inician sesión.
  */
 export default function AuthSync() {
   const [, setUser] = useState<User | null>(null);
@@ -38,12 +42,12 @@ export default function AuthSync() {
         const isNewUser = timeDifference <= fiveMinutesInMs;
         
         if (isNewUser) {
-          console.log('🔄 Usuario recién registrado detectado, iniciando sincronización automática...');
-          syncNewUser(currentUser, true);
+          console.log('✨ Usuario recién registrado detectado, creando perfil...');
+          createUserProfile(currentUser); // Crear perfil de usuario
         } else {
-          // Para usuarios existentes, intentar sincronizar solo si es necesario
-          console.log('🔄 Usuario existente detectado, verificando si necesita sincronización...');
-          syncNewUser(currentUser, false);
+          // Para usuarios existentes, solo asegurar que el perfil exista
+          console.log('🔄 Usuario existente detectado, asegurando que el perfil exista...');
+          createUserProfile(currentUser); // Asegurar que el perfil exista
         }
       }
     });
@@ -51,54 +55,47 @@ export default function AuthSync() {
     return () => unsubscribe();
   }, [syncAttempted]);
 
-  const syncNewUser = async (user: User, isNewUser: boolean) => {
+  /**
+   * Crea un documento de perfil para un nuevo usuario en Firestore.
+   */
+  const createUserProfile = async (user: User) => {
+    const db = getFirestore();
+    const userDocRef = doc(db, 'userProfiles', user.uid);
+
     try {
-      console.log('📞 Llamando a función de sincronización automática para:', user.email);
+      // Verificar si el documento ya existe para no sobrescribir.
+      const docSnap = await getDoc(userDocRef);
+      if (docSnap.exists()) {
+        console.log(`El perfil para el usuario ${user.uid} ya existe en 'userProfiles'. No se creará uno nuevo.`);
+        return;
+      }
       
-      const syncFunction = httpsCallable(functions, 'onUserAuthCreate');
-      const result = await syncFunction({
+      console.log(`📝 Creando perfil de Firestore para el usuario: ${user.uid} en 'userProfiles'`);
+
+      const userData = {
         uid: user.uid,
         email: user.email,
-        displayName: user.displayName || ''
-      });
+        displayName: user.displayName || user.email?.split('@')[0] || 'Usuario Anónimo',
+        photoURL: user.photoURL || DEFAULT_AVATAR_URL,
+        roles: ['user'],
+        createdAt: serverTimestamp(),
+        interests: [],
+      };
 
-      const data = result.data as SyncResponse;
+      await setDoc(userDocRef, userData);
+      console.log(`✅ Perfil de usuario creado exitosamente en Firestore para ${user.uid}`);
 
-      if (data?.success) {
-        if (data.skipped) {
-          console.log('⏭️ Usuario ya estaba sincronizado:', data.message);
-          
-          // Solo mostrar notificación para usuarios nuevos que ya estaban sincronizados
-          if (isNewUser) {
-            showSyncNotification('¡Bienvenido! Ya estás suscrito a nuestro newsletter.', 'info');
-          }
-        } else {
-          console.log('✅ Sincronización automática exitosa:', data.message);
-          
-          // Mostrar notificación de éxito
-          if (isNewUser) {
-            showSyncNotification('¡Te has suscrito automáticamente a nuestro newsletter!', 'success');
-          } else {
-            showSyncNotification('¡Te hemos agregado a nuestro newsletter!', 'success');
-          }
-        }
-      } else {
-        console.error('❌ Error en sincronización automática:', data?.message);
-        
-        // Solo mostrar error para usuarios nuevos
-        if (isNewUser) {
-          showSyncNotification('No pudimos suscribirte automáticamente al newsletter. Puedes hacerlo manualmente.', 'warning');
-        }
-      }
+      // Redirigir a la página de bienvenida
+      // window.location.href = '/welcome'; // Eliminado para evitar conflictos de redirección
+
     } catch (error) {
-      console.error('❌ Error ejecutando sincronización automática:', error);
-      
-      // Solo mostrar error para usuarios nuevos  
-      if (isNewUser) {
-        showSyncNotification('Error al configurar la suscripción automática.', 'error');
-      }
+      console.error(`❌ Error al crear el perfil de usuario en Firestore para ${user.uid}:`, error);
+      showSyncNotification('No pudimos crear tu perfil de usuario. Por favor, contacta a soporte.', 'error');
     }
   };
+
+
+  
 
   const showSyncNotification = (message: string, type: 'success' | 'error' | 'warning' | 'info' = 'success') => {
     // Definir colores según el tipo
@@ -150,4 +147,5 @@ export default function AuthSync() {
 
   // Este componente no renderiza nada visible
   return null;
-} 
+}
+ 

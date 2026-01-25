@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cancelar Registro - Centro Umbandista Reino Da Mata</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: #2d3748;
+            border-radius: 12px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #48bb78;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #cbd5e0;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+
+        #status {
+            background: #1a202c;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #48bb78;
+        }
+
+        .log-entry {
+            padding: 8px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .log-entry.info { color: #63b3ed; }
+        .log-entry.success { color: #48bb78; }
+        .log-entry.error { color: #fc8181; }
+        .log-entry.warning { color: #f6ad55; }
+
+        .icon {
+            font-size: 18px;
+            width: 20px;
+            display: inline-block;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid #48bb78;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .button {
+            background: #48bb78;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        .button:hover {
+            background: #38a169;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(72, 187, 120, 0.4);
+        }
+
+        .button:disabled {
+            background: #4a5568;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .code-block {
+            background: #1a202c;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #a0aec0;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Cancelar Registro de Evento</h1>
+        <p class="subtitle">Herramienta de administración para cancelar registro incompleto</p>
+
+        <div id="status">
+            <div class="log-entry info">
+                <span class="icon">ℹ️</span>
+                <span>Esperando inicialización...</span>
+            </div>
+        </div>
+
+        <div class="actions">
+            <button id="cancelBtn" class="button" disabled>
+                <span class="loading"></span> Conectando...
+            </button>
+            <a href="https://www.centroumbandistareinodamata.org" class="button" style="background: #4a5568;">
+                Volver al Sitio
+            </a>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+        import { getFunctions, httpsCallable, connectFunctionsEmulator } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
+
+        // Configuración de Firebase (producción)
+        const firebaseConfig = {
+            apiKey: "AIzaSyC0XZVB0Wz-0pOlYM5b8VNEfGCuJuAjME8",
+            authDomain: "reino-da-mata-2fea3.firebaseapp.com",
+            projectId: "reino-da-mata-2fea3",
+            storageBucket: "reino-da-mata-2fea3.firebasestorage.app",
+            messagingSenderId: "534486648877",
+            appId: "1:534486648877:web:d4e825bc8afcdb44d5f52c",
+            measurementId: "G-P6RDKFGLNY"
+        };
+
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const functions = getFunctions(app, 'southamerica-east1');
+
+        const statusDiv = document.getElementById('status');
+        const cancelBtn = document.getElementById('cancelBtn');
+
+        function addLog(message, type = 'info') {
+            const icons = {
+                info: 'ℹ️',
+                success: '✅',
+                error: '❌',
+                warning: '⚠️',
+                loading: '🔄'
+            };
+
+            const log = document.createElement('div');
+            log.className = `log-entry ${type}`;
+            log.innerHTML = `
+                <span class="icon">${icons[type] || 'ℹ️'}</span>
+                <span>${message}</span>
+            `;
+            statusDiv.appendChild(log);
+            statusDiv.scrollTop = statusDiv.scrollHeight;
+        }
+
+        function clearLogs() {
+            statusDiv.innerHTML = '';
+        }
+
+        async function cancelRegistration() {
+            clearLogs();
+            addLog('Iniciando proceso de cancelación...', 'loading');
+
+            cancelBtn.disabled = true;
+            cancelBtn.innerHTML = '<span class="loading"></span> Cancelando...';
+
+            try {
+                const user = auth.currentUser;
+
+                if (!user) {
+                    addLog('Error: No hay usuario autenticado', 'error');
+                    addLog('Por favor, inicia sesión primero', 'warning');
+                    cancelBtn.disabled = false;
+                    cancelBtn.textContent = 'Reintentar';
+                    return;
+                }
+
+                addLog(`Usuario autenticado: ${user.email}`, 'info');
+                addLog('Llamando a Cloud Function...', 'loading');
+
+                const cancelEventRegistration = httpsCallable(functions, 'cancelEventRegistration');
+
+                const result = await cancelEventRegistration({
+                    userId: 'BLC1d4Yd8JbQ7k5sXsnfWHTWztA3',
+                    eventId: 'jca6PGwp7owwiIgior75',
+                    reason: 'Registro incompleto - cancelado vía herramienta admin'
+                });
+
+                if (result.data.success) {
+                    addLog('¡Registro cancelado exitosamente!', 'success');
+                    addLog(`ID del registro: ${result.data.registrationId}`, 'info');
+
+                    if (result.data.alreadyCancelled) {
+                        addLog('El registro ya estaba cancelado', 'warning');
+                    }
+
+                    addLog('Contador de participantes actualizado', 'success');
+                    addLog('', 'info');
+                    addLog('✨ ¡Listo! Ahora puedes registrarte nuevamente al evento', 'success');
+
+                    cancelBtn.style.background = '#48bb78';
+                    cancelBtn.innerHTML = '✅ Completado';
+
+                    setTimeout(() => {
+                        addLog('Redirigiendo al evento...', 'loading');
+                        window.location.href = 'https://www.centroumbandistareinodamata.org/eventos/jca6PGwp7owwiIgior75';
+                    }, 2000);
+                } else {
+                    addLog(`Error: ${result.data.message}`, 'error');
+                    cancelBtn.disabled = false;
+                    cancelBtn.textContent = 'Reintentar';
+                }
+
+            } catch (error) {
+                console.error('Error completo:', error);
+                addLog(`Error: ${error.message}`, 'error');
+
+                if (error.code === 'unauthenticated') {
+                    addLog('No estás autenticado. Redirigiendo al login...', 'warning');
+                    setTimeout(() => {
+                        window.location.href = 'https://www.centroumbandistareinodamata.org/login';
+                    }, 2000);
+                } else if (error.code === 'permission-denied') {
+                    addLog('No tienes permisos para cancelar este registro', 'error');
+                } else if (error.code === 'not-found') {
+                    addLog('Registro no encontrado. Puede que ya haya sido cancelado.', 'warning');
+                } else {
+                    addLog('Detalles: ' + (error.details || 'Sin detalles adicionales'), 'info');
+                }
+
+                cancelBtn.disabled = false;
+                cancelBtn.textContent = 'Reintentar';
+            }
+        }
+
+        // Verificar estado de autenticación
+        onAuthStateChanged(auth, (user) => {
+            clearLogs();
+
+            if (user) {
+                addLog(`✅ Autenticado como: ${user.email}`, 'success');
+                addLog('Firebase Functions conectado a: southamerica-east1', 'info');
+                addLog('Usuario objetivo: BLC1d4Yd8JbQ7k5sXsnfWHTWztA3', 'info');
+                addLog('Evento: jca6PGwp7owwiIgior75', 'info');
+                addLog('', 'info');
+                addLog('Presiona el botón para cancelar el registro', 'info');
+
+                cancelBtn.disabled = false;
+                cancelBtn.textContent = '🗑️ Cancelar Registro';
+                cancelBtn.onclick = cancelRegistration;
+            } else {
+                addLog('❌ No estás autenticado', 'error');
+                addLog('Redirigiendo al login...', 'warning');
+
+                setTimeout(() => {
+                    window.location.href = 'https://www.centroumbandistareinodamata.org/login';
+                }, 2000);
+            }
+        });
+    </script>
+</body>
+</html>

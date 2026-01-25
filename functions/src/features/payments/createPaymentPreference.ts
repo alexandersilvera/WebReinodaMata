@@ -2,7 +2,7 @@
  * Cloud Function para crear preferencias de pago en Mercado Pago
  */
 
-import * as functions from 'firebase-functions';
+import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as admin from 'firebase-admin';
 import { MercadoPagoConfig, Preference } from 'mercadopago';
 
@@ -24,24 +24,30 @@ interface CreatePreferenceRequest {
 /**
  * Crear preferencia de pago en Mercado Pago
  */
-export const createPaymentPreference = functions
-  .region('us-central1')
-  .https.onCall(async (data: CreatePreferenceRequest, context) => {
+export const createPaymentPreference = onCall(
+  {
+    region: 'us-central1',
+    memory: '256MiB', // Asumiendo un valor razonable
+    timeoutSeconds: 60, // Asumiendo un valor razonable
+  },
+  async (request) => {
     try {
+      const data = request.data as CreatePreferenceRequest;
+      const context = request;
       // Verificar autenticación para suscripciones
       if (data.paymentType === 'subscription' && !context.auth) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           'unauthenticated',
           'Debes estar autenticado para suscribirte'
         );
       }
 
       // Inicializar Mercado Pago
-      const accessToken = functions.config().mercadopago?.access_token;
+      const accessToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
       if (!accessToken) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           'failed-precondition',
-          'Mercado Pago no está configurado. Ejecuta: firebase functions:config:set mercadopago.access_token="YOUR_TOKEN"'
+          'Mercado Pago no está configurado. Asegúrate de que MERCADOPAGO_ACCESS_TOKEN esté configurado en las variables de entorno.'
         );
       }
 
@@ -57,12 +63,12 @@ export const createPaymentPreference = functions
 
       // Para desarrollo, usar una URL pública de ngrok o similar
       // Para producción, usar la URL real del sitio
-      const appUrl = functions.config().app?.url || 'https://centroumbandistareinodamata.vercel.app';
+      const appUrl = process.env.APP_URL || 'https://centroumbandistareinodamata.vercel.app';
 
       // Construir preferencia según el tipo de pago
       if (data.paymentType === 'subscription') {
         if (!data.planId || !data.billingPeriod || !data.userId) {
-          throw new functions.https.HttpsError(
+          throw new HttpsError(
             'invalid-argument',
             'Faltan datos requeridos: planId, billingPeriod, userId'
           );
@@ -71,7 +77,7 @@ export const createPaymentPreference = functions
         // Obtener datos del plan
         const planDoc = await db.collection('subscription_plans').doc(data.planId).get();
         if (!planDoc.exists) {
-          throw new functions.https.HttpsError('not-found', 'Plan no encontrado');
+          throw new HttpsError('not-found', 'Plan no encontrado');
         }
 
         const plan = planDoc.data();
@@ -111,7 +117,7 @@ export const createPaymentPreference = functions
         };
       } else if (data.paymentType === 'donation') {
         if (!data.amount || data.amount <= 0) {
-          throw new functions.https.HttpsError(
+          throw new HttpsError(
             'invalid-argument',
             'El monto de la donación debe ser mayor a 0'
           );
@@ -151,7 +157,7 @@ export const createPaymentPreference = functions
         };
       } else if (data.paymentType === 'event_registration') {
         if (!data.eventId || !data.userId || !data.amount) {
-          throw new functions.https.HttpsError(
+          throw new HttpsError(
             'invalid-argument',
             'Faltan datos requeridos: eventId, userId, amount'
           );
@@ -188,7 +194,7 @@ export const createPaymentPreference = functions
           statement_descriptor: 'EVENTO CURDM',
         };
       } else {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           'invalid-argument',
           'Tipo de pago no soportado'
         );
@@ -221,11 +227,11 @@ export const createPaymentPreference = functions
     } catch (error: any) {
       console.error('❌ Error creating payment preference:', error);
 
-      if (error instanceof functions.https.HttpsError) {
+      if (error instanceof HttpsError) {
         throw error;
       }
 
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'internal',
         'Error al crear la preferencia de pago: ' + error.message
       );

@@ -1,0 +1,15 @@
+---
+import MainLayout from '@/layouts/MainLayout.astro';
+import PersonalizedFeed from '@/components/PersonalizedFeed';
+---
+
+<MainLayout title="Tu Feed Personalizado - Reino da Mata" description="Contenido seleccionado especialmente para ti.">
+  <div class="container mx-auto px-4 py-12">
+    <h1 class="text-4xl font-bold text-center text-[#F08F4A] mb-8">
+      Tu Espacio Personal
+    </h1>
+    
+    <PersonalizedFeed client:load />
+    
+  </div>
+</MainLayout>

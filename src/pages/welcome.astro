@@ -1,0 +1,30 @@
+---
+import MainLayout from '@/layouts/MainLayout.astro';
+import { useAuth } from '@/core/hooks/useAuth';
+
+// Este es un componente del lado del cliente que se encargará de la lógica de React
+import WelcomeChat from '@/components/WelcomeChat';
+
+const { user, loading } = useAuth();
+---
+
+<MainLayout title="¡Bienvenido/a! - Reino da Mata" description="Completa tu perfil para personalizar tu experiencia.">
+  <div class="container mx-auto px-4 py-12 max-w-2xl text-center">
+    <h1 class="text-4xl font-bold text-[#F08F4A] mb-4">
+      ¡Bienvenido/a, {user?.displayName || 'nuevo miembro'}!
+    </h1>
+    <p class="text-lg text-gray-300 mb-8">
+      Para poder ofrecerte el contenido y las experiencias que más resuenan contigo, nos gustaría conocer tus intereses.
+    </p>
+
+    <!-- Aquí irá el componente del chatbot de bienvenida -->
+    <div id="welcome-chat-container" class="bg-[#1f1e23] p-8 rounded-lg shadow-lg text-left">
+      <WelcomeChat client:load />
+    </div>
+    
+  </div>
+</MainLayout>
+
+<style>
+  /* Estilos adicionales si son necesarios */
+</style>
