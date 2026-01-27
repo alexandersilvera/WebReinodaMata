@@ -7,7 +7,7 @@
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
 
-import * as admin from "firebase-admin";
+import admin from "firebase-admin";
 
 // Inicializar la aplicación de Firebase Admin
 admin.initializeApp();

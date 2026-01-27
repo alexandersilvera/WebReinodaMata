@@ -3,7 +3,7 @@
  */
 
 import { onRequest } from "firebase-functions/v2/https";
-import * as admin from 'firebase-admin';
+import admin from 'firebase-admin';
 import { MercadoPagoConfig, Payment } from 'mercadopago';
 
 

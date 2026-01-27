@@ -5,7 +5,7 @@ import { onSchedule } from "firebase-functions/v2/scheduler";
 // import { beforeUserCreated } from "firebase-functions/v2/identity"; // Para futura compatibilidad con GCIP
 
 import { logger } from "firebase-functions";
-import * as admin from "firebase-admin";
+import admin from "firebase-admin";
 import fetch from "node-fetch";
 import { getMailgunConfig, isValidEmail, validateEmailList, isAdminUser, getSiteUrlConfig } from "./config/mailgun.js";
 import { loadEmailTemplate, formatContentForHtml, createCallToAction, EmailTemplateData } from "./utils/emailTemplates.js";

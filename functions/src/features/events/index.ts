@@ -7,8 +7,8 @@ import * as logger from "firebase-functions/logger";
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import { isValidEmail, getSiteUrlConfig } from "../../config/mailgun.js";
 import { sendEmail } from "../../shared/emailService.js";
-import * as admin from "firebase-admin"; // Mantener esta importación para FieldValue
-import { db } from '../../index.js'; // Importar la instancia de db desde index.ts
+import admin from "firebase-admin"; // Mantener esta importación para FieldValue
+
 
 /**
  * Función para cancelar un registro de evento
@@ -146,7 +146,7 @@ export const cancelEventRegistration = onCall(
       });
 
       // Decrementar contador de participantes
-      const eventRef = db.collection("academic_events").doc(eventId);
+      const eventRef = admin.firestore().collection("academic_events").doc(eventId);
       await eventRef.update({
         currentParticipants: admin.firestore.FieldValue.increment(-1),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),

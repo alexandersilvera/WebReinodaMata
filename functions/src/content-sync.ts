@@ -1,6 +1,6 @@
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { onCall } from "firebase-functions/v2/https";
-import * as admin from "firebase-admin";
+import admin from "firebase-admin";
 import * as fs from "fs";
 import * as path from "path";
 import { mkdirp } from "mkdirp";
