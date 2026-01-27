@@ -6,7 +6,6 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as admin from 'firebase-admin';
 import { MercadoPagoConfig, Preference } from 'mercadopago';
 
-const db = admin.firestore();
 
 // Tipos
 interface CreatePreferenceRequest {
@@ -75,7 +74,7 @@ export const createPaymentPreference = onCall(
         }
 
         // Obtener datos del plan
-        const planDoc = await db.collection('subscription_plans').doc(data.planId).get();
+        const planDoc = await admin.firestore().collection('subscription_plans').doc(data.planId).get();
         if (!planDoc.exists) {
           throw new HttpsError('not-found', 'Plan no encontrado');
         }
@@ -205,7 +204,7 @@ export const createPaymentPreference = onCall(
       const preference = await preferenceClient.create({ body: preferenceData });
 
       // Guardar en Firestore para tracking
-      await db.collection('payment_preferences').add({
+      await admin.firestore().collection('payment_preferences').add({
         preferenceId: preference.id,
         userId: data.userId || null,
         paymentType: data.paymentType,

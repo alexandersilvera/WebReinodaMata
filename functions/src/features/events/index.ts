@@ -2,12 +2,13 @@
  * Cloud Functions para gestión de eventos
  */
 
-import * as admin from "firebase-admin";
-import {onCall, HttpsError} from "firebase-functions/v2/https";
+import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
-import fetch from "node-fetch";
-import { getMailgunConfig, isValidEmail, getSiteUrlConfig } from "../../config/mailgun";
+import { isValidEmail, getSiteUrlConfig } from "../../config/mailgun.js";
+import { sendEmail } from "../../shared/emailService.js";
+import * as admin from "firebase-admin"; // Mantener esta importación para FieldValue
+import { db } from '../../index.js'; // Importar la instancia de db desde index.ts
 
 /**
  * Función para cancelar un registro de evento
@@ -26,7 +27,7 @@ export const cancelEventRegistration = onCall(
       );
     }
 
-    const {registrationId, eventId, userId, reason} = request.data;
+    const { registrationId, eventId, userId, reason } = request.data;
 
     logger.info("Cancelando registro", {
       registrationId,
@@ -36,11 +37,10 @@ export const cancelEventRegistration = onCall(
     });
 
     try {
-      const db = admin.firestore();
-
+      // const db = admin.firestore(); // Eliminado
       // Si se proporciona registrationId, usar directamente
       if (registrationId) {
-        const regRef = db.collection("event_registrations").doc(registrationId);
+        const regRef = admin.firestore().collection("event_registrations").doc(registrationId);
         const regDoc = await regRef.get();
 
         if (!regDoc.exists) {
@@ -72,14 +72,14 @@ export const cancelEventRegistration = onCall(
 
         // Decrementar contador de participantes
         if (regData?.eventId) {
-          const eventRef = db.collection("academic_events").doc(regData.eventId);
+          const eventRef = admin.firestore().collection("academic_events").doc(regData.eventId);
           await eventRef.update({
             currentParticipants: admin.firestore.FieldValue.increment(-1),
             updatedAt: admin.firestore.FieldValue.serverTimestamp(),
           });
         }
 
-        logger.info("Registro cancelado exitosamente", {registrationId});
+        logger.info("Registro cancelado exitosamente", { registrationId });
 
         return {
           success: true,
@@ -108,7 +108,7 @@ export const cancelEventRegistration = onCall(
       }
 
       // Buscar el registro
-      const querySnapshot = await db
+      const querySnapshot = await admin.firestore()
         .collection("event_registrations")
         .where("userId", "==", userId)
         .where("eventId", "==", eventId)
@@ -152,7 +152,7 @@ export const cancelEventRegistration = onCall(
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
 
-      logger.info("Registro cancelado exitosamente", {id: regDoc.id});
+      logger.info("Registro cancelado exitosamente", { id: regDoc.id });
 
       return {
         success: true,
@@ -181,7 +181,8 @@ export const cancelEventRegistration = onCall(
 export const sendEventRegistrationConfirmation = onDocumentCreated(
   {
     document: "event_registrations/{registrationId}",
-    memory: "128MiB"
+    memory: "128MiB",
+    region: "southamerica-east1" // <--- AÑADE ESTA LÍNEA
   },
   async (event) => {
     try {
@@ -218,8 +219,6 @@ export const sendEventRegistrationConfirmation = onDocumentCreated(
         console.error("Error obteniendo detalles del evento:", error);
       }
 
-      // Obtener configuración de Mailgun
-      const mailgunConfig = getMailgunConfig();
       const siteUrlConfig = getSiteUrlConfig();
 
       // Construir URL del evento
@@ -437,41 +436,18 @@ Centro Umbandista Reino Da Mata
         `;
       }
 
-      // Enviar correo usando Mailgun
-      const auth = Buffer.from(`api:${mailgunConfig.apiKey}`).toString("base64");
-      const formData = new URLSearchParams();
+      // Enviar correo usando el servicio centralizado
+      await sendEmail({
+        to: userEmail,
+        subject: subject,
+        text: textContent,
+        html: htmlContent
+      });
 
-      formData.append("from", `${mailgunConfig.fromName} <${mailgunConfig.fromEmail}>`);
-      formData.append("to", userEmail);
-      formData.append("subject", subject);
-      formData.append("text", textContent);
-      formData.append("html", htmlContent);
 
-      // Headers adicionales
-      formData.append("h:Reply-To", mailgunConfig.fromEmail);
-      formData.append("h:X-Mailgun-Native-Send", "true");
 
-      const response = await fetch(
-        `${mailgunConfig.baseUrl}/${mailgunConfig.domain}/messages`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Basic ${auth}`,
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          body: formData,
-        }
-      );
 
-      if (!response.ok) {
-        const errorData = await response.text();
-        console.error("Error en Mailgun:", errorData);
-        throw new Error(`Error al enviar el correo: ${response.statusText}`);
-      }
 
-      const responseData = await response.json();
-      console.log("Respuesta de Mailgun:", responseData);
-      console.log(`Correo de confirmación de evento enviado a ${userEmail} para evento ${eventTitle}`);
 
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error";

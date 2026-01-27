@@ -14,6 +14,7 @@
     "node": "22"
   },
   "main": "lib/index.js",
+  "type": "module",
   "dependencies": {
     "@firebase/auth": "^1.12.0",
     "@google/generative-ai": "^0.24.1",

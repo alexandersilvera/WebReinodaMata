@@ -6,7 +6,6 @@ import { onRequest } from "firebase-functions/v2/https";
 import * as admin from 'firebase-admin';
 import { MercadoPagoConfig, Payment } from 'mercadopago';
 
-const db = admin.firestore();
 
 interface WebhookNotification {
   action: string;
@@ -95,7 +94,7 @@ export const mercadoPagoWebhook = onRequest(
       };
 
       // Guardar en Firestore
-      await db.collection('payments').doc(paymentId).set(paymentData, { merge: true });
+      await admin.firestore().collection('payments').doc(paymentId).set(paymentData, { merge: true });
       console.log(`✅ Payment saved to Firestore: ${paymentId}`);
 
       // Procesar según el tipo de pago y estado
@@ -161,7 +160,7 @@ async function activateSubscription(
     }
 
     // Obtener plan
-    const planDoc = await db.collection('subscription_plans').doc(planId).get();
+    const planDoc = await admin.firestore().collection('subscription_plans').doc(planId).get();
     if (!planDoc.exists) {
       throw new Error(`Plan ${planId} not found`);
     }
@@ -185,7 +184,7 @@ async function activateSubscription(
     };
 
     // Buscar suscripción existente del usuario
-    const existingSubscription = await db
+    const existingSubscription = await admin.firestore()
       .collection('subscriptions')
       .where('userId', '==', userId)
       .where('status', '==', 'active')
@@ -198,7 +197,7 @@ async function activateSubscription(
       console.log(`✅ Subscription updated for user ${userId}`);
     } else {
       // Crear nueva suscripción
-      await db.collection('subscriptions').add({
+      await admin.firestore().collection('subscriptions').add({
         ...subscriptionData,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
       });
@@ -235,11 +234,11 @@ async function recordDonation(
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 
-    await db.collection('donations').add(donationData);
+    await admin.firestore().collection('donations').add(donationData);
 
     // Agregar al muro de donantes si no es anónimo
     if (!donationData.isAnonymous) {
-      await db.collection('donor_wall').add({
+      await admin.firestore().collection('donor_wall').add({
         name: donorName,
         amount: amount,
         message: message || null,
@@ -275,7 +274,7 @@ async function registerToEvent(
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 
-    await db.collection('event_registrations').add(registrationData);
+    await admin.firestore().collection('event_registrations').add(registrationData);
     console.log(`✅ User registered to event successfully`);
   } catch (error) {
     console.error('❌ Error registering to event:', error);

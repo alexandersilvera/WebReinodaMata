@@ -7,9 +7,10 @@ import { onSchedule } from "firebase-functions/v2/scheduler";
 import { logger } from "firebase-functions";
 import * as admin from "firebase-admin";
 import fetch from "node-fetch";
-import { getMailgunConfig, isValidEmail, validateEmailList, isAdminUser, getSiteUrlConfig } from "./config/mailgun";
-import { loadEmailTemplate, formatContentForHtml, createCallToAction, EmailTemplateData } from "./utils/emailTemplates";
+import { getMailgunConfig, isValidEmail, validateEmailList, isAdminUser, getSiteUrlConfig } from "./config/mailgun.js";
+import { loadEmailTemplate, formatContentForHtml, createCallToAction, EmailTemplateData } from "./utils/emailTemplates.js";
 import { v4 as uuidv4 } from "uuid";
+
 
 // Configuración CORS unificada - ACTUALIZADA
 const CORS_CONFIG = [
@@ -31,7 +32,7 @@ const CORS_CONFIG = [
  * Envía un newsletter a todos los suscriptores activos
  */
 export const sendNewsletterToSubscribers = onCall(
-  { 
+  {
     memory: "512MiB",
     cors: CORS_CONFIG
   },
@@ -51,10 +52,10 @@ export const sendNewsletterToSubscribers = onCall(
 
       // Obtener configuración segura de Mailgun
       const mailgunConfig = getMailgunConfig();
-      
+
       // Verificar parámetros requeridos
       const data = request.data;
-      
+
       if (!data.subject || !data.content) {
         throw new Error("Se requiere asunto y contenido");
       }
@@ -99,7 +100,7 @@ export const sendNewsletterToSubscribers = onCall(
       const subject = data.subject;
       const textContent = data.content;
       const senderName = data.fromName || mailgunConfig.fromName;
-      
+
       // Generar HTML usando plantillas profesionales
       let htmlContent: string;
       if (data.htmlContent) {
@@ -108,13 +109,13 @@ export const sendNewsletterToSubscribers = onCall(
       } else {
         // Formatear contenido de texto para HTML
         const formattedContent = formatContentForHtml(textContent);
-        
+
         // Crear call-to-action si hay URL
         let callToAction = '';
         if (data.actionUrl && data.actionText) {
           callToAction = createCallToAction(data.actionText, data.actionUrl);
         }
-        
+
         // Usar plantilla profesional
         const templateData: EmailTemplateData = {
           subject: subject,
@@ -122,7 +123,7 @@ export const sendNewsletterToSubscribers = onCall(
           callToAction: callToAction,
           siteUrl: getSiteUrlConfig().url
         };
-        
+
         htmlContent = loadEmailTemplate('newsletter-base', templateData);
       }
 
@@ -137,7 +138,7 @@ export const sendNewsletterToSubscribers = onCall(
 
       for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
         const currentBatch = recipients.slice(i, i + BATCH_SIZE);
-        console.log(`Procesando lote ${ (i / BATCH_SIZE) + 1 }/${totalBatches} con ${currentBatch.length} correos.`);
+        console.log(`Procesando lote ${(i / BATCH_SIZE) + 1}/${totalBatches} con ${currentBatch.length} correos.`);
 
         const formData = new URLSearchParams();
         formData.append("from", `${senderName} <${mailgunConfig.fromEmail}>`);
@@ -145,13 +146,13 @@ export const sendNewsletterToSubscribers = onCall(
         formData.append("subject", subject);
         formData.append("text", textContent);
         formData.append("html", htmlContent);
-        
+
         // Headers adicionales para mejorar deliverability
         formData.append("h:Reply-To", mailgunConfig.fromEmail);
         formData.append("h:List-Unsubscribe", `<${getSiteUrlConfig().url}/unsubscribe>`);
         formData.append("h:List-Id", "Centro Umbandista Reino Da Mata Newsletter");
         formData.append("h:X-Mailgun-Native-Send", "true");
-        
+
         // Mailgun specific: add recipient variables if you use them for per-recipient data
         // formData.append('recipient-variables', JSON.stringify(batchRecipientVariables));
 
@@ -170,25 +171,25 @@ export const sendNewsletterToSubscribers = onCall(
 
           if (!response.ok) {
             const errorData = await response.text();
-            console.error(`Error en Mailgun para el lote ${ (i / BATCH_SIZE) + 1 }: ${response.statusText}`, errorData);
+            console.error(`Error en Mailgun para el lote ${(i / BATCH_SIZE) + 1}: ${response.statusText}`, errorData);
             failedBatches++;
             totalProcessedEmailsInFailedBatches += currentBatch.length;
           } else {
             const responseData = await response.json();
-            console.log(`Respuesta de Mailgun para el lote ${ (i / BATCH_SIZE) + 1 }:`, responseData);
+            console.log(`Respuesta de Mailgun para el lote ${(i / BATCH_SIZE) + 1}:`, responseData);
             successfulBatches++;
             successfulSends += currentBatch.length;
           }
         } catch (batchError: any) {
-          console.error(`Error crítico procesando el lote ${ (i / BATCH_SIZE) + 1 }:`, batchError);
+          console.error(`Error crítico procesando el lote ${(i / BATCH_SIZE) + 1}:`, batchError);
           failedBatches++;
           totalProcessedEmailsInFailedBatches += currentBatch.length;
         }
 
         // Pausa entre lotes para evitar rate limiting
-        if ( (i / BATCH_SIZE) + 1 < totalBatches ) { // No esperar después del último lote
-           console.log(`Esperando 3 segundos antes del siguiente lote...`);
-           await new Promise(resolve => setTimeout(resolve, 3000)); // 3 segundos
+        if ((i / BATCH_SIZE) + 1 < totalBatches) { // No esperar después del último lote
+          console.log(`Esperando 3 segundos antes del siguiente lote...`);
+          await new Promise(resolve => setTimeout(resolve, 3000)); // 3 segundos
         }
       }
 
@@ -277,7 +278,7 @@ export const sendArticleNewsletter = onDocumentCreated(
       // Preparar contenido del email
       const subject = `📖 Nuevo artículo: ${articleData.title}`;
       const articleUrl = `${siteUrlConfig.url}/blog/${articleData.slug}`;
-      
+
       const textContent = `
 ¡Hola!
 
@@ -333,7 +334,7 @@ ${siteUrlConfig.url}
 
       for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
         const currentBatch = recipients.slice(i, i + BATCH_SIZE);
-        console.log(`Procesando lote artículo ${ (i / BATCH_SIZE) + 1 }/${totalBatches} con ${currentBatch.length} correos.`);
+        console.log(`Procesando lote artículo ${(i / BATCH_SIZE) + 1}/${totalBatches} con ${currentBatch.length} correos.`);
 
         const formData = new URLSearchParams();
         formData.append("from", `${mailgunConfig.fromName} <${mailgunConfig.fromEmail}>`);
@@ -341,7 +342,7 @@ ${siteUrlConfig.url}
         formData.append("subject", subject);
         formData.append("text", textContent);
         formData.append("html", htmlContent);
-        
+
         // Headers adicionales
         formData.append("h:Reply-To", mailgunConfig.fromEmail);
         formData.append("h:List-Unsubscribe", `<${siteUrlConfig.url}/unsubscribe>`);
@@ -362,20 +363,20 @@ ${siteUrlConfig.url}
 
           if (!response.ok) {
             const errorData = await response.text();
-            console.error(`Error en Mailgun para artículo lote ${ (i / BATCH_SIZE) + 1 }: ${response.statusText}`, errorData);
+            console.error(`Error en Mailgun para artículo lote ${(i / BATCH_SIZE) + 1}: ${response.statusText}`, errorData);
             failedSends += currentBatch.length;
           } else {
             const responseData = await response.json();
-            console.log(`Artículo enviado exitosamente lote ${ (i / BATCH_SIZE) + 1 }:`, responseData);
+            console.log(`Artículo enviado exitosamente lote ${(i / BATCH_SIZE) + 1}:`, responseData);
             successfulSends += currentBatch.length;
           }
         } catch (batchError: any) {
-          console.error(`Error crítico enviando artículo lote ${ (i / BATCH_SIZE) + 1 }:`, batchError);
+          console.error(`Error crítico enviando artículo lote ${(i / BATCH_SIZE) + 1}:`, batchError);
           failedSends += currentBatch.length;
         }
 
         // Pausa entre lotes
-        if ( (i / BATCH_SIZE) + 1 < totalBatches ) {
+        if ((i / BATCH_SIZE) + 1 < totalBatches) {
           console.log(`Esperando 3 segundos antes del siguiente lote de artículo...`);
           await new Promise(resolve => setTimeout(resolve, 3000));
         }
@@ -413,7 +414,7 @@ export const sendSubscriptionConfirmation = onDocumentCreated(
     try {
       // Obtener configuración segura de Mailgun
       const mailgunConfig = getMailgunConfig();
-      
+
       const subscriber = event.data?.data();
       if (!subscriber) {
         console.error("No se encontraron datos del suscriptor");
@@ -421,7 +422,7 @@ export const sendSubscriptionConfirmation = onDocumentCreated(
       }
 
       const { email, firstName = "", unsubscribeToken } = subscriber; // Extraer unsubscribeToken
-      
+
       if (!email || !isValidEmail(email)) {
         return;
       }
@@ -446,7 +447,7 @@ Es un honor tenerte en nuestra comunidad espiritual. A partir de ahora recibirá
 
 ¿Qué puedes esperar?
 - Artículos sobre espiritualidad y sabiduría ancestral
-- Noticias y eventos de nuestro centro
+- Noticias y eventos y de nuestro centro
 - Reflexiones y enseñanzas espirituales
 - Invitaciones a ceremonias y actividades especiales
 
@@ -469,13 +470,13 @@ Centro Umbandista Reino Da Mata
       // Enviar correo usando Mailgun
       const auth = Buffer.from(`api:${mailgunConfig.apiKey}`).toString("base64");
       const formData = new URLSearchParams();
-      
+
       formData.append("from", `${mailgunConfig.fromName} <${mailgunConfig.fromEmail}>`);
       formData.append("to", email);
       formData.append("subject", "Confirmación de suscripción - Centro Umbandista Reino Da Mata");
       formData.append("text", textContent);
       formData.append("html", htmlContent);
-      
+
       // Headers adicionales para mejorar deliverability
       formData.append("h:Reply-To", mailgunConfig.fromEmail);
       formData.append("h:List-Unsubscribe", unsubscribeLink ? `<${unsubscribeLink}>` : `<${siteUrlConfig.url}/unsubscribe>`);
@@ -514,7 +515,7 @@ Centro Umbandista Reino Da Mata
  * Función para enviar correo de prueba
  */
 export const sendTestNewsletter = onCall(
-  { 
+  {
     memory: "256MiB",
     cors: CORS_CONFIG
   },
@@ -522,7 +523,7 @@ export const sendTestNewsletter = onCall(
     try {
       // En desarrollo local, permitir sin autenticación para testing
       const isDevelopment = process.env.FUNCTIONS_EMULATOR === 'true';
-      
+
       if (!isDevelopment) {
         // Verificar autenticación de admin solo en producción
         if (!request.auth) {
@@ -541,10 +542,10 @@ export const sendTestNewsletter = onCall(
 
       // Obtener configuración segura de Mailgun
       const mailgunConfig = getMailgunConfig();
-      
+
       // Verificar parámetros requeridos
       const data = request.data;
-      
+
       if (!data.subject || !data.content || !data.testEmail) {
         throw new Error("Se requiere asunto, contenido y correo de destino");
       }
@@ -562,22 +563,22 @@ export const sendTestNewsletter = onCall(
 
       // Usar plantilla profesional para emails de prueba
       const formattedContent = formatContentForHtml(textContent);
-      
+
       // Crear call-to-action si hay URL de prueba
       let callToAction = '';
       if (data.actionUrl && data.actionText) {
         callToAction = createCallToAction(data.actionText, data.actionUrl);
       }
-      
+
       const templateData: EmailTemplateData = {
         subject: subject,
         content: formattedContent,
         callToAction: callToAction,
         siteUrl: getSiteUrlConfig().url
       };
-      
+
       const htmlContent = loadEmailTemplate('test-email', templateData);
-      
+
       const formData = new URLSearchParams({
         'from': `${senderName} <${mailgunConfig.fromEmail}>`,
         'to': testEmail,
@@ -633,34 +634,34 @@ export const cleanupInactiveSubscribers = onSchedule(
   async (_event) => {
     try {
       console.log("Iniciando limpieza de suscriptores inactivos...");
-      
+
       // Buscar suscriptores inactivos con más de 6 meses de inactividad
       const sixMonthsAgo = new Date();
       sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-      
+
       const inactiveSubscribersSnapshot = await admin
         .firestore()
         .collection("subscribers")
         .where("active", "==", false)
         .where("createdAt", "<", admin.firestore.Timestamp.fromDate(sixMonthsAgo))
         .get();
-      
+
       if (inactiveSubscribersSnapshot.empty) {
         console.log("No se encontraron suscriptores inactivos para limpiar");
         return;
       }
-      
+
       console.log(`Se encontraron ${inactiveSubscribersSnapshot.docs.length} suscriptores inactivos para eliminar`);
-      
+
       // Eliminar en lotes de 500 (límite de Firestore)
       const batch = admin.firestore().batch();
       inactiveSubscribersSnapshot.docs.forEach((doc) => {
         batch.delete(doc.ref);
       });
-      
+
       await batch.commit();
       console.log(`Se eliminaron ${inactiveSubscribersSnapshot.docs.length} suscriptores inactivos`);
-      
+
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
       console.error("Error en limpieza de suscriptores:", errorMessage);
@@ -681,7 +682,7 @@ export const recordPageView = onCall(
     try {
       // Validar datos
       const data = request.data;
-      
+
       if (!data.path) {
         throw new Error("Se requiere una ruta de página");
       }
@@ -691,10 +692,10 @@ export const recordPageView = onCall(
       const referrer = data.referrer as string || null;
       const userAgent = data.userAgent as string || null;
       const timestamp = admin.firestore.FieldValue.serverTimestamp();
-      
+
       // Identificar usuario (si está autenticado)
       const userId = request.auth?.uid || null;
-      
+
       // Crear documento de visita
       const pageView = {
         path,
@@ -703,17 +704,17 @@ export const recordPageView = onCall(
         timestamp,
         userId
       };
-      
+
       // Guardar en Firestore
       await admin.firestore().collection("pageViews").add(pageView);
-      
+
       return { success: true };
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
       console.error("Error al registrar visita:", errorMessage);
-      return { 
-        success: false, 
-        message: `Error al registrar la visita: ${errorMessage}` 
+      return {
+        success: false,
+        message: `Error al registrar la visita: ${errorMessage}`
       };
     }
   }
@@ -735,7 +736,7 @@ export const cleanupOldPageViews = onSchedule(
       // Calcular fecha límite (1 año atrás)
       const oneYearAgo = new Date();
       oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-      
+
       // Consultar visitas antiguas
       const snapshot = await admin
         .firestore()
@@ -743,21 +744,21 @@ export const cleanupOldPageViews = onSchedule(
         .where("timestamp", "<", oneYearAgo)
         .limit(500) // Procesar en lotes para evitar problemas de rendimiento
         .get();
-      
+
       // Si no hay visitas antiguas, terminar
       if (snapshot.empty) {
         console.log("No hay visitas antiguas para eliminar");
         return;
       }
-      
+
       // Eliminar visitas antiguas en batch
       const batch = admin.firestore().batch();
       snapshot.docs.forEach((doc) => {
         batch.delete(doc.ref);
       });
-      
+
       await batch.commit();
-      
+
       console.log(`Eliminadas ${snapshot.size} visitas antiguas`);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
@@ -770,14 +771,14 @@ export const cleanupOldPageViews = onSchedule(
  * Suscribir un nuevo email
  */
 export const subscribeEmail = onCall(
-  { 
+  {
     memory: "128MiB",
     cors: CORS_CONFIG
   },
   async (request) => {
     try {
       console.log('Nueva suscripción solicitada:', { data: request.data, context: request.auth?.uid });
-      
+
       // Validar que tenga los datos necesarios
       if (!request.data || !request.data.email) {
         throw new Error('El email es requerido');
@@ -815,7 +816,7 @@ export const subscribeEmail = onCall(
       });
 
       console.log('Suscripción exitosa:', { id: docRef.id, email });
-      
+
       return {
         success: true,
         message: 'Suscripción exitosa',
@@ -825,7 +826,7 @@ export const subscribeEmail = onCall(
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
       console.error('Error en subscribeEmail:', error);
-      
+
       return {
         success: false,
         message: `Error al suscribir: ${errorMessage}`
@@ -845,14 +846,14 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 const validateEmailAdvanced = (email: string): boolean => {
   if (!email || typeof email !== 'string') return false;
-  
+
   // Regex más estricto para validación de email
   const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
-  
+
   // Verificar dominios bloqueados conocidos
   const blockedDomains = ['tempmail.com', '10minutemail.com', 'guerrillamail.com', 'mailinator.com'];
   const domain = email.split('@')[1]?.toLowerCase();
-  
+
   return emailRegex.test(email) && !!domain && !blockedDomains.includes(domain);
 };
 
@@ -899,26 +900,26 @@ const saveFailedSync = async (user: any, error: any, attempt: number) => {
     });
     logger.warn('failed_sync_saved', { userId: user.uid, email: user.email, attempt });
   } catch (saveError: any) {
-    logger.error('failed_to_save_sync_error', { 
-      originalError: error.message, 
+    logger.error('failed_to_save_sync_error', {
+      originalError: error.message,
       saveError: saveError?.message || 'Unknown save error',
-      userId: user.uid 
+      userId: user.uid
     });
   }
 };
 
 const syncUserToSubscribersWithRetry = async (user: any, maxRetries: number = 3): Promise<boolean> => {
   let attempt = 0;
-  
+
   while (attempt < maxRetries) {
     try {
       attempt++;
-      
-      logger.info('sync_attempt_start', { 
-        userId: user.uid, 
-        email: user.email, 
-        attempt, 
-        maxRetries 
+
+      logger.info('sync_attempt_start', {
+        userId: user.uid,
+        email: user.email,
+        attempt,
+        maxRetries
       });
 
       // Validación avanzada de email
@@ -933,14 +934,14 @@ const syncUserToSubscribersWithRetry = async (user: any, maxRetries: number = 3)
           .where('email', '==', user.email.toLowerCase())
           .limit(1)
           .get(),
-        new Promise((_, reject) => 
+        new Promise((_, reject) =>
           setTimeout(() => reject(new Error('Timeout en consulta de suscriptor existente')), 10000)
         )
       ]) as admin.firestore.QuerySnapshot;
 
       if (!existingQuery.empty) {
-        logger.info('user_already_subscribed', { 
-          userId: user.uid, 
+        logger.info('user_already_subscribed', {
+          userId: user.uid,
           email: user.email,
           existingSubscriberId: existingQuery.docs[0].id
         });
@@ -949,7 +950,7 @@ const syncUserToSubscribersWithRetry = async (user: any, maxRetries: number = 3)
 
       // Crear nuevo suscriptor con validación
       const unsubscribeToken = uuidv4();
-      
+
       const subscriberData = {
         email: user.email.toLowerCase(),
         name: user.displayName || '',
@@ -969,11 +970,11 @@ const syncUserToSubscribersWithRetry = async (user: any, maxRetries: number = 3)
       // Guardar con timeout
       const docRef = await Promise.race([
         admin.firestore().collection('subscribers').add(subscriberData),
-        new Promise((_, reject) => 
+        new Promise((_, reject) =>
           setTimeout(() => reject(new Error('Timeout al guardar suscriptor')), 15000)
         )
       ]) as admin.firestore.DocumentReference;
-      
+
       logSyncOperation('user_sync_success', user, true);
       logger.info('sync_success_detail', {
         userId: user.uid,
@@ -982,14 +983,14 @@ const syncUserToSubscribersWithRetry = async (user: any, maxRetries: number = 3)
         attempt,
         finalAttempt: true
       });
-      
+
       return true;
 
     } catch (error: any) {
       const isLastAttempt = attempt >= maxRetries;
-      
+
       logSyncOperation('user_sync_attempt_failed', user, false, error);
-      
+
       if (isLastAttempt) {
         // Último intento fallido - guardar para procesamiento manual
         await saveFailedSync(user, error, attempt);
@@ -1005,12 +1006,12 @@ const syncUserToSubscribersWithRetry = async (user: any, maxRetries: number = 3)
           nextAttemptIn: backoffTime,
           error: error.message
         });
-        
+
         await delay(backoffTime);
       }
     }
   }
-  
+
   return false;
 };
 
@@ -1030,7 +1031,7 @@ export const processFailedSyncs = onSchedule(
   async (_event) => {
     try {
       logger.info('processing_failed_syncs_started');
-      
+
       // Buscar sincronizaciones fallidas sin procesar
       const failedSyncsSnapshot = await admin
         .firestore()
@@ -1039,18 +1040,18 @@ export const processFailedSyncs = onSchedule(
         .where("retryCount", "<", 5) // Máximo 5 reintentos
         .limit(10) // Procesar máximo 10 por ejecución
         .get();
-      
+
       if (failedSyncsSnapshot.empty) {
         logger.info('no_failed_syncs_to_process');
         return;
       }
-      
+
       let processedCount = 0;
       let successCount = 0;
-      
+
       for (const doc of failedSyncsSnapshot.docs) {
         const failedSync = doc.data();
-        
+
         try {
           // Intentar crear el usuario mock para retry
           const mockUser = {
@@ -1059,9 +1060,9 @@ export const processFailedSyncs = onSchedule(
             displayName: failedSync.displayName,
             emailVerified: true // Asumir verificado en retry
           };
-          
+
           const success = await syncUserToSubscribersWithRetry(mockUser, 2); // Solo 2 intentos en retry
-          
+
           if (success) {
             successCount++;
             // Marcar como procesado exitosamente
@@ -1070,7 +1071,7 @@ export const processFailedSyncs = onSchedule(
               processedAt: admin.firestore.FieldValue.serverTimestamp(),
               retrySuccess: true
             });
-            
+
             logger.info('failed_sync_retry_success', {
               docId: doc.id,
               userId: failedSync.userId,
@@ -1082,7 +1083,7 @@ export const processFailedSyncs = onSchedule(
               retryCount: admin.firestore.FieldValue.increment(1),
               lastRetryAt: admin.firestore.FieldValue.serverTimestamp()
             });
-            
+
             logger.warn('failed_sync_retry_failed', {
               docId: doc.id,
               userId: failedSync.userId,
@@ -1090,16 +1091,16 @@ export const processFailedSyncs = onSchedule(
               retryCount: failedSync.retryCount + 1
             });
           }
-          
+
           processedCount++;
-          
+
         } catch (retryError: any) {
           logger.error('failed_sync_retry_error', {
             docId: doc.id,
             userId: failedSync.userId,
             error: retryError.message
           });
-          
+
           // Incrementar contador aunque haya error
           await doc.ref.update({
             retryCount: admin.firestore.FieldValue.increment(1),
@@ -1107,17 +1108,17 @@ export const processFailedSyncs = onSchedule(
             lastError: retryError.message
           });
         }
-        
+
         // Pequeña pausa entre procesamiento
         await delay(1000);
       }
-      
+
       logger.info('processing_failed_syncs_completed', {
         totalProcessed: processedCount,
         successfulRetries: successCount,
         failedRetries: processedCount - successCount
       });
-      
+
     } catch (error: any) {
       logger.error('failed_syncs_processing_error', {
         error: error.message
@@ -1156,7 +1157,7 @@ export const syncUserProfileToSubscribers = onDocumentCreated(
 
       // Usar la función de sincronización mejorada que ya tenemos
       const syncSuccess = await syncUserToSubscribersWithRetry(user, 3);
-      
+
       if (syncSuccess) {
         console.log('✅ Sincronización automática exitosa:', user.email);
       } else {
@@ -1225,7 +1226,7 @@ export const sendWorkshopInvitation = onDocumentCreated(
       // Preparar contenido del email
       const subject = `🎓 Nuevo taller disponible: ${workshopData.title}`;
       const workshopUrl = `${siteUrlConfig.url}/talleres/${workshopData.slug || event.params.workshopId}`;
-      
+
       // Formatear fecha del taller
       const workshopDate = workshopData.date ? new Date(workshopData.date.seconds * 1000) : new Date();
       const formattedDate = workshopDate.toLocaleDateString('es-ES', {
@@ -1234,9 +1235,9 @@ export const sendWorkshopInvitation = onDocumentCreated(
         month: 'long',
         day: 'numeric'
       });
-      
+
       const formattedTime = workshopData.time || 'Horario por confirmar';
-      
+
       const textContent = `
 ¡Hola!
 
@@ -1321,7 +1322,7 @@ ${workshopData.requirements ? `
 
       for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
         const currentBatch = recipients.slice(i, i + BATCH_SIZE);
-        console.log(`Procesando lote taller ${ (i / BATCH_SIZE) + 1 }/${totalBatches} con ${currentBatch.length} correos.`);
+        console.log(`Procesando lote taller ${(i / BATCH_SIZE) + 1}/${totalBatches} con ${currentBatch.length} correos.`);
 
         const formData = new URLSearchParams();
         formData.append("from", `${mailgunConfig.fromName} <${mailgunConfig.fromEmail}>`);
@@ -1329,7 +1330,7 @@ ${workshopData.requirements ? `
         formData.append("subject", subject);
         formData.append("text", textContent);
         formData.append("html", htmlContent);
-        
+
         // Headers adicionales
         formData.append("h:Reply-To", mailgunConfig.fromEmail);
         formData.append("h:List-Unsubscribe", `<${siteUrlConfig.url}/unsubscribe>`);
@@ -1350,20 +1351,20 @@ ${workshopData.requirements ? `
 
           if (!response.ok) {
             const errorData = await response.text();
-            console.error(`Error en Mailgun para taller lote ${ (i / BATCH_SIZE) + 1 }: ${response.statusText}`, errorData);
+            console.error(`Error en Mailgun para taller lote ${(i / BATCH_SIZE) + 1}: ${response.statusText}`, errorData);
             failedSends += currentBatch.length;
           } else {
             const responseData = await response.json();
-            console.log(`Invitación de taller enviada exitosamente lote ${ (i / BATCH_SIZE) + 1 }:`, responseData);
+            console.log(`Invitación de taller enviada exitosamente lote ${(i / BATCH_SIZE) + 1}:`, responseData);
             successfulSends += currentBatch.length;
           }
         } catch (batchError: any) {
-          console.error(`Error crítico enviando invitación de taller lote ${ (i / BATCH_SIZE) + 1 }:`, batchError);
+          console.error(`Error crítico enviando invitación de taller lote ${(i / BATCH_SIZE) + 1}:`, batchError);
           failedSends += currentBatch.length;
         }
 
         // Pausa entre lotes
-        if ( (i / BATCH_SIZE) + 1 < totalBatches ) {
+        if ((i / BATCH_SIZE) + 1 < totalBatches) {
           console.log(`Esperando 3 segundos antes del siguiente lote de taller...`);
           await new Promise(resolve => setTimeout(resolve, 3000));
         }
@@ -1388,4 +1389,3 @@ ${workshopData.requirements ? `
   }
 );
 
- 

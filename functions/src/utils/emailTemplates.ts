@@ -4,7 +4,7 @@
 
 import * as path from "path";
 import * as fs from "fs";
-import { getSiteUrlConfig } from "../config/mailgun";
+import { getSiteUrlConfig } from "../config/mailgun.js";
 
 export interface EmailTemplateData {
   subject?: string;
