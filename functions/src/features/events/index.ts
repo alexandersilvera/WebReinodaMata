@@ -181,7 +181,7 @@ export const cancelEventRegistration = onCall(
 export const sendEventRegistrationConfirmation = onDocumentCreated(
   {
     document: "event_registrations/{registrationId}",
-    memory: "128MiB",
+    memory: "256MiB",
     region: "southamerica-east1" // <--- AÑADE ESTA LÍNEA
   },
   async (event) => {
